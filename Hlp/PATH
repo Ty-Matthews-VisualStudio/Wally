@@ -1,0 +1,10 @@
+Microsoft (R) Help Compiler
+HCRTF 4.01.0951
+Copyright (c) Microsoft Corp 1990 - 1995. All rights reserved.
+wally.hpj
+    HC4006: Warning: 
+	The folder "PATH........." specified for the "BMROOT" option does not exist.
+    HC4006: Warning: 
+	The folder "PATH........" specified for the "ROOT" option does not exist.
+    HC5011: Error: wally.hpj : 
+	Cannot open the file "PATH.....\WALLY.RTF."
