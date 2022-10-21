@@ -1,0 +1,6 @@
+
+Unless otherwise noted, every step assumes Wally is currently running.
+
+Step							Status
+==========================================================================================
+1. 

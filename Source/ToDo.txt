@@ -1,0 +1,9 @@
+
+The ToDo List!
+
+- Fix the WAD view list box in CPackageView to list out non-mip items, instead of just 
+skipping them.  This will allow people to see that there is actually stuff in WADs such
+as gfx.wad, even though they're not mips.  
+
+- BUG FIX:  For whatever reason, if you play a sound file within the PAK editor, and then 
+either try to export it or copy it, the file that gets saved is 0 length.  Check that out.
