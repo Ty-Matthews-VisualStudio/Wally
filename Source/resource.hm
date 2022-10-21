@@ -1,0 +1,4 @@
+// Microsoft Developer Studio generated Help ID include file.
+// Used by Wally.rc
+//
+#define HIDC_STATIC                     0x80bfffff    // IDD_BATCH_DLG
