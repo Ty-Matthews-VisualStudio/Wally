@@ -1,1 +1,1 @@
-
+This version of Wally was built using Visual Studio Community Edition 2022.  The solution and project files were regenerated from scratch and the old source files from prior environments (VC6 and VS2008) were copied over.
