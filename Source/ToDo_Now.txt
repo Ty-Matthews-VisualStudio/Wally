@@ -1,5 +1,0 @@
-TODO:
-
-Somewhere along the lines, merging in multiple WADs seems to have porked up the list.  Saving
-the resultant WAD does not include those items.  So it's like the package view list is different
-from the actual wadlist object.  Did it by doing 3 or 4 different sessions of Merge WAD.
