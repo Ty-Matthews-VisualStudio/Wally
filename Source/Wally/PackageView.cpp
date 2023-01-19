@@ -55,6 +55,7 @@ CPackageView::CPackageView()
 	m_iMipNumber = 0;
 	m_pbyOutputData = NULL;
 	m_iOutputDataSize = 0;
+	m_bInitialUpdate = false;
 
 	m_iLastWADType = WAD2_TYPE - 1000;
 
@@ -112,7 +113,7 @@ void CPackageView::DoDataExchange(CDataExchange* pDX)
 	//{{AFX_DATA_MAP(CPackageView)
 	DDX_Control(pDX, IDC_SLIDER_THUMBNAIL_SIZE, m_slThumbnailSize);
 	DDX_Control(pDX, IDC_STATIC_THUMB_SIZE, m_stThumbnailSize);
-	DDX_Control(pDX, IDC_TREE_IMAGES, m_tcImages);
+	//DDX_Control(pDX, IDC_TREE_IMAGES, m_tcImages);
 	DDX_Control(pDX, IDC_PUSH_ANIMATE, m_btnAnimate);
 	DDX_Control(pDX, IDC_PUSH_RANDOM, m_btnRandom);
 	DDX_Control(pDX, IDC_PUSH_BROWSE_MODE, m_btnBrowseMode);
@@ -249,7 +250,7 @@ void CPackageView::OnInitialUpdate()
 	m_btnBrowseMode.SetBitmap ((HBITMAP)m_bmBrowseMode);
 
 	// Set up the Tree Control
-	m_tcImages.OnInitialUpdate();
+	//m_tcImages.OnInitialUpdate();
 
 	if( pDoc )
 	{
@@ -265,7 +266,7 @@ void CPackageView::OnInitialUpdate()
 			m_lbImages.SetItemData (iItemAdded, (DWORD)pItem);
 			pItem->SetListBoxIndex (iItemAdded);
 
-			m_tcImages.AddToAllImages( pItem );
+			//m_tcImages.AddToAllImages( pItem );
 			
 			pItem = pDoc->GetNextLump();
 			bAtLeastOne = true;
@@ -315,6 +316,7 @@ void CPackageView::OnInitialUpdate()
 	{
 		m_pBrowseView->SetBrowseImageSize( g_iPackageThumbnailSize * 32 );
 	}
+	m_bInitialUpdate = true;
 }
 
 LRESULT CPackageView::OnPackageListBoxCustomMessage(WPARAM nType, LPARAM nFlags)
@@ -544,22 +546,26 @@ void CPackageView::UpdateStatusBar()
 
 void CPackageView::OnPaint() 
 {
+	if (!m_bInitialUpdate)
+	{
+		return;
+	}
 	if( m_bFirstTime )
 	{		
-		m_bFirstTime = FALSE;
-	}
+		m_bFirstTime = FALSE;		
+	}	
 
 	CPaintDC PaintDC(this); // device context for painting
 
 	RECT rcClient;
-	GetClientRect( &rcClient);
-	CRect rcLB (rcClient);
-	CRect rcED (rcClient);
-	CRect rcST (rcClient);
-
+	GetClientRect(&rcClient);
+	CRect rcLB(rcClient);
+	CRect rcED(rcClient);
+	CRect rcST(rcClient);
+		
 	int iRCWidth = rcLB.Width();
 	int iRCHeight = rcLB.Height();
-	
+
 	BOOL bReposition = FALSE;
 
 	if ((m_iOldRCWidth != iRCWidth) || (m_iOldRCHeight != iRCHeight))
@@ -568,155 +574,146 @@ void CPackageView::OnPaint()
 		m_iOldRCHeight = iRCHeight;
 		bReposition = TRUE;
 	}
-	
+
 	CDC DC;
-	DC.CreateCompatibleDC( &PaintDC);
-	CBitmap Bmp;	
-	Bmp.CreateCompatibleBitmap( &PaintDC, iRCWidth, iRCHeight);
-	DC.SelectObject( Bmp);
-	
+	DC.CreateCompatibleDC(&PaintDC);
+	CBitmap Bmp;
+	Bmp.CreateCompatibleBitmap(&PaintDC, iRCWidth, iRCHeight);
+	DC.SelectObject(Bmp);
+
 	WINDOWPLACEMENT wpLB;
-	wpLB.length = sizeof (WINDOWPLACEMENT);
-	
+	wpLB.length = sizeof(WINDOWPLACEMENT);
+
 	WINDOWPLACEMENT wpED;
-	wpED.length = sizeof (WINDOWPLACEMENT);
+	wpED.length = sizeof(WINDOWPLACEMENT);
 
 	WINDOWPLACEMENT wpCK;
-	wpCK.length = sizeof (WINDOWPLACEMENT);
+	wpCK.length = sizeof(WINDOWPLACEMENT);
 
-	WINDOWPLACEMENT wpThumbnailStatic;
-	wpThumbnailStatic.length = sizeof (WINDOWPLACEMENT);
-
-	WINDOWPLACEMENT wpThumbnailSlider;
-	wpThumbnailSlider.length = sizeof (WINDOWPLACEMENT);
-
-	WINDOWPLACEMENT wpTC;
-	wpTC.length = sizeof (WINDOWPLACEMENT);
+	WINDOWPLACEMENT wpTMP;
+	wpTMP.length = sizeof(WINDOWPLACEMENT);
 
 	WINDOWPLACEMENT wp;
-	wp.length = sizeof (WINDOWPLACEMENT);
+	wp.length = sizeof(WINDOWPLACEMENT);
 
 	int iHeight = 0;
 	int iWidth = 0;
 
 	if (bReposition)
-	{	
-		m_lbImages.GetWindowPlacement (&wpLB);
-		wpLB.rcNormalPosition.left		=	rcLB.left			+ PFORMVIEW_LB_OFFSET_LEFT;
-		wpLB.rcNormalPosition.right		=	rcLB.right			- PFORMVIEW_LB_OFFSET_RIGHT;
-		wpLB.rcNormalPosition.top		=	rcLB.top			+ PFORMVIEW_LB_OFFSET_TOP;
-		wpLB.rcNormalPosition.bottom	=	max ((rcLB.top		+ PFORMVIEW_LB_OFFSET_BOTTOM), (wpLB.rcNormalPosition.top + 2 + 16));
-		m_lbImages.SetWindowPlacement (&wpLB);
+	{
+		m_lbImages.GetWindowPlacement(&wpLB);
+		wpLB.rcNormalPosition.left = rcLB.left + PFORMVIEW_LB_OFFSET_LEFT;
+		wpLB.rcNormalPosition.right = rcLB.right - PFORMVIEW_LB_OFFSET_RIGHT;
+		wpLB.rcNormalPosition.top = rcLB.top + PFORMVIEW_LB_OFFSET_TOP;
+		wpLB.rcNormalPosition.bottom = max((rcLB.bottom - PFORMVIEW_LB_OFFSET_BOTTOM), (wpLB.rcNormalPosition.top + 2 + 16));
+		m_lbImages.SetWindowPlacement(&wpLB);
 	}
 
-	m_lbImages.GetWindowPlacement (&wpLB);
-	
-	HBRUSH hOldBrush = (HBRUSH )SelectObject( DC, (HBRUSH)m_brDlgColor);	
-		
-	::PatBlt( DC, 0, 0, iRCWidth, iRCHeight, PATCOPY);
-	
+	m_lbImages.GetWindowPlacement(&wpLB);
+
+	HBRUSH hOldBrush = (HBRUSH)SelectObject(DC, (HBRUSH)m_brDlgColor);
+
+	::PatBlt(DC, 0, 0, iRCWidth, iRCHeight, PATCOPY);
+
 	int iB = wpLB.rcNormalPosition.bottom;
 	int iT = wpLB.rcNormalPosition.top;
 	int iL = wpLB.rcNormalPosition.left;
 	int iR = wpLB.rcNormalPosition.right;
-		
+
 	// clear background, around our listbox (eliminates flashing)
 	//PaintDC.BitBlt( 0, 0, iRCWidth, iRCHeight, &DC, 0, 0, SRCCOPY);	
-	PaintDC.BitBlt( 0,		0,		iRCWidth,		iT,				&DC, 0, 0, SRCCOPY);
-	PaintDC.BitBlt( 0,		0,		iL,				iRCHeight,		&DC, 0, 0, SRCCOPY);
-	PaintDC.BitBlt( iR,		0,		iRCWidth - iR,	iRCHeight,		&DC, 0, 0, SRCCOPY);
-	PaintDC.BitBlt( iL,		iB,		iR - iL,		iRCHeight - iB,	&DC, 0, 0, SRCCOPY);
+	PaintDC.BitBlt(0, 0, iRCWidth, iT, &DC, 0, 0, SRCCOPY);
+	PaintDC.BitBlt(0, 0, iL, iRCHeight, &DC, 0, 0, SRCCOPY);
+	PaintDC.BitBlt(iR, 0, iRCWidth - iR, iRCHeight, &DC, 0, 0, SRCCOPY);
+	PaintDC.BitBlt(iL, iB, iR - iL, iRCHeight - iB, &DC, 0, 0, SRCCOPY);
 
-	DC.SelectStockObject( NULL_BRUSH);
-	SelectObject( DC, hOldBrush);
+	DC.SelectStockObject(NULL_BRUSH);
+	SelectObject(DC, hOldBrush);
 
 	DC.DeleteDC();
 
 	if (bReposition)
 	{
-		m_btnSelectAll.GetWindowPlacement (&wp);
+		m_btnSelectAll.GetWindowPlacement(&wp);
 		iWidth = wp.rcNormalPosition.right - wp.rcNormalPosition.left;
 		iHeight = wp.rcNormalPosition.bottom - wp.rcNormalPosition.top;
 		wp.rcNormalPosition.right = wpLB.rcNormalPosition.right;
 		wp.rcNormalPosition.left = wp.rcNormalPosition.right - iWidth;
 		wp.rcNormalPosition.bottom = wpLB.rcNormalPosition.top - 6;
 		wp.rcNormalPosition.top = wp.rcNormalPosition.bottom - iHeight;
-		m_btnSelectAll.SetWindowPlacement (&wp);
+		m_btnSelectAll.SetWindowPlacement(&wp);
 
-		m_edFilter.GetWindowPlacement (&wpED);
+		m_edFilter.GetWindowPlacement(&wpED);
 		iHeight = wpED.rcNormalPosition.bottom - wpED.rcNormalPosition.top;
-		wpED.rcNormalPosition.left =		rcED.left + PFORMVIEW_ED_OFFSET_LEFT;
-		wpED.rcNormalPosition.right =		wpLB.rcNormalPosition.right;
-		wpED.rcNormalPosition.top =			wpLB.rcNormalPosition.bottom + 6;
-		wpED.rcNormalPosition.bottom =		wpED.rcNormalPosition.top + iHeight;
-		m_edFilter.SetWindowPlacement (&wpED);
+		wpED.rcNormalPosition.left = rcED.left + PFORMVIEW_ED_OFFSET_LEFT;
+		wpED.rcNormalPosition.right = wpLB.rcNormalPosition.right;
+		wpED.rcNormalPosition.top = wpLB.rcNormalPosition.bottom + 6;
+		wpED.rcNormalPosition.bottom = wpED.rcNormalPosition.top + iHeight;
+		m_edFilter.SetWindowPlacement(&wpED);
 
-		m_ckFilter.GetWindowPlacement (&wpCK);
+		m_ckFilter.GetWindowPlacement(&wpCK);
 		iHeight = wpCK.rcNormalPosition.bottom - wpCK.rcNormalPosition.top;
-		wpCK.rcNormalPosition.left =		rcLB.left + PFORMVIEW_LB_OFFSET_LEFT;
-		wpCK.rcNormalPosition.right =		wpED.rcNormalPosition.left - 4;
-		wpCK.rcNormalPosition.top =			wpED.rcNormalPosition.top + 2;
-		wpCK.rcNormalPosition.bottom =		wpCK.rcNormalPosition.top + iHeight;
-		m_ckFilter.SetWindowPlacement (&wpCK);		
+		wpCK.rcNormalPosition.left = rcLB.left + PFORMVIEW_LB_OFFSET_LEFT;
+		wpCK.rcNormalPosition.right = wpED.rcNormalPosition.left - 4;
+		wpCK.rcNormalPosition.top = wpED.rcNormalPosition.top + 2;
+		wpCK.rcNormalPosition.bottom = wpCK.rcNormalPosition.top + iHeight;
+		m_ckFilter.SetWindowPlacement(&wpCK);
 
-		m_btnRandom.GetWindowPlacement (&wp);
-		wp.rcNormalPosition.left =		rcLB.left + PFORMVIEW_LB_OFFSET_LEFT;
-		wp.rcNormalPosition.right =		wp.rcNormalPosition.left + 25;
-		wp.rcNormalPosition.top =		wpCK.rcNormalPosition.bottom + 10;
-		wp.rcNormalPosition.bottom =	wp.rcNormalPosition.top + 25;
-		m_btnRandom.SetWindowPlacement (&wp);
+		m_btnRandom.GetWindowPlacement(&wp);
+		wp.rcNormalPosition.left = rcLB.left + PFORMVIEW_LB_OFFSET_LEFT;
+		wp.rcNormalPosition.right = wp.rcNormalPosition.left + 25;
+		wp.rcNormalPosition.top = wpCK.rcNormalPosition.bottom + 10;
+		wp.rcNormalPosition.bottom = wp.rcNormalPosition.top + 25;
+		m_btnRandom.SetWindowPlacement(&wp);
 
-		wp.rcNormalPosition.left =		wp.rcNormalPosition.right + 1;
-		wp.rcNormalPosition.right =		wp.rcNormalPosition.left + 25;
-		m_btnAnimate.SetWindowPlacement (&wp);
+		wp.rcNormalPosition.left = wp.rcNormalPosition.right + 1;
+		wp.rcNormalPosition.right = wp.rcNormalPosition.left + 25;
+		m_btnAnimate.SetWindowPlacement(&wp);
 
-		wp.rcNormalPosition.left =		wp.rcNormalPosition.right + 1;
-		wp.rcNormalPosition.right =		wp.rcNormalPosition.left + 25;
-		m_btnTileMode.SetWindowPlacement (&wp);
+		wp.rcNormalPosition.left = wp.rcNormalPosition.right + 1;
+		wp.rcNormalPosition.right = wp.rcNormalPosition.left + 25;
+		m_btnTileMode.SetWindowPlacement(&wp);
 
-		wp.rcNormalPosition.left =		wp.rcNormalPosition.right + 1;
-		wp.rcNormalPosition.right =		wp.rcNormalPosition.left + 25;
-		m_btnBrowseMode.SetWindowPlacement (&wp);
+		wp.rcNormalPosition.left = wp.rcNormalPosition.right + 1;
+		wp.rcNormalPosition.right = wp.rcNormalPosition.left + 25;
+		m_btnBrowseMode.SetWindowPlacement(&wp);
 
-		m_stThumbnailSize.GetWindowPlacement( &wpThumbnailStatic );
-		wpThumbnailStatic.rcNormalPosition.left = rcLB.left + PFORMVIEW_LB_OFFSET_LEFT;
-		wpThumbnailStatic.rcNormalPosition.right = wpThumbnailStatic.rcNormalPosition.left + 80;
-		wpThumbnailStatic.rcNormalPosition.top = wp.rcNormalPosition.bottom + 6;
-		wpThumbnailStatic.rcNormalPosition.bottom = wpThumbnailStatic.rcNormalPosition.top + 15;
-		m_stThumbnailSize.SetWindowPlacement( &wpThumbnailStatic );
+		m_btnRandom.GetWindowPlacement(&wp);
+		m_stThumbnailSize.GetWindowPlacement(&wpTMP);  // Get current dimensions for width
+		wp.rcNormalPosition.left = rcLB.left + PFORMVIEW_LB_OFFSET_LEFT;
+		wp.rcNormalPosition.right = wp.rcNormalPosition.left + (wpTMP.rcNormalPosition.right - wpTMP.rcNormalPosition.left);
+		wp.rcNormalPosition.top = wp.rcNormalPosition.bottom + 5; // +5 for the padding
+		wp.rcNormalPosition.bottom = wp.rcNormalPosition.top + (wpTMP.rcNormalPosition.bottom - wpTMP.rcNormalPosition.top);
+		m_stThumbnailSize.SetWindowPlacement(&wp);		
 
-		m_slThumbnailSize.GetWindowPlacement( &wpThumbnailSlider );
-		iHeight = wpThumbnailSlider.rcNormalPosition.bottom - wpThumbnailSlider.rcNormalPosition.top;
-		wpThumbnailSlider.rcNormalPosition.left = rcLB.left + PFORMVIEW_LB_OFFSET_LEFT;
-		wpThumbnailSlider.rcNormalPosition.right = rcLB.right	- PFORMVIEW_LB_OFFSET_RIGHT;
-		wpThumbnailSlider.rcNormalPosition.top = wpThumbnailStatic.rcNormalPosition.bottom + 2;
-		wpThumbnailSlider.rcNormalPosition.bottom = wpThumbnailSlider.rcNormalPosition.top + iHeight;
-		m_slThumbnailSize.SetWindowPlacement( &wpThumbnailSlider );
-
-		m_tcImages.GetWindowPlacement( &wpTC );
-		iHeight = wpTC.rcNormalPosition.bottom - wpTC.rcNormalPosition.top;
-		wpTC.rcNormalPosition.left =		wpLB.rcNormalPosition.left;
-		wpTC.rcNormalPosition.right =		wpLB.rcNormalPosition.right;
-		wpTC.rcNormalPosition.top =			wpThumbnailSlider.rcNormalPosition.bottom + 4;
-		wpTC.rcNormalPosition.bottom =		wpTC.rcNormalPosition.top + iHeight;
-		m_tcImages.SetWindowPlacement( &wpTC );
+		m_stThumbnailSize.GetWindowPlacement(&wp);
+		m_slThumbnailSize.GetWindowPlacement(&wpTMP);  // Get current dimensions for width
+		iHeight = wpTMP.rcNormalPosition.bottom - wpTMP.rcNormalPosition.top;
+		wpTMP.rcNormalPosition.top = wp.rcNormalPosition.bottom + 5;
+		wpTMP.rcNormalPosition.bottom = wpTMP.rcNormalPosition.top + iHeight;
+		wpTMP.rcNormalPosition.left = rcLB.left + PFORMVIEW_LB_OFFSET_LEFT;
+		wpTMP.rcNormalPosition.right = wpTMP.rcNormalPosition.left + (iR - iL);
+		m_slThumbnailSize.SetWindowPlacement(&wpTMP);
+		
+		//m_slThumbnailSize;
+		//m_stThumbnailSize;
 	}
-	
-	HICON hIcon		= NULL;	
-	HICON hPrevIcon	= NULL;
 
-	CPackageDoc *pDoc = GetDocument();	
+	HICON hIcon = NULL;
+	HICON hPrevIcon = NULL;
+
+	CPackageDoc* pDoc = GetDocument();
 
 	if (pDoc)
-	{		
+	{
 		int iType = pDoc->GetWADType();
 
 		if (iType != m_iLastWADType)
 		{
-			m_iLastWADType = iType;			
+			m_iLastWADType = iType;
 
 			switch (iType)
-			{	
+			{
 			case WAD3_TYPE:
 				hIcon = m_imgList.ExtractIcon(0);
 				break;
@@ -729,17 +726,17 @@ void CPackageView::OnPaint()
 				hIcon = m_imgList.ExtractIcon(0);
 				break;
 			}
-			
+
 			if (hIcon)
-			{				
+			{
 				CWnd* pParent = GetParent();
 				if (pParent)
 				{
-					hPrevIcon = (HICON) pParent->SendMessage( WM_SETICON, 
-							(WPARAM )ICON_SMALL, (LPARAM )hIcon);
+					hPrevIcon = (HICON)pParent->SendMessage(WM_SETICON,
+						(WPARAM)ICON_SMALL, (LPARAM)hIcon);
 
 					// Free the previous icon resource
-					if (hPrevIcon) 
+					if (hPrevIcon)
 					{
 						DestroyIcon(hPrevIcon);
 					}
@@ -747,10 +744,10 @@ void CPackageView::OnPaint()
 			}
 			else
 			{
-				TRACE ("Unable to create the icon!\n");
+				TRACE("Unable to create the icon!\n");
 			}
 		}
-	}	
+	}
 }
 
 BOOL CPackageView::OnToolTipNotify( UINT id, NMHDR * pNMHDR, LRESULT * pResult )
@@ -950,14 +947,14 @@ void CPackageView::OnEditRename()
 void CPackageView::RenameImage()
 {
 	CPackageDoc *pDoc = GetDocument();
-	m_tcImages.RenameSelectedItem( pDoc );
+	//m_tcImages.RenameSelectedItem( pDoc );
 	
-#if 0
+#if 1
 	CRenameImageDlg dlgRename;
 	CString strName ("");
 
-	//int iSelCount = m_lbImages.GetSelCount();
-	int iSelCount = m_tcImages.GetSelectedCount();
+	int iSelCount = m_lbImages.GetSelCount();
+	//int iSelCount = m_tcImages.GetSelectedCount();
 	ASSERT (iSelCount == 1);		// OnEditRename() should not be possible with multiple items selected!
 
 	int iIndex		= 0;
@@ -966,9 +963,9 @@ void CPackageView::RenameImage()
 	CWADItem *pItem = NULL;
 	CWallyDoc *pWallyDoc = NULL;
 	
-	//m_lbImages.GetSelItems (1, &iIndex);
-	//pItem = (CWADItem *)(m_lbImages.GetItemData (iIndex));
-	pItem = m_tcImages.GetSelectedImage();
+	m_lbImages.GetSelItems (1, &iIndex);
+	pItem = (CWADItem *)(m_lbImages.GetItemData (iIndex));
+	//pItem = m_tcImages.GetSelectedImage();
 	strName = pItem->GetName();
 
 	dlgRename.SetMaxLength( 15 );
@@ -1021,8 +1018,8 @@ void CPackageView::RenameImage()
 
 void CPackageView::OnUpdateEditRename(CCmdUI* pCmdUI) 
 {
-	//int iSelCount = m_lbImages.GetSelCount();
-	int iSelCount = m_tcImages.GetSelectedCount();
+	int iSelCount = m_lbImages.GetSelCount();
+	//int iSelCount = m_tcImages.GetSelectedCount();
 	pCmdUI->Enable (iSelCount == 1);
 }
 
@@ -1076,7 +1073,7 @@ void CPackageView::OnPackageOpen()
 	OpenSelectedImages();
 }
 
-#if 0
+#if 1
 void CPackageView::OpenSelectedImages(BOOL bCaretOnly /* = FALSE */)
 {
 	int iSelCount = m_lbImages.GetSelCount();
@@ -3916,7 +3913,7 @@ BOOL CPackageView::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 	return CFormView::OnSetCursor(pWnd, nHitTest, message);
 }
 
-void CPackageView::OnPushAnimate() 
+void CPackageView::OnPushAnimate()
 {	
 	m_lbImages.SetFocus();
 	if (m_pBrowseView)

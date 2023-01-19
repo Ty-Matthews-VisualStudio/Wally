@@ -21,7 +21,7 @@
 #define PFORMVIEW_LB_OFFSET_LEFT		10
 #define PFORMVIEW_LB_OFFSET_RIGHT		10
 #define PFORMVIEW_LB_OFFSET_TOP			28
-#define PFORMVIEW_LB_OFFSET_BOTTOM		100
+#define PFORMVIEW_LB_OFFSET_BOTTOM		110
 
 #define PFORMVIEW_ED_OFFSET_LEFT		60
 
@@ -77,7 +77,7 @@ public:
 	enum { IDD = IDD_WADPAK_VIEW_DLG };
 	CSliderCtrl	m_slThumbnailSize;
 	CStatic	m_stThumbnailSize;
-	CPackageTreeControl	m_tcImages;
+	//CPackageTreeControl	m_tcImages;
 	CButton	m_btnAnimate;
 	CButton	m_btnRandom;
 	CButton	m_btnBrowseMode;
@@ -93,6 +93,7 @@ public:
 // Members
 private:
 	bool m_bFirstTime;
+	bool m_bInitialUpdate;
 	CPackagePreviewWnd m_wndPreview;
 	int m_iMipNumber;
 	CString m_strStatusText;
@@ -171,7 +172,9 @@ public:
 	}
 	CPackageTreeControl *GetTreeCtrl()
 	{
-		return &m_tcImages;
+		ASSERT(FALSE);
+		return NULL;
+		//return &m_tcImages;
 	}
 
 	int GetReMipFlag ()

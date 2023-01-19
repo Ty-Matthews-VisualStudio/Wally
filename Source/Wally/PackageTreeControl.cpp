@@ -1380,6 +1380,7 @@ void CPackageTreeControl::OnInitialUpdate()
 {
 	InitializeImageList();
 	
+#if 0
 	// First add the root (which is always there)
 	CString strCategory("");
 	strCategory = "All Images";
@@ -1464,13 +1465,14 @@ void CPackageTreeControl::OnInitialUpdate()
 
 	m_htTransparentFloors = InsertItem( &tvInsert );
 	pTransparentFloors->SetTreeItem( m_htTransparentFloors );
+#endif
 	
 }
 
 void CPackageTreeControl::InitializeImageList()
 {
 	m_bImageListInitialized = TRUE;
-
+#if 0
 	SetImageList (NULL, 0);
 
 	m_ImageList.Create( GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ), ILC_COLOR24, 50, 50 );
@@ -1490,10 +1492,12 @@ void CPackageTreeControl::InitializeImageList()
 	DestroyIcon (hIcon);
 
 	SetImageList (&m_ImageList, LVSIL_NORMAL);
+#endif
 }
 
 void CPackageTreeControl::AddToAllImages( CWADItem *pItem )
 {
+#if 0
 	TV_INSERTSTRUCT tvInsert;
 	CPackageTreeEntryBase *pBase = NULL;
 	CPackageTreeEntryCategory *pCategory = NULL;
@@ -1600,6 +1604,7 @@ void CPackageTreeControl::AddToAllImages( CWADItem *pItem )
 			pItem->AddPackageEntry( pImage );
 		}
 	}
+#endif
 }
 
 BOOL CPackageTreeControl::PreTranslateMessage(MSG* pMsg) 

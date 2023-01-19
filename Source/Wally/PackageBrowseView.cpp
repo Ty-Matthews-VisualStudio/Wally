@@ -253,7 +253,8 @@ void CPackageBrowseView::DrawTileMode(CDC* pDC)
 			
 	SetScrollInfo (SB_VERT, &initScroll, FALSE);
 	
-	CPackageTreeControl *pTreeControl = GetPackageTreeCtrl();
+	//CPackageTreeControl *pTreeControl = GetPackageTreeCtrl();
+	CPackageListBox *pListBox = GetPackageListBox();
 
 	BOOL bEraseBGround = TRUE;
 
@@ -266,25 +267,30 @@ void CPackageBrowseView::DrawTileMode(CDC* pDC)
 
 	CPackageDoc *pDoc = GetDocument();
 	
-	if( pTreeControl )
-	{		
-		CWADItem *pWADItem = NULL;
-		pWADItem = pTreeControl->GetSelectedImage();
+	if (pListBox)
+	{
+		if (pListBox->GetCount() > 0)
+		{
+			int iCurSel = pListBox->GetCaretIndex();
 
-			if( pWADItem )
+			CWADItem* pWADItem = NULL;
+			pWADItem = (CWADItem*)(pListBox->GetItemData(iCurSel));
+			//pWADItem = pTreeControl->GetSelectedImage();
+
+			if (pWADItem)
 			{
 				// Draw the image
 				int iWidth = 0;
 				int iHeight = 0;
-				
-				if( (pWADItem != m_pPreviousTiledItem) || (m_bForceDIBRebuild))
+
+				if ((pWADItem != m_pPreviousTiledItem) || (m_bForceDIBRebuild))
 				{
 					m_bRandomMode = FALSE;
 					m_bAnimateMode = FALSE;
 
 					// Rebuild the DIB
 					m_pPreviousTiledItem = pWADItem;
-					
+
 					// Delete the old ones
 					for (j = 0; j < PACKAGE_BROWSE_NUM_ANIMATION_DIBS; j++)
 					{
@@ -314,11 +320,11 @@ void CPackageBrowseView::DrawTileMode(CDC* pDC)
 					///////////////////
 
 					if ((strName.GetAt(0) == '-') && (m_bAllowRandomMode))
-					{						
-						ASSERT (PACKAGE_BROWSE_NUM_RANDOM_DIBS <= 10);		// This has to be <= 10; more than 10 would screw up the routine for finding other random tiles
-						CWADItem *pWADTemp = NULL;
+					{
+						ASSERT(PACKAGE_BROWSE_NUM_RANDOM_DIBS <= 10);		// This has to be <= 10; more than 10 would screw up the routine for finding other random tiles
+						CWADItem* pWADTemp = NULL;
 						strMatch = strName;
-						
+
 						for (j = 0; j < PACKAGE_BROWSE_NUM_RANDOM_DIBS; j++)
 						{
 							// Only look at those images other than ourself!
@@ -328,15 +334,15 @@ void CPackageBrowseView::DrawTileMode(CDC* pDC)
 								strMatch.SetAt(1, szDigits[j]);
 
 								// See if there's a match
-								pWADTemp = pDoc->FindNameInList (strMatch, FALSE);
-								
+								pWADTemp = pDoc->FindNameInList(strMatch, FALSE);
+
 								if (pWADTemp)
 								{
 									// Make sure the width/height are identical
-									if ( (pWADTemp->GetWidth() == pWADItem->GetWidth()) && (pWADTemp->GetHeight() == pWADItem->GetHeight()))
+									if ((pWADTemp->GetWidth() == pWADItem->GetWidth()) && (pWADTemp->GetHeight() == pWADItem->GetHeight()))
 									{
 										m_bRandomMode = TRUE;
-	
+
 										m_pdsTiledDIBs[m_iNumDIBTiles].pWADItem = pWADTemp;
 										m_pdsTiledDIBs[m_iNumDIBTiles].pdsImage = new CDibSection;
 										m_iNumDIBTiles++;
@@ -354,10 +360,10 @@ void CPackageBrowseView::DrawTileMode(CDC* pDC)
 
 						if (strName.GetAt(0) == '+')
 						{
-							ASSERT (PACKAGE_BROWSE_NUM_RANDOM_DIBS <= 10);		// This has to be <= 10; more than 10 would screw up the routine for finding other random tiles
-							CWADItem *pWADTemp = NULL;
+							ASSERT(PACKAGE_BROWSE_NUM_RANDOM_DIBS <= 10);		// This has to be <= 10; more than 10 would screw up the routine for finding other random tiles
+							CWADItem* pWADTemp = NULL;
 							strMatch = strName;
-							
+
 							for (j = 0; j < PACKAGE_BROWSE_NUM_RANDOM_DIBS; j++)
 							{
 								// Only look at those images other than ourself!
@@ -367,12 +373,12 @@ void CPackageBrowseView::DrawTileMode(CDC* pDC)
 									strMatch.SetAt(1, szDigits[j]);
 
 									// See if there's a match
-									pWADTemp = pDoc->FindNameInList (strMatch, FALSE);
-									
+									pWADTemp = pDoc->FindNameInList(strMatch, FALSE);
+
 									if (pWADTemp)
 									{
 										// Make sure the width/height are identical
-										if ( (pWADTemp->GetWidth() == pWADItem->GetWidth()) && (pWADTemp->GetHeight() == pWADItem->GetHeight()))
+										if ((pWADTemp->GetWidth() == pWADItem->GetWidth()) && (pWADTemp->GetHeight() == pWADItem->GetHeight()))
 										{
 											m_bAnimateMode = TRUE;
 											m_iAnimateTimerValue = PB_TIMER_ANIMATE_NORMAL;
@@ -393,11 +399,11 @@ void CPackageBrowseView::DrawTileMode(CDC* pDC)
 						{
 							bLiquid = true;
 
-							CWADItem *pWADTemp = NULL;
+							CWADItem* pWADTemp = NULL;
 
 							// just find a copy of ourself
-							pWADTemp = pDoc->FindNameInList (strName, FALSE);
-							
+							pWADTemp = pDoc->FindNameInList(strName, FALSE);
+
 							//////////////////////////////////////////////////////////
 							// Neal - liquids just reuse first frame over-and-over //
 							////////////////////////////////////////////////////////
@@ -413,36 +419,36 @@ void CPackageBrowseView::DrawTileMode(CDC* pDC)
 							// Neal - for a liquid, we will always play frame[0]
 						}
 					}
-					
+
 					iWidth = pWADItem->GetWidth();
 					iHeight = pWADItem->GetHeight();
-					
+
 					int iBitDepth = 0;
 
 					int xOffset = 0;
 					int yOffset = 0;
-					
-					BYTE *pbyData = NULL;
-					BYTE *pbyPalette = NULL;
-					
+
+					BYTE* pbyData = NULL;
+					BYTE* pbyPalette = NULL;
+
 					iBitDepth = 8;
 					if ((iWidth > 0) && (iHeight > 0))		// Neal - fix Quake1?
 						pbyData = pWADItem->GetBits(0);
 
 					pbyPalette = pWADItem->GetPalette();
 
-					#define		PACKAGE_BROWSE_TILE_MULTIPLIER		4
-					
+#define		PACKAGE_BROWSE_TILE_MULTIPLIER		4
+
 					if (pbyData && pbyPalette)
 					{
-						if ( ((iWidth < 64) || (iHeight < 64)) && (m_iNumDIBTiles == 1))
-						{					
+						if (((iWidth < 64) || (iHeight < 64)) && (m_iNumDIBTiles == 1))
+						{
 							// Let's make a bigger source image so it doesn't take so long to draw
 							int iNewWidth = iWidth * PACKAGE_BROWSE_TILE_MULTIPLIER;
 							int iNewHeight = iHeight * PACKAGE_BROWSE_TILE_MULTIPLIER;
 							int iNewSize = iNewWidth * iNewHeight;
 
-							m_pdsTiledDIBs[0].pdsImage->Init( iNewWidth, iNewHeight, 8, pbyPalette, TRUE);
+							m_pdsTiledDIBs[0].pdsImage->Init(iNewWidth, iNewHeight, 8, pbyPalette, TRUE);
 
 							int w = 0;
 							int h = 0;
@@ -450,73 +456,73 @@ void CPackageBrowseView::DrawTileMode(CDC* pDC)
 							{
 								for (w = 0; w < PACKAGE_BROWSE_TILE_MULTIPLIER; w++)
 								{
-									m_pdsTiledDIBs[0].pdsImage->AddDIB (w * iWidth, h * iHeight, iWidth, iHeight, pbyData);
-								}						
+									m_pdsTiledDIBs[0].pdsImage->AddDIB(w * iWidth, h * iHeight, iWidth, iHeight, pbyData);
+								}
 							}
-							
+
 							iWidth = iNewWidth;
 							iHeight = iNewHeight;
 						}
 						else
-						{	
+						{
 							for (j = 0; j < m_iNumDIBTiles; j++)
 							{
 								pbyData = m_pdsTiledDIBs[j].pWADItem->GetBits(0);
 								pbyPalette = m_pdsTiledDIBs[j].pWADItem->GetPalette();
 
-								m_pdsTiledDIBs[j].pdsImage->Init( iWidth, iHeight, 8, pbyPalette, TRUE);
+								m_pdsTiledDIBs[j].pdsImage->Init(iWidth, iHeight, 8, pbyPalette, TRUE);
 
 								// Neal - animated liquid texture?
 								//if (strName.GetAt(0) == '!')
 								if (bLiquid)
 								{
-									m_pdsTiledDIBs[j].pdsImage->SetRawLiquidBits( pbyData, m_iCurrentAnimation);
+									m_pdsTiledDIBs[j].pdsImage->SetRawLiquidBits(pbyData, m_iCurrentAnimation);
 									break;
 								}
 								else
 								{
-									m_pdsTiledDIBs[j].pdsImage->SetRawBits( pbyData);
+									m_pdsTiledDIBs[j].pdsImage->SetRawBits(pbyData);
 								}
 							}
 						}
 					}			// if (pbyData && pbyPalette)
 					else
 					{
-						if ((iWidth < 64) || (iHeight < 64))				
-						{					
+						if ((iWidth < 64) || (iHeight < 64))
+						{
 							iWidth *= PACKAGE_BROWSE_TILE_MULTIPLIER;
 							iHeight *= PACKAGE_BROWSE_TILE_MULTIPLIER;
 						}
 
 						BYTE byPalette[768];
-						memset (byPalette, 0, 768);
+						memset(byPalette, 0, 768);
 
 						// Neal - fix Quake1?
 						if ((iWidth > 0) && (iHeight > 0))
 						{
-							m_pdsTiledDIBs[0].pdsImage->Init( iWidth, iHeight, 8, byPalette, TRUE);
-							m_pdsTiledDIBs[0].pdsImage->ClearBits (0);
+							m_pdsTiledDIBs[0].pdsImage->Init(iWidth, iHeight, 8, byPalette, TRUE);
+							m_pdsTiledDIBs[0].pdsImage->ClearBits(0);
 						}
 					}
 				}				// if (iCurSel != m_iPreviousTiledItem)
 
 				if (m_bRandomMode)
 				{
-					InitRandom( (unsigned)time( NULL ));
+					InitRandom((unsigned)time(NULL));
 				}
 
 				if ((m_bAnimateMode) && (m_iAnimateTimer == 0))
 				{
-					m_iAnimateTimer = SetTimer( TIMER_PB_ID_ANIMATE, m_iAnimateTimerValue, NULL);
+					m_iAnimateTimer = SetTimer(TIMER_PB_ID_ANIMATE, m_iAnimateTimerValue, NULL);
 				}
 
 				if ((!m_bAnimateMode) && (m_iAnimateTimer))
 				{
-					KillTimer (TIMER_PB_ID_ANIMATE);
+					KillTimer(TIMER_PB_ID_ANIMATE);
 					m_iAnimateTimer = 0;
 					m_iCurrentAnimation = 0;
 				}
-				
+
 				int iDibNum = 0;
 
 				iWidth = m_pdsTiledDIBs[0].pdsImage->GetImageWidth();
@@ -533,7 +539,7 @@ void CPackageBrowseView::DrawTileMode(CDC* pDC)
 						for (int w = 0; w < iNumAcross; w++)
 						{
 							if (m_bRandomMode)
-							{							
+							{
 								iDibNum = (int)(Random() * m_iNumDIBTiles);
 							}
 
@@ -546,19 +552,20 @@ void CPackageBrowseView::DrawTileMode(CDC* pDC)
 								else
 								{
 									// Sanity check
-									m_iCurrentAnimation = min (m_iCurrentAnimation, (m_iNumDIBTiles - 1));
-									m_iCurrentAnimation = max (m_iCurrentAnimation, 0);
+									m_iCurrentAnimation = min(m_iCurrentAnimation, (m_iNumDIBTiles - 1));
+									m_iCurrentAnimation = max(m_iCurrentAnimation, 0);
 
 									iDibNum = m_iCurrentAnimation;
 								}
-							}						
-							m_pdsTiledDIBs[iDibNum].pdsImage->Show (&MemDC, w * (iWidth * m_iZoomLevel), h * (iHeight * m_iZoomLevel), m_iZoomLevel);
+							}
+							m_pdsTiledDIBs[iDibNum].pdsImage->Show(&MemDC, w * (iWidth * m_iZoomLevel), h * (iHeight * m_iZoomLevel), m_iZoomLevel);
 						}
 					}
 					bEraseBGround = FALSE;
 				}
 			}			// if (pWADItem)
 		}				// if (pListBox->GetCount() > 0)
+	}					// if (pListBox)
 
 	if (bEraseBGround)
 	{
@@ -585,10 +592,15 @@ void CPackageBrowseView::DrawBrowseMode(CDC* pDC)
 	CPackageDoc* pDoc = GetDocument();	
 	
 	CPackageView *pFormView = pDoc->GetFormView();
+	int iNumItems = 0;
+#if 0
 	CPackageTreeControl *pTreeCtrl = pFormView->GetTreeCtrl();
-
-	int iNumItems = pTreeCtrl->GetVisibleCount();
-
+	iNumItems = pTreeCtrl->GetVisibleCount();
+#else
+	CPackageListBox* pListBox = pFormView->GetListBox();
+	iNumItems = pListBox->GetCount();
+#endif
+	
 	CWADItem *pWADItem = NULL;
 	int iOldWidth = 0;
 	int iOldHeight = 0;
@@ -713,21 +725,20 @@ void CPackageBrowseView::DrawBrowseMode(CDC* pDC)
 			// OffsetPosition is the position of the texture we're currently at
 			iOffsetPosition = (iRow * m_iHorzButtons) + (j * m_iHorzButtons) + k;
 
-			if( iOffsetPosition < pTreeCtrl->GetVisibleCount() )
+			if (iOffsetPosition < pListBox->GetCount())
 			{
-				pWADItem = (CWADItem *)( pTreeCtrl->GetImageAtPosition( iOffsetPosition ));
+				pWADItem = (CWADItem*)(pListBox->GetItemData(iOffsetPosition));
 
 				if (pWADItem)
 				{
 					if (pWADItem->IsValidMip())
 					{
-						pWADItem->SetListBoxIndex (iOffsetPosition);
-						//DrawItem( pWADItem, (pListBox->GetSel(iOffsetPosition) > 0) ? TRUE : FALSE, iOffsetPosition == m_iFocusItem ? TRUE : FALSE, &m_dcBackroundDraw, j, k);
-						DrawItem( pWADItem, pWADItem->IsSelected(), iOffsetPosition == m_iFocusItem ? TRUE : FALSE, &m_dcBackroundDraw, j, k);
+						pWADItem->SetListBoxIndex(iOffsetPosition);
+						DrawItem(pWADItem, (pListBox->GetSel(iOffsetPosition) > 0) ? TRUE : FALSE, iOffsetPosition == m_iFocusItem ? TRUE : FALSE, &m_dcBackroundDraw, j, k);
 					}
 				}
-			}			
-		}			
+			}
+		}
 	}
 	
 	//int rcY = iRow * PACKAGE_BROWSE_BUTTON_HEIGHT;
@@ -1092,11 +1103,11 @@ void CPackageBrowseView::CalcMaxButtons()
 	m_bCalcSizes = TRUE;
 
 	CPackageView *pFormView = pDoc->GetFormView();
-	CPackageTreeControl *pTreeCtrl = pFormView->GetTreeCtrl();
+	//CPackageTreeControl *pTreeCtrl = pFormView->GetTreeCtrl();
 	CPackageListBox *pListBox = pFormView->GetListBox();
 
 	int iNumItems = 0;
-
+#if 0
 	if( ::IsWindow( pTreeCtrl->m_hWnd ) )
 	{
 		iNumItems = pTreeCtrl->GetVisibleCount();
@@ -1105,6 +1116,9 @@ void CPackageBrowseView::CalcMaxButtons()
 	{
 		iNumItems = pDoc->GetNumImages();
 	}
+#else
+	iNumItems = pDoc->GetNumImages();
+#endif
 
 	CRect crView;
 	GetClientRect (&crView);
