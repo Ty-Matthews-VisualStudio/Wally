@@ -445,6 +445,7 @@ public:
 	CWallyApp();
 	void LoadPalette (int iGameType);
 	void OpenNonWalFile (LPCTSTR szFileName);
+	static CWallyApp* GetApp();
 	
 	CMultiDocTemplate* WallyDocTemplate;
 	CMultiDocTemplate* BrowseDocTemplate;

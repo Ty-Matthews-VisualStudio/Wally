@@ -379,7 +379,7 @@ void CHalfLifePaletteDlg::OnButtonLoad()
 			if (dlgName.DoModal() == IDOK)
 			{
 				strExtension      = GetExtension( dlgName.GetName());
-				strPalettePath    = m_strPath + dlgName.GetName() + (strExtension.IsEmpty() ? strSourceExtension : "");
+				strPalettePath    = m_strPath + dlgName.GetName() + (strExtension.IsEmpty() ? strSourceExtension.GetBuffer() : "");
 				strSourceFileName = GetRawFileNameWExt (strPalettePath);
 				err = fopen_s(&fp, strPalettePath, "r");
 			}

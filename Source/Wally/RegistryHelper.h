@@ -185,7 +185,9 @@ public:
 	void AddItem (CString *pCString, LPCTSTR szDefaultValue, LPCTSTR szValueName, LPCTSTR szSubKey, BOOL bEncrypt = FALSE, DWORD dwFlags = 0);
 #endif		// #ifdef __AFX_H__
 	void AddItemToList (CRegistryItem *pItem);
+
 	void SetAll (CRegistryItem *pItem);
+
 	BOOL ReadRegistry(DWORD dwSAMDesired = 0);
 	BOOL WriteRegistry();
 };

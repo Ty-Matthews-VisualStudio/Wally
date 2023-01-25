@@ -362,9 +362,17 @@ BOOL LoadDefaultEditingPalette( LPBYTE pbyPalette, CWallyPalette *pPalette, int 
 	}
 	else
 	{
-		// ToDo:  should we load up a palette from a built-in resource (aka hard-coded) or 
-		// should we just let this pass through to FALSE so an optimized palette will be used?
-		// Do we care now... because we'll have a better color picker in the future?
+		CMemBuffer mbPalette;
+		LPBYTE pData = mbPalette.InitFromResource(IDR_LMP_BLEND);
+		if (pbyPalette)
+		{
+			CopyMemory(pbyPalette, pData, iNumColors * 3);
+		}
+
+		if (pPalette)
+		{
+			pPalette->SetPalette(pData, iNumColors);
+		}		
 	}
 	
 	return FALSE;	
@@ -413,6 +421,11 @@ CWallyApp::CWallyApp()
 
 // The one and only
 CWallyApp theApp;
+
+/*static */CWallyApp* CWallyApp::GetApp()
+{
+	return &theApp;
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // CWallyApp initialization
@@ -3388,7 +3401,24 @@ void CWallyApp::OnWizardTest()
 }
 #endif
 
-void CWallyApp::OnWizardTest() 
+void CWallyApp::OnWizardTest()
+{
+	boost::property_tree::ptree parser;
+	const string str = "{ \"user\": { \"Name\": \"John\", \"Balance\": \"2000.53\" } }";
+	stringstream ss(str);
+	boost::property_tree::json_parser::read_json(ss, parser);
+
+	//get "user"
+	boost::property_tree::ptree user_array = parser.get_child("user");
+
+	//get "Name"
+	const string name = user_array.get<string>("Name");
+	//get "Balance"
+	const string balance = user_array.get<string>("Balance");	
+}
+
+#if 0
+void CWallyApp::OnWizardTest()
 {
 #ifdef _DEBUG			// This code is just some test code to do batch resizing
 	CImageHelper ihHelper;
@@ -3697,3 +3727,4 @@ void CWallyApp::OnWizardTest()
 #endif
 #endif
 }
+#endif

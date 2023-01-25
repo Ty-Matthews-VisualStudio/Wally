@@ -88,8 +88,8 @@ public:
 			ASSERT( pDoc != NULL);
 			m_pDoc = pDoc;
 
-			ASSERT( (iWidth > 0) && (iWidth < MAX_MIP_SIZE));
-			ASSERT( (iHeight > 0) && (iHeight < MAX_MIP_SIZE));
+			ASSERT( (iWidth > 0) && (iWidth <= MAX_MIP_SIZE));
+			ASSERT( (iHeight > 0) && (iHeight <= MAX_MIP_SIZE));
 			ASSERT( (iNumBits == 8) || (iNumBits == 24) || (iNumBits == 32));
 
 			SetNumBits( iNumBits);

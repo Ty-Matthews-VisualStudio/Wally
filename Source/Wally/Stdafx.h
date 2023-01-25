@@ -36,6 +36,7 @@
 #include <math.h>
 #include <time.h>
 #include <process.h>
+#include <boost/property_tree/json_parser.hpp>
 
 #include <list>
 #include <map>

@@ -5,6 +5,7 @@
 #include "StdAfx.h"
 #include "MemBuffer.h"
 #include "MiscFunctions.h"
+#include "Wally.h"
 
 using namespace std;
 
@@ -1042,4 +1043,32 @@ CString CMemBuffer::GetAllTagValues( LPCTSTR szTag, LPEnumSequencesCallBack lpCa
 		szCompare = NULL;
 	}
 	return strReturn;
+}
+
+LPBYTE CMemBuffer::InitFromResource(WORD ID)
+{
+	HMODULE hMod = ::GetModuleHandle(NULL);
+	HRSRC myResource = ::FindResource(hMod, MAKEINTRESOURCE(ID), MAKEINTRESOURCE(RT_RCDATA));
+	DWORD dwError = 0;
+	unsigned int myResourceSize = 0;
+	HGLOBAL myResourceData = NULL;
+
+	if (myResource)
+	{
+		int myResourceSize = ::SizeofResource(NULL, myResource);
+		if (myResourceSize > 0)
+		{
+			myResourceData = ::LoadResource(NULL, myResource);
+			if (myResourceData)
+			{
+				GetBuffer(myResourceSize);
+				memcpy(GetBuffer(myResourceSize), ::LockResource(myResourceData), myResourceSize);
+			}
+		}
+	}
+	else
+	{
+		dwError = ::GetLastError();
+	}
+	return GetBuffer();
 }

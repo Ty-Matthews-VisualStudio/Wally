@@ -669,7 +669,7 @@ void CPakDoc::ImportFiles()
 				strOffsetDirectory = bAddNewDirectories ? strPakDirectory : "" + TrimFromLeft (strFilePath, strBaseOffsetDirectory);
 				
 				if (!pPakDirectory->AddFile ( strFileName, 
-						(g_bPakImportRetainStructure ? strOffsetDirectory : ""),
+						(g_bPakImportRetainStructure ? strOffsetDirectory.GetBuffer() : ""),
 						(g_bPakImportReplaceExistingItems ? PAK_ADD_FLAG_REPLACE : 0)							
 					))
 				{						

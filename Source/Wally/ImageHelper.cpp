@@ -1587,7 +1587,6 @@ void CImageHelper::LoadImage(LPCTSTR szFileName, int iFlags /* = 0*/)
 		{
 			m_strFileName = szFileName;
 			SetErrorCode (IH_FILE_NOT_FOUND);
-			ASSERT(FALSE);
 			return;
 		}
 		fclose (fp);

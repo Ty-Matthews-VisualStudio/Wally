@@ -36,9 +36,9 @@ typedef void (EnumSequencesCallBack) ( DWORD, LPVOID );
 typedef EnumSequencesCallBack *LPEnumSequencesCallBack;
 
 
-class CMemBuffer  
+class CMemBuffer
 {
-// Private members
+	// Private members
 private:
 	LPBYTE m_pbyBuffer;
 	DWORD m_dwDataSize;			// What's being used
@@ -46,33 +46,34 @@ private:
 	DWORD m_dwMinDataSize;		// Minimum data size
 	CString m_strName;
 
-// Private methods
+	// Private methods
 private:
-	void Init();	
+	void Init();
 	LPBYTE AllocateBuffer(DWORD dwDataSize, DWORD dwFlags);
 
-// Public members
+	// Public members
 public:
-	CMemBuffer( LPCTSTR szName = NULL);
+	CMemBuffer(LPCTSTR szName = NULL);
 	CMemBuffer(DWORD dwDataSize, DWORD dwFlags = MEMBUFFER_FLAG_ZEROMEMORY);
 	virtual ~CMemBuffer();
-	
+
 	BOOL Release();
 	LPBYTE GetBuffer();
-	LPBYTE GetBuffer( DWORD dwDataSize, DWORD dwFlags = MEMBUFFER_FLAG_ZEROMEMORY);
-	LPBYTE InitFromFile( FILE *fp, DWORD dwFlags = 0);
-	LPBYTE InitFromFile( LPCTSTR szFileName, DWORD dwFlags = 0);
-	void WriteToFile( LPCTSTR szFileName);
-	void ReplaceString( LPCTSTR szReplace, LPCTSTR szNewString, DWORD dwFlags = 0);
-	void InsertString( LPCTSTR szMatch, LPCTSTR szNewString, DWORD dwFlags = MEMBUFFER_FLAG_INSERT_AFTER);
-	void InsertBuffer( LPCTSTR szMatch, CMemBuffer *pmbInsertBlock, DWORD dwFlags = MEMBUFFER_FLAG_INSERT_AFTER);
-	void MoveStringBlock( LPCTSTR szBegin, LPCTSTR szEnd, CMemBuffer *pmbNewBlock, DWORD dwFlags = 0);
-	void CopyBuffer( CMemBuffer *pmbCopy);
-	BOOL AdjustBufferAtPosition( DWORD dwBeginPosition, DWORD dwRemoveLength, DWORD dwInsertLength);
-	CString GetTagValue( LPCTSTR szTag, DWORD dwFlags = 0);
-	CString GetAllTagValues( LPCTSTR szTag, LPEnumSequencesCallBack lpCallBack, LPVOID lpAppDefined, DWORD dwFlags = 0);
-	
-	void SetBuffer( LPBYTE pbyBuffer)
+	LPBYTE GetBuffer(DWORD dwDataSize, DWORD dwFlags = MEMBUFFER_FLAG_ZEROMEMORY);
+	LPBYTE InitFromFile(FILE* fp, DWORD dwFlags = 0);
+	LPBYTE InitFromFile(LPCTSTR szFileName, DWORD dwFlags = 0);
+	LPBYTE InitFromResource(WORD ID);
+	void WriteToFile(LPCTSTR szFileName);
+	void ReplaceString(LPCTSTR szReplace, LPCTSTR szNewString, DWORD dwFlags = 0);
+	void InsertString(LPCTSTR szMatch, LPCTSTR szNewString, DWORD dwFlags = MEMBUFFER_FLAG_INSERT_AFTER);
+	void InsertBuffer(LPCTSTR szMatch, CMemBuffer* pmbInsertBlock, DWORD dwFlags = MEMBUFFER_FLAG_INSERT_AFTER);
+	void MoveStringBlock(LPCTSTR szBegin, LPCTSTR szEnd, CMemBuffer* pmbNewBlock, DWORD dwFlags = 0);
+	void CopyBuffer(CMemBuffer* pmbCopy);
+	BOOL AdjustBufferAtPosition(DWORD dwBeginPosition, DWORD dwRemoveLength, DWORD dwInsertLength);
+	CString GetTagValue(LPCTSTR szTag, DWORD dwFlags = 0);
+	CString GetAllTagValues(LPCTSTR szTag, LPEnumSequencesCallBack lpCallBack, LPVOID lpAppDefined, DWORD dwFlags = 0);	
+
+	void SetBuffer(LPBYTE pbyBuffer)
 	{
 		m_pbyBuffer = pbyBuffer;
 	}
@@ -80,7 +81,7 @@ public:
 	{
 		return m_dwDataSize;
 	}
-	void SetDataSize( DWORD dwDataSize)
+	void SetDataSize(DWORD dwDataSize)
 	{
 		m_dwDataSize = dwDataSize;
 	}
@@ -88,7 +89,7 @@ public:
 	{
 		return m_dwTrueDataSize;
 	}
-	void SetTrueDataSize( DWORD dwTrueDataSize)
+	void SetTrueDataSize(DWORD dwTrueDataSize)
 	{
 		m_dwTrueDataSize = dwTrueDataSize;
 	}
@@ -96,14 +97,14 @@ public:
 	{
 		return m_dwMinDataSize;
 	}
-	void SetMinDataSize( DWORD dwMinDataSize)
+	void SetMinDataSize(DWORD dwMinDataSize)
 	{
 		m_dwMinDataSize = dwMinDataSize;
 	}
-	operator BYTE *()
+	operator BYTE* ()
 	{
 		return m_pbyBuffer;
-	}	
+	}
 };
 
 #endif // #ifndef _MEMBUFFER_H_
