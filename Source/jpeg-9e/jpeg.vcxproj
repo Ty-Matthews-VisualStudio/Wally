@@ -186,11 +186,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <IntDir>$(TEMP)\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <IntDir>$(TEMP)\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
@@ -226,6 +226,13 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <OmitFramePointers>true</OmitFramePointers>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ModuleOutputFile>$(IntDir)</ModuleOutputFile>
+      <ModuleDependenciesFile>$(IntDir)</ModuleDependenciesFile>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
+      <XMLDocumentationFileName>$(IntDir)</XMLDocumentationFileName>
+      <SourceDependenciesFile>$(IntDir)</SourceDependenciesFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -245,6 +252,13 @@
       <OmitFramePointers>true</OmitFramePointers>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ModuleOutputFile>$(IntDir)</ModuleOutputFile>
+      <ModuleDependenciesFile>$(IntDir)</ModuleDependenciesFile>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
+      <XMLDocumentationFileName>$(IntDir)</XMLDocumentationFileName>
+      <SourceDependenciesFile>$(IntDir)</SourceDependenciesFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

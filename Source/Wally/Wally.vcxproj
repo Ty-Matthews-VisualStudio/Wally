@@ -74,11 +74,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <IntDir>$(TEMP)\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <IntDir>$(TEMP)\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -89,6 +89,13 @@
       <AdditionalIncludeDirectories>$(SolutionDir)\lpng1639;$(SolutionDir)\jpeg-9e</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ModuleOutputFile>$(IntDir)</ModuleOutputFile>
+      <ModuleDependenciesFile>$(IntDir)</ModuleDependenciesFile>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
+      <XMLDocumentationFileName>$(IntDir)</XMLDocumentationFileName>
+      <SourceDependenciesFile>$(IntDir)</SourceDependenciesFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -109,6 +116,13 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <AdditionalIncludeDirectories>$(SolutionDir)\lpng1639;$(SolutionDir)\jpeg-9e</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ModuleOutputFile>$(IntDir)</ModuleOutputFile>
+      <ModuleDependenciesFile>$(IntDir)</ModuleDependenciesFile>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
+      <XMLDocumentationFileName>$(IntDir)</XMLDocumentationFileName>
+      <SourceDependenciesFile>$(IntDir)</SourceDependenciesFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -125,6 +139,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AssemblerListingLocation>$(TEMP)\$(TargetName)\$(IntDir)</AssemblerListingLocation>
+      <ModuleOutputFile>$(TEMP)\$(TargetName)\$(IntDir)</ModuleOutputFile>
+      <ModuleDependenciesFile>$(TEMP)\$(TargetName)\$(IntDir)</ModuleDependenciesFile>
+      <ObjectFileName>$(TEMP)\$(TargetName)\$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(TEMP)\$(TargetName)\$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
+      <XMLDocumentationFileName>$(TEMP)\$(TargetName)\$(IntDir)</XMLDocumentationFileName>
+      <SourceDependenciesFile>$(TEMP)\$(TargetName)\$(IntDir)</SourceDependenciesFile>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

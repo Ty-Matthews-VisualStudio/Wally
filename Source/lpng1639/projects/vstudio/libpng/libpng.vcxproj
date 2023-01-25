@@ -72,7 +72,7 @@
     </CustomBuildBeforeTargets>
     <TargetName>$(ProjectName)16</TargetName>
     <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <IntDir>$(TEMP)\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <LinkIncremental>false</LinkIncremental>
@@ -85,7 +85,7 @@
     </CustomBuildBeforeTargets>
     <TargetName>$(ProjectName)16</TargetName>
     <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <IntDir>$(TEMP)\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <LinkIncremental>false</LinkIncremental>
@@ -113,6 +113,13 @@
       <TreatWarningAsError>$(TreatWarningAsError)</TreatWarningAsError>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ModuleOutputFile>$(IntDir)</ModuleOutputFile>
+      <ModuleDependenciesFile>$(IntDir)</ModuleDependenciesFile>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
+      <XMLDocumentationFileName>$(IntDir)</XMLDocumentationFileName>
+      <SourceDependenciesFile>$(IntDir)</SourceDependenciesFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -171,6 +178,13 @@
       <AdditionalIncludeDirectories>$(ZLibSrcDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>$(TreatWarningAsError)</TreatWarningAsError>
       <Optimization>Full</Optimization>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <ModuleOutputFile>$(IntDir)</ModuleOutputFile>
+      <ModuleDependenciesFile>$(IntDir)</ModuleDependenciesFile>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
+      <XMLDocumentationFileName>$(IntDir)</XMLDocumentationFileName>
+      <SourceDependenciesFile>$(IntDir)</SourceDependenciesFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

@@ -123,9 +123,9 @@
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30128.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(TEMP)\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(TEMP)\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='ReleaseWithoutAsm|Win32'">x86\ZlibStat$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='ReleaseWithoutAsm|Win32'">x86\ZlibStat$(Configuration)\Tmp\</IntDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">x64\ZlibStat$(Configuration)\</OutDir>
@@ -180,10 +180,14 @@
       <PrecompiledHeaderOutputFile>$(IntDir)zlibstat.pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <ObjectFileName>$(IntDir)</ObjectFileName>
-      <ProgramDataBaseFileName>$(OutDir)</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <ModuleOutputFile>$(IntDir)</ModuleOutputFile>
+      <ModuleDependenciesFile>$(IntDir)</ModuleDependenciesFile>
+      <XMLDocumentationFileName>$(IntDir)</XMLDocumentationFileName>
+      <SourceDependenciesFile>$(IntDir)</SourceDependenciesFile>
     </ClCompile>
     <ResourceCompile>
       <Culture>0x040c</Culture>
@@ -208,9 +212,13 @@
       <PrecompiledHeaderOutputFile>$(IntDir)zlibstat.pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <ObjectFileName>$(IntDir)</ObjectFileName>
-      <ProgramDataBaseFileName>$(OutDir)</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
+      <ModuleOutputFile>$(IntDir)</ModuleOutputFile>
+      <ModuleDependenciesFile>$(IntDir)</ModuleDependenciesFile>
+      <XMLDocumentationFileName>$(IntDir)</XMLDocumentationFileName>
+      <SourceDependenciesFile>$(IntDir)</SourceDependenciesFile>
     </ClCompile>
     <ResourceCompile>
       <Culture>0x040c</Culture>
