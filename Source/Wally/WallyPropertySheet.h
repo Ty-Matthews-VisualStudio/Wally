@@ -27,7 +27,8 @@ public:
 	CWallyPropertyPage4 m_Page4;
 	CWallyPropertyPage5 m_Page5;
 	CWallyPropertyPage6 m_Page6;
-	CWallyPropertyPage7 m_Page7;
+	// 2023-01-24: Removed the property page for file associations, as this functionality no longer works with later versions of Windows
+	//CWallyPropertyPage7 m_Page7;
 
 // Operations
 public:

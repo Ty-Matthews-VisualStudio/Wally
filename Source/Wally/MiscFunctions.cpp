@@ -188,17 +188,6 @@ void StripNewLine (char *Source)
 }
 
 
-///////////////////////////////////////////////////////////////////////
-// Name:		CCommandLineItem Constructor
-// Action:		Copy the specified string into the FileName member 
-//				variable, and set the linked list p_Next pointer to NULL
-///////////////////////////////////////////////////////////////////////
-CCommandLineItem::CCommandLineItem (char *p_FileName)
-{
-	strcpy_s(FileName, sizeof(FileName), p_FileName);
-	p_Next = NULL;
-}
-
 
 ///////////////////////////////////////////////////////////////////////
 // Name:		CCommandLineItem Constructor
@@ -207,7 +196,6 @@ CCommandLineItem::CCommandLineItem (char *p_FileName)
 ///////////////////////////////////////////////////////////////////////
 CParseCommandLine::CParseCommandLine ()
 {
-	p_First = p_Read = p_Write = NULL;
 }
 
 void CParseCommandLine::Parse (char *p_CommandLine)
@@ -234,36 +222,7 @@ void CParseCommandLine::Parse (char *p_CommandLine)
 
 void CParseCommandLine::AddItem (char *NewItem)
 {
-	if (p_First == NULL)
-		p_First = p_Read = p_Write = new CCommandLineItem(NewItem);
-	else
-	{
-		p_Write->p_Next = new CCommandLineItem(NewItem);
-		p_Write = p_Write->p_Next;
-	}
-}
-
-bool CParseCommandLine::IsEmpty ()
-{
-	return (p_First == NULL);
-}
-
-void CParseCommandLine::GetFirst()
-{
-	p_Read = p_First;		
-}
-
-char* CParseCommandLine::GetNext ()
-{		
-	if (IsEmpty() || (p_Read == NULL))
-		return NULL;		
-	p_Temp = p_Read;
-	p_Read = p_Read->p_Next;
-		
-	if (p_Temp != NULL)
-		return &p_Temp->FileName[0];		
-	else
-		return NULL;
+	m_FileNames.push_back(CString(NewItem));
 }
 
 

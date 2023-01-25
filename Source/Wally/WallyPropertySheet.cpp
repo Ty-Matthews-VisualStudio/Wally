@@ -44,7 +44,9 @@ CWallyPropertySheet::CWallyPropertySheet(CWnd* pWndParent)
 	AddPage( &m_Page4);
 	AddPage( &m_Page5);
 	AddPage( &m_Page6);
-	AddPage( &m_Page7);
+
+	// 2023-01-24: Removing the file associations tab
+	//AddPage( &m_Page7);
 }
 
 CWallyPropertySheet::~CWallyPropertySheet()

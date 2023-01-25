@@ -1583,10 +1583,11 @@ void CImageHelper::LoadImage(LPCTSTR szFileName, int iFlags /* = 0*/)
 		// First verify the file is even there
 		FILE* fp = NULL;
 		errno_t err = fopen_s(&fp, szFileName, "rb");
-		if (fp != 0)
+		if (err != 0)
 		{
 			m_strFileName = szFileName;
 			SetErrorCode (IH_FILE_NOT_FOUND);
+			ASSERT(FALSE);
 			return;
 		}
 		fclose (fp);

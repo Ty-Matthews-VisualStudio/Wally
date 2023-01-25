@@ -295,16 +295,10 @@ void WhatsNew(void)
 	AfxMessageBox(
 //		"Neal - ALWAYS save existing text by commenting it out (for future reference)"
 //		""
-		"What's New in version 1.56B of Wally?\n"
+		"What's New in version 1.57 of Wally?\n"
 		"\n"
-		" * Image Resize can now stretch to any size (whole image only)\n"
-		" * Print and Print Preview\n"
-		" * New Fix Uneven Lighting Filter, for photographic textures,\n"
-		"    works best on images that are basically the same color shade.\n"
-		" * Much faster Color Optimization, for quicker loads of 24 bit images\n"
-		" * New Crop, Resize, and Transparency Blend features in Decal Wizard\n"
-		" * Slider control for size of thumbnails in WAD viewer browse mode\n"
-		" * This automatic \"what's new\" message\n"		
+		" * Adjustable image thumbnail size in WAD viewer\n"
+		
 		"\n"
 		"Bugs fixed:\n"
 		"\n"
@@ -442,11 +436,11 @@ BOOL CWallyApp::InitInstance()
 #endif
 
 	// For the package views:
-	g_iPackageFormat = RegisterClipboardFormat ("Wally package format");
+	g_iPackageFormat = RegisterClipboardFormat("Wally package format");
 
 	// For browse copy/paste moves between directories:
-	g_iBrowseCopyPasteFormat = RegisterClipboardFormat ("Wally browse copy-paste format");
-	
+	g_iBrowseCopyPasteFormat = RegisterClipboardFormat("Wally browse copy-paste format");
+
 	// Standard initialization
 	// If you are not using these features and wish to reduce the size
 	//  of your final executable, you should remove from the following
@@ -460,74 +454,74 @@ BOOL CWallyApp::InitInstance()
 
 	// Grab the full path to Wally
 	char szAppDir[_MAX_PATH];
-	GetModuleFileName (NULL, szAppDir, _MAX_PATH);
+	GetModuleFileName(NULL, szAppDir, _MAX_PATH);
 	g_szAppDirectory = GetPathToFile(szAppDir);
 
 	g_strPaletteDirectory = g_szAppDirectory + "Palettes";
 	g_strDecalDirectory = g_szAppDirectory + "Decals";
 	g_strBrowseCacheDirectory = g_szAppDirectory + "Browser Cache";
 	g_strTempDirectory = g_szAppDirectory + "Temp";
-	
-	_mkdir (g_strPaletteDirectory);	
-	_mkdir (g_strDecalDirectory);
-	_mkdir (g_strBrowseCacheDirectory);
-	_mkdir (g_strTempDirectory);
+
+	_mkdir(g_strPaletteDirectory);
+	_mkdir(g_strDecalDirectory);
+	_mkdir(g_strBrowseCacheDirectory);
+	_mkdir(g_strTempDirectory);
 
 	SetRegistryKey(_T("Team BDP"));
 	m_nClipboardFormat = ::RegisterClipboardFormat(_T("Quake2 .wal file"));
 
 	LoadStdProfileSettings(10);  // Load standard INI file options (including MRU)
-	
+
 	// This needs to be here, as people can drag BMP or PCX files to the icon
 	// and start rebuilding Sub-Mips before the mainframe has even opened.
 	RegisterGlobalVariables();
 	ReadGlobalVariables();
-		
-	g_bAutoRemip = GetProfileInt ("ReMipDLX", "AutoRemipOnImport",0);
-	g_strQuake2Palette		= theApp.GetProfileString	("Settings",	"Quake2 Palette",	"");
-	g_strQuake1Palette		= theApp.GetProfileString	("Settings",	"Quake1 Palette",	"");
-	g_iUseDefaultQ2Palette	= theApp.GetProfileInt		("Settings",	"Use Default Q2",	1);
-	g_iUseDefaultQ1Palette	= theApp.GetProfileInt		("Settings",	"Use Default Q1",	1);
-	
+
+	g_bAutoRemip = GetProfileInt("ReMipDLX", "AutoRemipOnImport", 0);
+	g_strQuake2Palette = theApp.GetProfileString("Settings", "Quake2 Palette", "");
+	g_strQuake1Palette = theApp.GetProfileString("Settings", "Quake1 Palette", "");
+	g_iUseDefaultQ2Palette = theApp.GetProfileInt("Settings", "Use Default Q2", 1);
+	g_iUseDefaultQ1Palette = theApp.GetProfileInt("Settings", "Use Default Q1", 1);
+
 
 	// Ty- delete the "ShellNew" items for WADs and WALs.  WLY is now the standard Wally format
-	char szKeys[2][10] = { ".wad", ".wal"};
+	char szKeys[2][10] = { ".wad", ".wal" };
 
 	for (int j = 0; j < 2; j++)
 	{
 		CRegistryHelper rhHelper;
-		rhHelper.SetMainKey (HKEY_CLASSES_ROOT);
+		rhHelper.SetMainKey(HKEY_CLASSES_ROOT);
 
 		CString strRegApp("");
 		CString strExtension(szKeys[j]);
 		CString strKeyName("");
-		
-		rhHelper.AddItem (&strRegApp, "", "", strExtension);
+
+		rhHelper.AddItem(&strRegApp, "", "", strExtension);
 		rhHelper.ReadRegistry();
 
-		if (!strRegApp.CompareNoCase ("Wally.Document"))
+		if (!strRegApp.CompareNoCase("Wally.Document"))
 		{
 			// Only yank if Wally is the owner of this type.
-			strKeyName.Format ("%s\\ShellNew", strExtension);
-			RegDeleteKey (HKEY_CLASSES_ROOT, strKeyName);
+			strKeyName.Format("%s\\ShellNew", strExtension);
+			RegDeleteKey(HKEY_CLASSES_ROOT, strKeyName);
 		}
-	}		
-	
+	}
+
 	// Load up the palettes from disk		
 	LoadQ2PaletteFromDisk();
 	LoadQ1PaletteFromDisk();
-	
+
 	// Set up some of the Global variables
 	g_iDocWidth = 0;
 	g_iDocHeight = 0;
-	g_iCurrentTool = 0;	
+	g_iCurrentTool = 0;
 
 	m_bBrowseOpen = FALSE;
 	m_bProgressCreated = FALSE;
 
 	// Register the application's document templates.  Document templates
 	//  serve as the connection between documents, frame windows and views.
-	
+
 	WallyDocTemplate = new CWallyDocTemplate(
 		IDR_WALLYTYPE,
 		RUNTIME_CLASS(CWallyDoc),
@@ -540,7 +534,7 @@ BOOL CWallyApp::InitInstance()
 		RUNTIME_CLASS(CPackageDoc),
 		RUNTIME_CLASS(CPackageChildFrm), // custom MDI child frame
 		RUNTIME_CLASS(CPackageView));
-	AddDocTemplate(PackageDocTemplate); 
+	AddDocTemplate(PackageDocTemplate);
 
 	BuildDocTemplate = new CMultiDocTemplate(
 		IDR_BUILDTYPE,
@@ -554,14 +548,14 @@ BOOL CWallyApp::InitInstance()
 		RUNTIME_CLASS(CBrowseDoc),
 		RUNTIME_CLASS(CBrowseChildFrm), // custom MDI child frame
 		RUNTIME_CLASS(CBrowseView));
-	AddDocTemplate(BrowseDocTemplate); 
-	
+	AddDocTemplate(BrowseDocTemplate);
+
 	PakDocTemplate = new CMultiDocTemplate(
 		IDR_PAK_TYPE,
 		RUNTIME_CLASS(CPakDoc),
 		RUNTIME_CLASS(CPakChildFrm),
 		RUNTIME_CLASS(CPakListView));
-	AddDocTemplate(PakDocTemplate);		
+	AddDocTemplate(PakDocTemplate);
 	/*
 	WLYDocTemplate = new CMultiDocTemplate(
 		IDR_WLY_TYPE,
@@ -577,39 +571,38 @@ BOOL CWallyApp::InitInstance()
 		RUNTIME_CLASS(CDebugChildFrm), // custom MDI child frame
 		RUNTIME_CLASS(CDebugDibView));
 	AddDocTemplate(DebugDibTemplate);
-	
+
 	// create main MDI Frame window
 	CMainFrame* pMainFrame = new CMainFrame;
 	if (!pMainFrame->LoadFrame(IDR_MAINFRAME))
 		return FALSE;
-	m_pMainWnd = pMainFrame;	
-
+	m_pMainWnd = pMainFrame;
 	// Enable drag/drop open
-	m_pMainWnd->DragAcceptFiles();
+	pMainFrame->DragAcceptFiles();
 
 	// Enable DDE Execute open
-	EnableShellOpen();	
+	EnableShellOpen();
 	RegisterShellFileTypes(TRUE);
-		
+
 	// Parse command line for standard shell commands, DDE, file open
 	CCommandLineInfo cmdInfo;
 	ParseCommandLine(cmdInfo);
 
 	CParseCommandLine CommandLineParser;
-		
+
 	if ((cmdInfo.m_nShellCommand != CCommandLineInfo::FileDDE) && (!cmdInfo.m_bRunAutomated))
 	{
 		cmdInfo.m_nShellCommand = CCommandLineInfo::FileNothing;
 		if (m_lpCmdLine[0] == '\0')
-		{			
+		{
 		}
 		else
-		{    
+		{
 			// Setup the commandline parser class, to be used shortly...
-			CommandLineParser.Parse(m_lpCmdLine);	
-		}  
+			//CommandLineParser.Parse(m_lpCmdLine);	
+		}
 	}
-		
+
 	// Dispatch commands specified on the command line
 	if (!ProcessShellCommand(cmdInfo))
 		return FALSE;
@@ -617,13 +610,48 @@ BOOL CWallyApp::InitInstance()
 	// The main window has been initialized, so show and update it.
 	if (!pMainFrame->RestoreWindowState())
 		pMainFrame->ShowWindow(m_nCmdShow);
-	pMainFrame->UpdateWindow();	
+	pMainFrame->UpdateWindow();
 
+	BeginWaitCursor();
+#if 1
+	if (cmdInfo.m_strFileName.GetLength() > 0)
+	{
+		// Go grab the file extension
+		CString strFileExtension = GetExtension(cmdInfo.m_strFileName);
+		if (
+			(strFileExtension == ".wal") ||
+			(strFileExtension == ".mip") ||
+			(strFileExtension == ".swl") ||
+			(strFileExtension == ".m8")
+			)
+		{
+			WallyDocTemplate->OpenDocumentFile(cmdInfo.m_strFileName);
+		}
+		else
+		{
+			if (strFileExtension == ".pak")
+			{
+				PakDocTemplate->OpenDocumentFile(cmdInfo.m_strFileName);
+			}
+			else
+			{
+				if (strFileExtension == ".wad")
+				{
+					PackageDocTemplate->OpenDocumentFile(cmdInfo.m_strFileName);
+				}
+				else
+				{
+					OpenNonWalFile(cmdInfo.m_strFileName);
+				}
+			}
+		}
+	}
+	
+#else
 	// Set a char pointer to the first string in the command line	
 	CommandLineParser.GetFirst();
 	char *FileName = CommandLineParser.GetNext();				
-	BeginWaitCursor();
-
+	
 	// Spin through the list of filenames, our CommandLineParser routines.
 	// This code is for opening of non-Wal files.  We need to be able to determine
 	// the file extension type, and call the appropriate loading of the document.
@@ -656,7 +684,8 @@ BOOL CWallyApp::InitInstance()
 			OpenNonWalFile (FileName);
 		}
 		FileName = CommandLineParser.GetNext();
-	}   
+	}
+#endif
 	EndWaitCursor();
 
 	return TRUE;

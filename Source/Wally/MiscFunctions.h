@@ -90,7 +90,6 @@ class CCommandLineItem
 // Members
 public:
 	char FileName[_MAX_PATH * 5];
-	CCommandLineItem *p_Next;
 
 // Methods
 public:
@@ -102,19 +101,13 @@ class CParseCommandLine
 {
 // Members
 public:
-	CCommandLineItem *p_First;
-	CCommandLineItem *p_Read;
-	CCommandLineItem *p_Write;
-	CCommandLineItem *p_Temp;
+	std::vector<CString> m_FileNames;
 
-// Methods
+	// Methods
 public:
 	CParseCommandLine ();
 	void Parse (char *p_CommandLine);
-	void AddItem (char *NewItem);			
-	bool IsEmpty ();	
-	void GetFirst();
-	char *GetNext();
+	void AddItem (char *NewItem);	
 };
 
 #endif		// __MISC_FUNCTIONS_H_
