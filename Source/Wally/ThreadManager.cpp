@@ -26,6 +26,7 @@ CThreadManager::~CThreadManager()
 {
 	CloseHandle( m_hEvent );
 	CloseHandle( m_hFinished );
+	ClearQueues();
 }
 
 void CThreadManager::Initialize()
@@ -170,7 +171,7 @@ UINT WINAPI CThreadManager::Process( LPVOID lpParameter )
 	if( lpParameter )
 	{
 		pThis = (CThreadManager *)lpParameter;
-		pThis->SendMessage( THREAD_MGR_MESSAGE_STARTED );
+		pThis->SendMessage( THREAD_MGR_MESSAGE_STARTED );		
 
 		while( !bDone )
 		{
@@ -180,14 +181,12 @@ UINT WINAPI CThreadManager::Process( LPVOID lpParameter )
 				while( pThis->GetProcessingQueue()->size() < pThis->GetMaxThreads() )
 				{					
 					itJob = pThis->GetWaitingQueue()->begin();
-
 					if( itJob == pThis->GetWaitingQueue()->end() )
 					{						
 						break;
 					}
 
 					pJob = (CThreadJob *)(*itJob);					
-					
 					HANDLE hThread = (HANDLE)_beginthreadex( NULL, 0, CThreadJob::Start, (LPVOID)pJob, CREATE_SUSPENDED, &uiThreadID );
 
 					try
@@ -220,38 +219,26 @@ UINT WINAPI CThreadManager::Process( LPVOID lpParameter )
 				}
 			}
 
-			if( !pThis->GetProcessingQueue()->empty() )
+			// Are any of these jobs finished?
+			itJob = pThis->GetProcessingQueue()->begin();
+			while( itJob != pThis->GetProcessingQueue()->end() )
 			{
-				// Are any of these jobs finished?
-				itJob = pThis->GetProcessingQueue()->begin();
-
-				while( itJob != pThis->GetProcessingQueue()->end() )
-				{
-					pJob = (CThreadJob *)(*itJob);
+				pJob = (CThreadJob *)(*itJob);
 					
-					if( pJob->Finished() )
-					{
-						pJob->CleanUp();
-						pThis->GetFinishedQueue()->push_back( (LPVOID)pJob );
-
-						// Go send a message						
-						pThis->SendMessage( THREAD_MGR_MESSAGE_STATUS, pJob->GetMessage() );
-						itJob = pThis->GetProcessingQueue()->erase( itJob );
-					}
-					else
-					{				
-						itJob++;
-					}
-				}
-			}
-
-			if( pThis->GetWaitingQueue()->empty() )
-			{
-				if( pThis->GetProcessingQueue()->empty() )
+				if( pJob->Finished() )
 				{
-					bDone = TRUE;
+					pJob->CleanUp();
+					pThis->GetFinishedQueue()->push_back( (LPVOID)pJob );
+
+					// Go send a message						
+					pThis->SendMessage( THREAD_MGR_MESSAGE_STATUS, pJob->GetMessage() );
+					itJob = pThis->GetProcessingQueue()->erase( itJob );
 				}
-			}
+				else
+				{				
+					itJob++;
+				}
+			}			
 
 			// Are we signalled to break?
 			if( pThis->Stopped() )
@@ -261,33 +248,34 @@ UINT WINAPI CThreadManager::Process( LPVOID lpParameter )
 
 				while( itJob != pThis->GetWaitingQueue()->end() )
 				{						
-					pJob = (CThreadJob *)(*itJob);
-			
-					pThis->GetFinishedQueue()->push_back( (LPVOID)pJob );
+					pThis->GetFinishedQueue()->push_back(*itJob);
 					itJob = pThis->GetWaitingQueue()->erase( itJob );						
 				}
 
 				// Now signal the ones that are processing that we're stopping
 				itJob = pThis->GetProcessingQueue()->begin();
-
 				while( itJob != pThis->GetProcessingQueue()->end() )
 				{
 					CThreadJob *pJob = (CThreadJob *)(*itJob);
 					pJob->Stop();
-					itJob++;
+					pThis->GetFinishedQueue()->push_back(*itJob);
+					itJob = pThis->GetProcessingQueue()->erase(itJob);					
 				}
 			}
+
+			if (pThis->GetWaitingQueue()->empty() && pThis->GetProcessingQueue()->empty())
+			{
+				bDone = TRUE;
+			}
 			
-			Sleep( 100 );
+			Sleep( 10 );
 		}
 
 		pThis->Finished( TRUE );		
 		pThis->SendMessage( THREAD_MGR_MESSAGE_STOPPED );
-
 		pThis = NULL;
 	
-	}
-	
+	}	
 	_endthreadex(0);
 	return 0;
 }

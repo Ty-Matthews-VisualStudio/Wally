@@ -26,7 +26,11 @@ CThreadJob::~CThreadJob()
 
 void CThreadJob::CleanUp()
 {
-	CloseHandle( m_hEvent );
+	if (m_hEvent)
+	{
+		CloseHandle(m_hEvent);
+	}	
+	m_hEvent = NULL;
 }
 
 void CThreadJob::Initialize()

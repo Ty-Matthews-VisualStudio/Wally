@@ -25,6 +25,7 @@ private:
 	CString m_strStatusText;
 	CString m_strWallyOptions;
 	//CThreadList *m_pThreadList;
+	std::vector< LPVOID > m_vBatchJobs;
 
 	int m_iMaxThreads;
 	int m_iButtonState;
@@ -55,6 +56,7 @@ public:
 // Construction
 public:
 	CBatchDlg(CWnd* pParent = NULL);   // standard constructor
+	virtual ~CBatchDlg();
 
 // Dialog Data
 	//{{AFX_DATA(CBatchDlg)

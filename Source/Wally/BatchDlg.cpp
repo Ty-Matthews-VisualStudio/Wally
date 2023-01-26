@@ -46,6 +46,19 @@ CBatchDlg::CBatchDlg(CWnd* pParent /*=NULL*/)
 	m_ThreadManager.RegisterCallBack( ThreadMessageCallBack, &m_ThreadMessage );
 }
 
+CBatchDlg::~CBatchDlg()
+{
+	for (LPVOID pJob : m_vBatchJobs)
+	{
+		if (pJob)
+		{
+			delete (CBatchJob *)pJob;
+			pJob = NULL;
+		}
+	}
+	m_vBatchJobs.erase(m_vBatchJobs.begin(), m_vBatchJobs.end());
+}
+
 
 void CBatchDlg::DoDataExchange(CDataExchange* pDX)
 {
@@ -262,6 +275,8 @@ void CBatchDlg::OnButtonGo()
 	
 	CString strText("");
 	CString strWildCards("");
+	std::string sWildCards;
+	std::vector<std::string> vWildCards;
 	char *szWildCard = NULL;	
 	int iStrLength = 0;
 	int iStrPosition = 0;
@@ -303,53 +318,19 @@ void CBatchDlg::OnButtonGo()
 
 			GetDlgItemText (IDC_EDIT_WILDCARDS, strWildCards);	
 		
-			iStrLength = strWildCards.GetLength();
-			if (iStrLength <= 0)
+			sWildCards = strWildCards.GetBuffer();
+			boost::trim(sWildCards);  // Strip leading and trailing spaces
+			iStrLength = sWildCards.size();			
+			if (iStrLength == 0)
 			{
-				AfxMessageBox ("Nothing to convert!", MB_ICONSTOP);
-				return;
-			}
-
-			szWildCard = strWildCards.GetBuffer(iStrLength);
-			iStrPosition = 0;
-
-			// Strip out any spaces at the front		
-			while ((*szWildCard == ' ') && (iStrPosition < iStrLength))
-			{
-				szWildCard++;
-				iStrPosition++;
-			}
-
-			if (iStrPosition == iStrLength)
-			{
-				AfxMessageBox ("Nothing to convert!", MB_ICONSTOP);
-				return;
-			}
-
-			// Change any other spaces to NULL
-			for (x = iStrPosition, x1 = 0; x < iStrLength; x++, x1++)
-			{
-				if (szWildCard[x1] == ' ')
-				{
-					szWildCard[x1] = 0;
-				}
+				sWildCards = _T("*.*");
 			}
 			CDirectoryList dirList (g_bRecurseSubdirectories);
-
-			while (bMoreWildCards)
+			boost::split(vWildCards, sWildCards, boost::is_any_of(" "));
+			for( std::string sWC : vWildCards )
 			{
-				dirList.AddWildcard (szWildCard);
-				szWildCard += (strlen(szWildCard) + 1);
-				iStrPosition += (strlen(szWildCard) + 1);
-
-				if (iStrPosition >= iStrLength)
-				{
-					bMoreWildCards = FALSE;
-				}				
+				dirList.AddWildcard (sWC.c_str());				
 			}
-
-			strWildCards.ReleaseBuffer();
-
 			dirList.SetRoot (m_strSourceDir);
 			dirList.SearchDirectories ();
 
@@ -417,6 +398,7 @@ void CBatchDlg::OnButtonGo()
 				while (pFile)
 				{
 					CBatchJob *pJob = new CBatchJob( pFile->GetFileName(), m_strDestinationDir, m_strSourceDir, m_iDestinationType, iImageType, m_pDestinationPackage );
+					m_vBatchJobs.push_back(pJob);
 					m_ThreadManager.AddJob( (LPVOID)pJob );
 					m_iJobCount++;
 					SetDlgItemText (IDC_TEMP_STATUS, pFile->GetFileName());

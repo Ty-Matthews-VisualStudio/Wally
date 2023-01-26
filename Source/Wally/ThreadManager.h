@@ -79,7 +79,7 @@ class CThreadManager
 {
 // Members
 private:
-	typedef list<LPVOID> ThreadQueue;
+	typedef vector<LPVOID> ThreadQueue;
 	typedef ThreadQueue *LPThreadQueue;
 	typedef ThreadQueue::iterator itThreadQueue;
 
@@ -94,6 +94,12 @@ private:
 	LPThreadManagerCallBack m_fnCallBack;
 	CThreadMessage m_ThreadMessage;
 
+protected:
+	LPThreadQueue GetWaitingQueue();
+	LPThreadQueue GetProcessingQueue();
+	LPThreadQueue GetFinishedQueue();
+
+
 public:
 	CThreadManager( DWORD dwMaxThreads = 1 );
 	virtual ~CThreadManager();
@@ -105,15 +111,17 @@ public:
 	virtual BOOL Stopped( BOOL bSetEvent = FALSE );
 	virtual void AddJob( LPVOID lpJob );
 
-	LPThreadQueue GetWaitingQueue();
-	LPThreadQueue GetProcessingQueue();
-	LPThreadQueue GetFinishedQueue();
-
 	static UINT WINAPI Process( LPVOID lpParameter );
 	DWORD GetMaxThreads();
 	void SetMaxThreads( DWORD dwMaxThreads );
 	void RegisterCallBack( LPThreadManagerCallBack lpCallBack, CThreadMessage *lpMessage = NULL );
 	void SendMessage( DWORD dwMessageID, LPCTSTR szMessage = NULL );
+	void ClearQueues()
+	{
+		m_WaitingQueue.erase(m_WaitingQueue.begin(), m_WaitingQueue.end());
+		m_ProcessingQueue.erase(m_ProcessingQueue.begin(), m_ProcessingQueue.end());
+		m_FinishedQueue.erase(m_FinishedQueue.begin(), m_FinishedQueue.end());
+	}
 
 };
 
