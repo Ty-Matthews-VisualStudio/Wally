@@ -363,7 +363,7 @@ BOOL LoadDefaultEditingPalette( LPBYTE pbyPalette, CWallyPalette *pPalette, int 
 	else
 	{
 		CMemBuffer mbPalette;
-		LPBYTE pData = mbPalette.InitFromResource(IDR_LMP_BLEND);
+		LPBYTE pData = mbPalette.InitFromResource(IDR_DEFAULT_PALETTE);
 		if (pbyPalette)
 		{
 			CopyMemory(pbyPalette, pData, iNumColors * 3);
@@ -496,7 +496,7 @@ BOOL CWallyApp::InitInstance()
 	g_iUseDefaultQ2Palette = theApp.GetProfileInt("Settings", "Use Default Q2", 1);
 	g_iUseDefaultQ1Palette = theApp.GetProfileInt("Settings", "Use Default Q1", 1);
 
-
+#if 0
 	// Ty- delete the "ShellNew" items for WADs and WALs.  WLY is now the standard Wally format
 	char szKeys[2][10] = { ".wad", ".wal" };
 
@@ -519,6 +519,7 @@ BOOL CWallyApp::InitInstance()
 			RegDeleteKey(HKEY_CLASSES_ROOT, strKeyName);
 		}
 	}
+#endif
 
 	// Load up the palettes from disk		
 	LoadQ2PaletteFromDisk();
@@ -535,12 +536,12 @@ BOOL CWallyApp::InitInstance()
 	// Register the application's document templates.  Document templates
 	//  serve as the connection between documents, frame windows and views.
 
-	WallyDocTemplate = new CWallyDocTemplate(
+	m_pWallyDocTemplate = new CWallyDocTemplate(
 		IDR_WALLYTYPE,
 		RUNTIME_CLASS(CWallyDoc),
 		RUNTIME_CLASS(CChildFrame), // custom MDI child frame
 		RUNTIME_CLASS(CWallyView));
-	AddDocTemplate(WallyDocTemplate);
+	AddDocTemplate(m_pWallyDocTemplate);
 
 	PackageDocTemplate = new CMultiDocTemplate(
 		IDR_PACKAGE_TYPE,
@@ -638,7 +639,7 @@ BOOL CWallyApp::InitInstance()
 			(strFileExtension == ".m8")
 			)
 		{
-			WallyDocTemplate->OpenDocumentFile(cmdInfo.m_strFileName);
+			m_pWallyDocTemplate->OpenDocumentFile(cmdInfo.m_strFileName);
 		}
 		else
 		{
@@ -894,7 +895,7 @@ void CWallyApp::OnEditPasteAsNewImage()
 		}
 		// Go create a new document/view
 		g_iDocColorDepth = 8;
-		pWallyDoc = (CWallyDoc*)WallyDocTemplate->OpenDocumentFile( NULL, TRUE);		
+		pWallyDoc = (CWallyDoc*)m_pWallyDocTemplate->OpenDocumentFile( NULL, TRUE);
 		pWallyDoc->SetGameType (FILE_TYPE_QUAKE1);
 		pWallyDoc->SetName (strName);
 		pWallyDoc->SetTitle (strName);
@@ -923,7 +924,7 @@ void CWallyApp::OnEditPasteAsNewImage()
 		}
 		// Go create a new document/view
 		g_iDocColorDepth = 8;
-		pWallyDoc = (CWallyDoc*)WallyDocTemplate->OpenDocumentFile( NULL, TRUE);
+		pWallyDoc = (CWallyDoc*)m_pWallyDocTemplate->OpenDocumentFile( NULL, TRUE);
 		
 		pWallyDoc->SetGameType (FILE_TYPE_HALF_LIFE);
 		pWallyDoc->SetName (strName);
@@ -933,7 +934,7 @@ void CWallyApp::OnEditPasteAsNewImage()
 	case FILE_TYPE_QUAKE2:
 		// Go create a new document/view
 		g_iDocColorDepth = 8;
-		pWallyDoc = (CWallyDoc*)WallyDocTemplate->OpenDocumentFile( NULL, TRUE);
+		pWallyDoc = (CWallyDoc*)m_pWallyDocTemplate->OpenDocumentFile( NULL, TRUE);
 
 		pWallyDoc->SetGameType( iFileType);
 		pWallyDoc->SetTitle( strTitle);
@@ -943,7 +944,7 @@ void CWallyApp::OnEditPasteAsNewImage()
 	case FILE_TYPE_SIN:
 		// Go create a new document/view
 		g_iDocColorDepth = 8;
-		pWallyDoc = (CWallyDoc*)WallyDocTemplate->OpenDocumentFile( NULL, TRUE);
+		pWallyDoc = (CWallyDoc*)m_pWallyDocTemplate->OpenDocumentFile( NULL, TRUE);
 		
 		pWallyDoc->SetGameType (iFileType);
 		pWallyDoc->SetTitle (strTitle);
@@ -953,7 +954,7 @@ void CWallyApp::OnEditPasteAsNewImage()
 	case FILE_TYPE_HERETIC2:
 		g_iDocColorDepth = 8;
 		// Go create a new document/view
-		pWallyDoc = (CWallyDoc*)WallyDocTemplate->OpenDocumentFile( NULL, TRUE);
+		pWallyDoc = (CWallyDoc*)m_pWallyDocTemplate->OpenDocumentFile( NULL, TRUE);
 		
 		pWallyDoc->SetGameType (iFileType);
 		pWallyDoc->SetTitle (strTitle);
@@ -966,7 +967,7 @@ void CWallyApp::OnEditPasteAsNewImage()
 	case FILE_TYPE_JPG:
 	case FILE_TYPE_PNG:
 	case FILE_TYPE_TEX:
-		pWallyDoc = (CWallyDoc*)WallyDocTemplate->OpenDocumentFile( NULL, TRUE);
+		pWallyDoc = (CWallyDoc*)m_pWallyDocTemplate->OpenDocumentFile( NULL, TRUE);
 		
 		pWallyDoc->SetGameType (iFileType);
 		pWallyDoc->SetTitle (strTitle);
@@ -1522,8 +1523,11 @@ void CWallyApp::OnFileOpen()
 		while (Pos)
 		{			
 			strFileName = dlgOpen.GetNextPathName( Pos);
-			strFileExtension = GetExtension (strFileName);
-
+			OpenDocumentFile(strFileName);
+#if 0
+			// 2023-01-26: Moving this to the newly-override OnOpenDocument() function to support
+			// both OnFileOpen as well as MRU open
+			
 		/*	// WAD files can't be added to an existing WAD!
 			if ((pPackageView) && (strFileExtension != ".wad") && (strFileExtension != ".pak"))
 			{
@@ -1533,9 +1537,17 @@ void CWallyApp::OnFileOpen()
 			{
 				OpenDocumentFile (strFileName);
 			}
-			*/			
-			
-			OpenDocumentFile (strFileName);
+			*/
+
+			if ((strFileExtension == ".wad") || (strFileExtension == ".pak"))
+			{
+				OpenDocumentFile(strFileName);
+			}
+			else
+			{
+				m_pWallyDocTemplate->OpenDocumentFile(strFileName);
+			}			
+#endif
 		}	
 		
 	}	
@@ -1615,7 +1627,7 @@ void CWallyApp::OpenNonWalFile (LPCTSTR szFileName)
 	g_iDocWidth = ihHelper.GetImageWidth();
 	
 	// Go build a new document/view based on the WallyDoc Template, then display it
-	CWallyDoc* pDoc = (CWallyDoc *)WallyDocTemplate->OpenDocumentFile(NULL,true);
+	CWallyDoc* pDoc = (CWallyDoc *)m_pWallyDocTemplate->OpenDocumentFile(NULL,true);
 		
 	// Set the title to just the filename, no path or extension
 	pDoc->SetTitle (GetRawFileName(szFileName));
@@ -1673,7 +1685,7 @@ void CWallyApp::OnFileNew()
 			// Neal - fixes missing submips on new wal view
 			//
 			g_iFileTypeDefault = iFileType;
-			pWallyDoc = (CWallyDoc *)WallyDocTemplate->OpenDocumentFile(NULL, true);
+			pWallyDoc = (CWallyDoc *)m_pWallyDocTemplate->OpenDocumentFile(NULL, true);
 			g_iFileTypeDefault = iDefFileType;
 
 			if (pWallyDoc)
@@ -1761,7 +1773,7 @@ void CWallyApp::OnFileNew()
 				// Neal - part of fix for missing submips on new wal view
 				//
 				g_iFileTypeDefault = iFileType;
-				pWallyDoc = (CWallyDoc *)WallyDocTemplate->OpenDocumentFile(NULL, true);
+				pWallyDoc = (CWallyDoc *)m_pWallyDocTemplate->OpenDocumentFile(NULL, true);
 				g_iFileTypeDefault = iDefFileType;
 				
 				if (pWallyDoc)
@@ -3728,3 +3740,19 @@ void CWallyApp::OnWizardTest()
 #endif
 }
 #endif
+
+CDocument* CWallyApp::OpenDocumentFile(LPCTSTR lpszFileName)
+{
+	// TODO: Add your specialized code here and/or call the base class
+	CString strFileExtension = GetExtension(lpszFileName);
+	strFileExtension.MakeLower();
+	if ((strFileExtension == ".wad") || (strFileExtension == ".pak"))
+	{
+		return CWinApp::OpenDocumentFile(lpszFileName);
+	}
+
+	// For some reason our custom WallyDocTemplate document template is not called by the framework
+	// when calling CWinApp::OpenDocumentFile().  Must call it explicitly for any of 
+	// our single-image types
+	return m_pWallyDocTemplate->OpenDocumentFile(lpszFileName);
+}

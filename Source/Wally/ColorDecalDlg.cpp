@@ -862,7 +862,7 @@ void CColorDecalDlg::GetBlendColor( BYTE &byRed, BYTE &byGreen, BYTE &byBlue )
 		g_iDocHeight     = iHeight;
 		g_iDocColorDepth = 8;
 
-		pWallyDoc = ( CWallyDoc *)( pWallyApp->WallyDocTemplate->OpenDocumentFile( NULL, TRUE ) );
+		pWallyDoc = ( CWallyDoc *)( pWallyApp->m_pWallyDocTemplate->OpenDocumentFile( NULL, TRUE ) );
 		if( !pWallyDoc )
 		{
 			AfxMessageBox( "Failed to create Half-Life texture.", MB_ICONSTOP );

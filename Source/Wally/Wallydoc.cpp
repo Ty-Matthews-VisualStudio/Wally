@@ -483,7 +483,7 @@ void CWallyDoc::Serialize( CArchive& ar)
 		///////////////////////////////
 
 		int iType = GetGameType();
-
+		
 		switch (iType)
 		{
 		case FILE_TYPE_QUAKE2:

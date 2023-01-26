@@ -48,8 +48,10 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
+    <OutDir>D:\Wally_temp\</OutDir>
     <IntDir>$(USER_TEMP)\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
+    <CustomBuildAfterTargets>
+    </CustomBuildAfterTargets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
@@ -81,6 +83,10 @@
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
     </Link>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -752,8 +758,8 @@
     <None Include="res\redneck.dat" />
     <None Include="res\shadow.lmp" />
     <None Include="RES\wad_thumbnail.pcx" />
+    <None Include="Res\Wally.rc2" />
     <None Include="res\wally_logo.pcx" />
-    <None Include="wally.rc2" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="2PassScale.h" />

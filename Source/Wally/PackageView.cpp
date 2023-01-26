@@ -1133,7 +1133,7 @@ void CPackageView::OpenSelectedImages(BOOL bCaretOnly /* = FALSE */)
 			
 			int iHoldType = g_iFileTypeDefault;
 			g_iFileTypeDefault = iWadType;
-			pWallyDoc = (CWallyDoc *)theApp.WallyDocTemplate->OpenDocumentFile(NULL, TRUE);
+			pWallyDoc = (CWallyDoc *)theApp.m_pWallyDocTemplate->OpenDocumentFile(NULL, TRUE);
 			g_iFileTypeDefault = iHoldType;
 
 			pWallyDoc->SetGameType (iWadType);

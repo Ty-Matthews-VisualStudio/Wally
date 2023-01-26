@@ -484,9 +484,6 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="wally.rc2">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="res\cursor1.cur">
       <Filter>Resource Files</Filter>
     </None>
@@ -518,6 +515,9 @@
     <None Include="res\q2pal.lmp" />
     <None Include="res\blend.lmp" />
     <None Include="res\pldecal.wad" />
+    <None Include="Res\Wally.rc2">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="2PassScale.h">

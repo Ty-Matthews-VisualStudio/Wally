@@ -447,7 +447,7 @@ public:
 	void OpenNonWalFile (LPCTSTR szFileName);
 	static CWallyApp* GetApp();
 	
-	CMultiDocTemplate* WallyDocTemplate;
+	CMultiDocTemplate* m_pWallyDocTemplate;
 	CMultiDocTemplate* BrowseDocTemplate;
 	CMultiDocTemplate* PackageDocTemplate;
 	CMultiDocTemplate* BuildDocTemplate;
@@ -473,6 +473,7 @@ public:
 	CView *GetActiveView();	
 	CPackageDoc *CreatePackageDoc ();
 	void OpenImage (LPCTSTR szFileName);
+	virtual CDocument* OpenDocumentFile(LPCTSTR lpszFileName);
 	
 	BOOL GetBackgroundWindowPlacement (LPWINDOWPLACEMENT lpWindow);	
 	
@@ -520,7 +521,7 @@ private:
 	afx_msg void OnWizardWadmerge();
 	afx_msg void OnWizardTest();
 	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
+	DECLARE_MESSAGE_MAP()	
 };
 
 
