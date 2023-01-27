@@ -2695,8 +2695,8 @@ BOOL CImageHelper::EncodeMIP ()
 	}
 
 	// All the sub-mips need to be built.
-	// 512 is to reserve room for 512 byte header (max)
-	#define MAX_DATA_SIZE (MAX_MIP_SIZE * MAX_MIP_SIZE + 512)
+	// 2048 is to reserve room for 512 byte header (max)
+	#define MAX_DATA_SIZE (MAX_MIP_SIZE * MAX_MIP_SIZE + 2048)
 	
 	BYTE	*pbyMipData		= NULL;
 	pbyMipData = (BYTE *) malloc(MAX_DATA_SIZE);	
@@ -2993,8 +2993,8 @@ BOOL CImageHelper::EncodeWAL ()
 
 
 	// All the sub-mips need to be built.
-	// 512 is to reserve room for 512 byte header (max)
-	#define MAX_DATA_SIZE (MAX_MIP_SIZE * MAX_MIP_SIZE + 512)
+	// 2048 is to reserve room for 512 byte header (max)
+	#define MAX_DATA_SIZE (MAX_MIP_SIZE * MAX_MIP_SIZE + 2048)
 	
 	BYTE	*pbyMipData		= NULL;
 	pbyMipData = (BYTE *) malloc(MAX_DATA_SIZE);	
@@ -3218,8 +3218,8 @@ BOOL CImageHelper::EncodeSWL ()
 	CalcImageColor256 (iWidth[0], iHeight[0], pbyBits[0], m_byPalette, &(lpSinHeader->color[0]), &(lpSinHeader->color[1]), &(lpSinHeader->color[2]), TRUE);
 
 	// All the sub-mips need to be built.
-	// 512 is to reserve room for 512 byte header (max)
-	#define MAX_DATA_SIZE (MAX_MIP_SIZE * MAX_MIP_SIZE + 512)
+	// 2048 is to reserve room for 512 byte header (max)
+	#define MAX_DATA_SIZE (MAX_MIP_SIZE * MAX_MIP_SIZE + 2048)
 	
 	BYTE	*pbyMipData		= NULL;
 	pbyMipData = (BYTE *) malloc(MAX_DATA_SIZE);	
@@ -3463,8 +3463,8 @@ BOOL CImageHelper::EncodeM8 ()
 	Palette.SetPalette (m_byPalette, 256);
 	
 	// All the sub-mips need to be built.
-	// 512 is to reserve room for 512 byte header (max)
-	#define MAX_DATA_SIZE (MAX_MIP_SIZE * MAX_MIP_SIZE + 512)
+	//  2048 is to reserve room for 512 byte header (max)
+	#define MAX_DATA_SIZE (MAX_MIP_SIZE * MAX_MIP_SIZE + 2048)
 	
 	BYTE	*pbyMipData		= NULL;
 	pbyMipData = (BYTE *) malloc(MAX_DATA_SIZE);	

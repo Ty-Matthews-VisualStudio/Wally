@@ -10,14 +10,25 @@
 /////////////////////////////////////////////////////////////////////////////
 // CThreadJob thread
 
+typedef enum
+{
+	TJIdle = 0,
+	TJInitialized,
+	TJRunning,
+	TJFinished,
+	TJClosed
+} eThreadJobStatus;
+
 class CThreadJob
 {
 // Members
 protected:
 	HANDLE m_hEvent;
+	HANDLE m_hThread;
 	BOOL m_bInitialized;
 	CString m_strErrorMessage;
 	CString m_strMessage;
+	eThreadJobStatus m_eStatus;
 
 // Private Methods
 protected:
@@ -34,6 +45,15 @@ public:
 	virtual void Stop();
 	virtual BOOL Stopped();
 	virtual void CleanUp();
+	virtual void Start();
+	virtual void SetStatus(eThreadJobStatus eStatus)
+	{
+		m_eStatus = eStatus;
+	}
+	virtual eThreadJobStatus GetStatus()
+	{
+		return m_eStatus;
+	}
 
 	void SetErrorMessage( LPCTSTR szErrorMessage );
 	void AddToErrorMessage( LPCTSTR szErrorMessage );
@@ -41,7 +61,7 @@ public:
 	virtual LPCTSTR GetErrorMessage();
 	virtual LPCTSTR GetMessage() = 0;
 
-	static UINT WINAPI Start( LPVOID lpParameter );
+	static UINT WINAPI StartThread( LPVOID lpParameter );
 };
 
 

@@ -79,26 +79,29 @@ class CThreadManager
 {
 // Members
 private:
-	typedef vector<LPVOID> ThreadQueue;
+#if 0
+	typedef list<LPVOID> ThreadQueue;
 	typedef ThreadQueue *LPThreadQueue;
 	typedef ThreadQueue::iterator itThreadQueue;
-
+		
 	ThreadQueue m_WaitingQueue;
 	ThreadQueue m_ProcessingQueue;
-	ThreadQueue m_FinishedQueue;
+	ThreadQueue m_FinishedQueue;	
 
+protected:
+	LPThreadQueue GetWaitingQueue();
+	LPThreadQueue GetProcessingQueue();
+	LPThreadQueue GetFinishedQueue();
+#endif
+
+private:
 	HANDLE m_hEvent;
 	HANDLE m_hFinished;
 	DWORD m_dwMaxThreads;
 
 	LPThreadManagerCallBack m_fnCallBack;
 	CThreadMessage m_ThreadMessage;
-
-protected:
-	LPThreadQueue GetWaitingQueue();
-	LPThreadQueue GetProcessingQueue();
-	LPThreadQueue GetFinishedQueue();
-
+	std::list<LPVOID> JobQueue;
 
 public:
 	CThreadManager( DWORD dwMaxThreads = 1 );
@@ -109,19 +112,32 @@ public:
 	virtual void Stop();
 	virtual BOOL Finished( BOOL bSetEvent = FALSE );
 	virtual BOOL Stopped( BOOL bSetEvent = FALSE );
-	virtual void AddJob( LPVOID lpJob );
+	virtual void AddJob(LPVOID lpJob)
+	{
+		JobQueue.push_back(lpJob);
+	}
+	virtual void ClearQueue()
+	{
+		JobQueue.erase(JobQueue.begin(), JobQueue.end());
+	}
+	std::list<LPVOID>* GetQueue()
+	{
+		return &JobQueue;
+	}
 
 	static UINT WINAPI Process( LPVOID lpParameter );
 	DWORD GetMaxThreads();
 	void SetMaxThreads( DWORD dwMaxThreads );
 	void RegisterCallBack( LPThreadManagerCallBack lpCallBack, CThreadMessage *lpMessage = NULL );
 	void SendMessage( DWORD dwMessageID, LPCTSTR szMessage = NULL );
+#if 0
 	void ClearQueues()
 	{
 		m_WaitingQueue.erase(m_WaitingQueue.begin(), m_WaitingQueue.end());
 		m_ProcessingQueue.erase(m_ProcessingQueue.begin(), m_ProcessingQueue.end());
-		m_FinishedQueue.erase(m_FinishedQueue.begin(), m_FinishedQueue.end());
+		m_FinishedQueue.erase(m_FinishedQueue.begin(), m_FinishedQueue.end());		
 	}
+#endif
 
 };
 

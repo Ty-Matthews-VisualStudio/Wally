@@ -25,12 +25,15 @@
 #define HIST_CELLS (HIST_MAX * HIST_MAX * HIST_MAX)
 #define HIST_SHIFT (8 - HIST_BIT)
 
-CColorOptimizer::CColorOptimizer()
+CColorOptimizer::CColorOptimizer() : pHeap(NULL), pBoxes(NULL), puHist(NULL)
 {
 }
 
 CColorOptimizer::~CColorOptimizer()
 {
+	ASSERT(pHeap == NULL);
+	ASSERT(pBoxes == NULL);
+	ASSERT(puHist == NULL);
 }
 
 void* CColorOptimizer::SmartAlloc( UINT uSize)
@@ -40,7 +43,9 @@ void* CColorOptimizer::SmartAlloc( UINT uSize)
 	if (uSize == 0)
 		return NULL;
 
-	void* p = malloc( uSize);
+	//void* p = malloc( uSize);
+	LPVOID p = (LPVOID)new BYTE[uSize];
+
 
 	if (p == NULL)
 	{
@@ -135,7 +140,11 @@ int CColorOptimizer::Optimize( COLOR_IRGB* irgbBuffer, int iSizeX, int iSizeY,
 		END_CATCH_ALL
 
 		if (histogram)
-			free( histogram);
+		{
+			//free(histogram);
+			delete[]histogram;
+			histogram = NULL;
+		}
 #endif
 
 #if BETTER_METHOD
@@ -241,8 +250,11 @@ int CColorOptimizer::Optimize( COLOR_IRGB* irgbBuffer, int iSizeX, int iSizeY,
 		}
 	}
 
+#if 0
 	// Ty- if there aren't many colors, blend the rest based on the overall color.  Produces a broader palette
 	// when maybe only 20 were originally selected.
+
+	// 2023-01-26: Testing if this is causing the memory leak issue with Batch Conversion
 
 	if (iNumColors < 256)
 	{
@@ -289,6 +301,7 @@ int CColorOptimizer::Optimize( COLOR_IRGB* irgbBuffer, int iSizeX, int iSizeY,
 
 		memcpy (pbyPackedPalette, byTempPalette, 768);
 	}
+#endif
 	return iNumColors;
 }
 
@@ -1147,7 +1160,10 @@ BOOL CColorOptimizer::Quantize( UINT* uHistogram, int iMaxColors, BYTE* pbyPacke
 ReduceError:
 
 	free( pHeap);
+	pHeap = NULL;
 	free( pBoxes);
+	pBoxes = NULL;
+	puHist = NULL;	
 
 	return bStatus;
 }

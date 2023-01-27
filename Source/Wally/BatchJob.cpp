@@ -548,6 +548,11 @@ void CBatchJob::Process()
 				Palette.SetNumFullBrights( 0 );
 				Palette.RebuildWAL( pbyBuffer );
 
+				if (Stopped())
+				{
+					throw ("Thread was stopped prematurely");
+				}
+
 				LPBYTE pbyBits[4];
 
 				for (j = 0; j < 4; j++)

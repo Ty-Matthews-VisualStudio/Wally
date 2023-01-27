@@ -17,16 +17,22 @@ static char THIS_FILE[]=__FILE__;
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CThreadManager::CThreadManager( DWORD dwMaxThreads /* = 1 */ ) : m_hEvent( NULL ), m_fnCallBack( NULL )
+CThreadManager::CThreadManager( DWORD dwMaxThreads /* = 1 */ ) : m_hEvent( NULL ), m_hFinished( NULL ), m_fnCallBack( NULL )
 {
 	SetMaxThreads( dwMaxThreads );
 }
 
 CThreadManager::~CThreadManager()
 {
-	CloseHandle( m_hEvent );
-	CloseHandle( m_hFinished );
-	ClearQueues();
+	if(m_hEvent)
+	{
+		CloseHandle(m_hEvent);
+	}
+	if (m_hFinished)
+	{
+		CloseHandle(m_hFinished);
+	}	
+	//ClearQueues();
 }
 
 void CThreadManager::Initialize()
@@ -139,6 +145,7 @@ void CThreadManager::SendMessage( DWORD dwMessageID, LPCTSTR szMessage /* = NULL
 	}	
 }
 
+#if 0
 CThreadManager::LPThreadQueue CThreadManager::GetWaitingQueue()
 {
 	return &m_WaitingQueue;
@@ -154,9 +161,9 @@ CThreadManager::LPThreadQueue CThreadManager::GetFinishedQueue()
 	return &m_FinishedQueue;
 }
 
-void CThreadManager::AddJob( LPVOID lpJob )
+void CThreadManager::AddJob(LPVOID lpJob)
 {
-	m_WaitingQueue.push_back( lpJob );
+	m_WaitingQueue.push_back(lpJob);
 }
 
 UINT WINAPI CThreadManager::Process( LPVOID lpParameter )
@@ -232,6 +239,7 @@ UINT WINAPI CThreadManager::Process( LPVOID lpParameter )
 
 					// Go send a message						
 					pThis->SendMessage( THREAD_MGR_MESSAGE_STATUS, pJob->GetMessage() );
+					(*itJob) = NULL;
 					itJob = pThis->GetProcessingQueue()->erase( itJob );
 				}
 				else
@@ -249,6 +257,7 @@ UINT WINAPI CThreadManager::Process( LPVOID lpParameter )
 				while( itJob != pThis->GetWaitingQueue()->end() )
 				{						
 					pThis->GetFinishedQueue()->push_back(*itJob);
+					(*itJob) = NULL;
 					itJob = pThis->GetWaitingQueue()->erase( itJob );						
 				}
 
@@ -259,6 +268,7 @@ UINT WINAPI CThreadManager::Process( LPVOID lpParameter )
 					CThreadJob *pJob = (CThreadJob *)(*itJob);
 					pJob->Stop();
 					pThis->GetFinishedQueue()->push_back(*itJob);
+					(*itJob) = NULL;
 					itJob = pThis->GetProcessingQueue()->erase(itJob);					
 				}
 			}
@@ -279,3 +289,92 @@ UINT WINAPI CThreadManager::Process( LPVOID lpParameter )
 	_endthreadex(0);
 	return 0;
 }
+#else
+UINT WINAPI CThreadManager::Process(LPVOID lpParameter)
+{
+	CThreadManager* pThis = NULL;
+	CThreadJob* pJob = NULL;
+	BOOL bDone = FALSE;
+	CString strMessage("");
+	
+	if (lpParameter)
+	{
+		pThis = (CThreadManager*)lpParameter;
+		pThis->SendMessage(THREAD_MGR_MESSAGE_STARTED);
+
+		while(1)
+		{
+			int iRunCount = 0;
+			int iClosedCount = 0;
+			// Get count of currently running threads
+			for (LPVOID pIT : (*pThis->GetQueue()))
+			{
+				pJob = (CThreadJob*)pIT;
+				switch (pJob->GetStatus())
+				{
+				case TJRunning:
+				case TJInitialized:
+					iRunCount++;
+					if (pThis->Stopped())
+					{
+						pJob->Stop();
+					}
+					break;
+
+				case TJFinished:
+					if (pJob->Finished())
+					{
+						pJob->CleanUp();
+						// Go send a message						
+						pThis->SendMessage(THREAD_MGR_MESSAGE_STATUS, pJob->GetMessage());						
+					}
+					break;
+
+				case TJClosed:
+					iClosedCount++;
+					break;
+
+				case TJIdle:
+				default:
+					break;
+				}
+			}
+
+			if (iClosedCount == pThis->GetQueue()->size())
+			{
+				break;
+			}
+
+			for (LPVOID pIT : (*pThis->GetQueue()))
+			{
+				if (iRunCount >= pThis->GetMaxThreads())
+				{
+					break;
+				}
+				pJob = (CThreadJob*)pIT;
+				switch (pJob->GetStatus())
+				{
+				case TJIdle:
+					pJob->Start();
+					iRunCount++;
+					break;
+
+				case TJRunning:
+				case TJInitialized:
+				case TJFinished:
+				default:
+					break;
+				}
+			}			
+			Sleep(10);
+		}
+
+		pThis->Finished(TRUE);
+		pThis->SendMessage(THREAD_MGR_MESSAGE_STOPPED);
+		pThis->ClearQueue();
+		pThis = NULL;
+	}
+	_endthreadex(0);
+	return 0;
+}
+#endif

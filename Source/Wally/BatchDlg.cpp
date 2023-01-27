@@ -31,7 +31,7 @@ static UINT NEAR WM_BATCHDLG_CUSTOM = RegisterWindowMessage( "WM_WALLY_BATCHDLG_
 
 
 CBatchDlg::CBatchDlg(CWnd* pParent /*=NULL*/)
-	: CDialog(CBatchDlg::IDD, pParent)
+	: CDialog(CBatchDlg::IDD, pParent), m_pThreadManager(NULL)
 {
 	//{{AFX_DATA_INIT(CBatchDlg)
 	//}}AFX_DATA_INIT
@@ -42,12 +42,15 @@ CBatchDlg::CBatchDlg(CWnd* pParent /*=NULL*/)
 	m_strStatusText = "";
 	m_iJobCount = 0;
 	m_iFinishedCount = 0;
+	m_pThreadManager = new CThreadManager();
 	m_ThreadMessage.SetAppSpecific( (LPVOID)this );
-	m_ThreadManager.RegisterCallBack( ThreadMessageCallBack, &m_ThreadMessage );
+	m_pThreadManager->RegisterCallBack( ThreadMessageCallBack, &m_ThreadMessage );
 }
 
 CBatchDlg::~CBatchDlg()
 {
+	delete m_pThreadManager;
+	m_pThreadManager = NULL;
 	for (LPVOID pJob : m_vBatchJobs)
 	{
 		if (pJob)
@@ -290,146 +293,152 @@ void CBatchDlg::OnButtonGo()
 
 	switch (m_iButtonState)
 	{
-	case BUTTON_GO:	
-		{			
-			m_iJobCount = 0;
-			m_iFinishedCount = 0;
-			m_strStatusText = "";		
+	case BUTTON_GO:
+	{
+		m_iJobCount = 0;
+		m_iFinishedCount = 0;
+		m_strStatusText = "";
 
-			m_ThreadManager.SetMaxThreads( GetMaxThreads() );
-			GetDlgItemText (IDC_EDIT_DEST_DIR, m_strDestinationDir);
-			GetDlgItemText (IDC_EDIT_SOURCE_DIR, m_strSourceDir);	
-		
-			m_strStatusText = "";
-			SetDlgItemText (IDC_EDIT_STATUS, m_strStatusText);
-			m_pbStatus.SetRange (0, m_iJobCount);
+		m_pThreadManager->ClearQueue();
+		m_pThreadManager->SetMaxThreads(GetMaxThreads());
+		GetDlgItemText(IDC_EDIT_DEST_DIR, m_strDestinationDir);
+		GetDlgItemText(IDC_EDIT_SOURCE_DIR, m_strSourceDir);
 
-			bool bNoSource = (m_strSourceDir == "");
-			bool bNoDest = (m_iDestinationType == DESTINATION_TEXTURES ? m_strDestinationDir == "" : false);
+		m_strStatusText = "";
+		SetDlgItemText(IDC_EDIT_STATUS, m_strStatusText);
+		m_pbStatus.SetRange(0, m_iJobCount);
 
-			if (bNoSource || bNoDest) 
+		bool bNoSource = (m_strSourceDir == "");
+		bool bNoDest = (m_iDestinationType == DESTINATION_TEXTURES ? m_strDestinationDir == "" : false);
+
+		if (bNoSource || bNoDest)
+		{
+			strText.Format("Please provide a %s%s%s directory.", m_strSourceDir == "" ? "source" : "", ((bNoSource && bNoDest) ? " and " : ""), (m_iDestinationType == DESTINATION_TEXTURES ? (m_strDestinationDir == "" ? "destination" : "") : ""));
+			AfxMessageBox(strText, MB_ICONSTOP);
+			return;
+		}
+
+		SetDlgItemText(IDC_TEMP_STATUS, "Retrieving list of files to convert...");
+
+		GetDlgItemText(IDC_EDIT_WILDCARDS, strWildCards);
+
+		sWildCards = strWildCards.GetBuffer();
+		boost::trim(sWildCards);  // Strip leading and trailing spaces
+		iStrLength = sWildCards.size();
+		if (iStrLength == 0)
+		{
+			// If no wildcards are specified, assume all files
+			sWildCards = _T("*.*");
+		}
+		CDirectoryList dirList(g_bRecurseSubdirectories);
+		boost::split(vWildCards, sWildCards, boost::is_any_of(" "));
+		for (std::string sWC : vWildCards)
+		{
+			dirList.AddWildcard(sWC.c_str());
+		}
+		dirList.SetRoot(m_strSourceDir);
+		dirList.SearchDirectories();
+
+		if (m_iDestinationType == DESTINATION_TEXTURES)
+		{
+			// Make sure the destination directory is created
+			CString strRemainingPath("");
+			CString strMkDir("");
+			int iPosition = 0;
+
+			strRemainingPath = TrimSlashes(m_strDestinationDir);
+
+			while (strRemainingPath != "")
 			{
-				strText.Format ("Please provide a %s%s%s directory.", m_strSourceDir == "" ? "source" : "", ((bNoSource && bNoDest) ? " and " : ""), (m_iDestinationType == DESTINATION_TEXTURES ? (m_strDestinationDir == "" ? "destination" : "") : ""));
-				AfxMessageBox (strText, MB_ICONSTOP);
-				return;
-			}		
+				iPosition = strRemainingPath.Find("\\");
 
-			SetDlgItemText (IDC_TEMP_STATUS, "Retrieving list of files to convert...");
-
-			GetDlgItemText (IDC_EDIT_WILDCARDS, strWildCards);	
-		
-			sWildCards = strWildCards.GetBuffer();
-			boost::trim(sWildCards);  // Strip leading and trailing spaces
-			iStrLength = sWildCards.size();			
-			if (iStrLength == 0)
-			{
-				sWildCards = _T("*.*");
-			}
-			CDirectoryList dirList (g_bRecurseSubdirectories);
-			boost::split(vWildCards, sWildCards, boost::is_any_of(" "));
-			for( std::string sWC : vWildCards )
-			{
-				dirList.AddWildcard (sWC.c_str());				
-			}
-			dirList.SetRoot (m_strSourceDir);
-			dirList.SearchDirectories ();
-
-			if( m_iDestinationType == DESTINATION_TEXTURES )
-			{
-				// Make sure the destination directory is created
-				CString strRemainingPath("");
-				CString strMkDir("");
-				int iPosition = 0;
-
-				strRemainingPath = TrimSlashes (m_strDestinationDir);
-							
-				while (strRemainingPath != "")
+				if (iPosition == -1)
 				{
-					iPosition = strRemainingPath.Find ("\\");
-
-					if (iPosition == -1)
-					{
-						strMkDir += strRemainingPath;
-						strRemainingPath = "";						
-					}
-					else
-					{
-						strMkDir += strRemainingPath.Left(iPosition);
-						strMkDir += "\\";							
-						strRemainingPath = 	strRemainingPath.Right (strRemainingPath.GetLength() - (iPosition + 1));
-					}			
-					
-					_mkdir (strMkDir);
-				}
-			}
-
-			if( IsDlgButtonChecked( IDC_RADIO_NEW_PACKAGE ) )
-			{
-				int iCurSel = m_cbWADType.GetCurSel();
-
-				if( iCurSel == CB_ERR )
-				{
-					AfxMessageBox( "Did not specify new package type", MB_ICONSTOP );
-					return;
-				}
-				
-				g_iMergeNewWADType = m_cbWADType.GetItemData( iCurSel );
-				m_pDestinationPackage = theApp.CreatePackageDoc();
-
-				if( m_pDestinationPackage )
-				{
-					m_pDestinationPackage->SetWADType( g_iMergeNewWADType );					
+					strMkDir += strRemainingPath;
+					strRemainingPath = "";
 				}
 				else
 				{
-					AfxMessageBox( "Failed to create new package", MB_ICONSTOP );
+					strMkDir += strRemainingPath.Left(iPosition);
+					strMkDir += "\\";
+					strRemainingPath = strRemainingPath.Right(strRemainingPath.GetLength() - (iPosition + 1));
 				}
+
+				_mkdir(strMkDir);
 			}
+		}
 
-			CDirectoryEntry *pDir = dirList.GetFirst();
-			CFileList *pList = NULL;
-			CFileItem *pFile = NULL;
+		if (IsDlgButtonChecked(IDC_RADIO_NEW_PACKAGE))
+		{
+			int iCurSel = m_cbWADType.GetCurSel();
 
-			while (pDir)
+			if (iCurSel == CB_ERR)
 			{
-				pList = pDir->GetFileList();
-				pFile = pList->GetFirst();
-
-				while (pFile)
-				{
-					CBatchJob *pJob = new CBatchJob( pFile->GetFileName(), m_strDestinationDir, m_strSourceDir, m_iDestinationType, iImageType, m_pDestinationPackage );
-					m_vBatchJobs.push_back(pJob);
-					m_ThreadManager.AddJob( (LPVOID)pJob );
-					m_iJobCount++;
-					SetDlgItemText (IDC_TEMP_STATUS, pFile->GetFileName());
-					
-					pFile = pFile->GetNext();
-				}
-
-				pDir = pDir->GetNext();
+				AfxMessageBox("Did not specify new package type", MB_ICONSTOP);
+				return;
 			}
 
-			if (m_iJobCount)
-			{			
-				SetDlgItemText (IDC_BUTTON_GO, "&Stop");
-				m_iButtonState = BUTTON_STOP;
-				strText.Format ("Found %d files for conversion%s", m_iJobCount, CRLF);
-				SetDlgItemText (IDC_TEMP_STATUS, strText);
-				m_pbStatus.SetRange (0, m_iJobCount);
+			g_iMergeNewWADType = m_cbWADType.GetItemData(iCurSel);
+			m_pDestinationPackage = theApp.CreatePackageDoc();
 
-				m_ThreadManager.Start();
+			if (m_pDestinationPackage)
+			{
+				m_pDestinationPackage->SetWADType(g_iMergeNewWADType);
 			}
 			else
 			{
-				SetDlgItemText (IDC_TEMP_STATUS, "Nothing to convert!");		
+				AfxMessageBox("Failed to create new package", MB_ICONSTOP);
 			}
-
-			break;
 		}
 
-	case BUTTON_STOP:		
+		CDirectoryEntry* pDir = dirList.GetFirst();
+		CFileList* pList = NULL;
+		CFileItem* pFile = NULL;
+
+		while (pDir)
+		{
+			pList = pDir->GetFileList();
+			pFile = pList->GetFirst();
+
+			while (pFile)
+			{
+				CBatchJob* pJob = new CBatchJob(pFile->GetFileName(), m_strDestinationDir, m_strSourceDir, m_iDestinationType, iImageType, m_pDestinationPackage);
+				m_vBatchJobs.push_back(pJob);
+				m_pThreadManager->AddJob((LPVOID)pJob);
+				m_iJobCount++;
+				SetDlgItemText(IDC_TEMP_STATUS, pFile->GetFileName());
+
+				pFile = pFile->GetNext();
+			}
+
+			pDir = pDir->GetNext();
+		}
+
+		if (m_iJobCount)
+		{
+			SetDlgItemText(IDC_BUTTON_GO, "&Stop");
+			m_iButtonState = BUTTON_STOP;
+			strText.Format("Found %d files for conversion%s", m_iJobCount, CRLF);
+			SetDlgItemText(IDC_TEMP_STATUS, strText);
+			m_pbStatus.SetRange(0, m_iJobCount);
+
+			m_pThreadManager->Start();
+		}
+		else
+		{
+			SetDlgItemText(IDC_TEMP_STATUS, "Nothing to convert!");
+		}
+
+		break;
+	}
+
+	case BUTTON_STOP:
 		//m_pThreadList->SetSpoolerMessage (THREADSPOOLER_STOP);
-		m_ThreadManager.Stopped( TRUE );
+		m_pThreadManager->Stopped(TRUE);
+		while (!m_pThreadManager->Stopped())
+		{
+			Sleep(100);
+		}
 		strText.Format ("Threads cancelled!%s", CRLF);
 		m_strStatusText += strText;
 		break;
@@ -959,44 +968,34 @@ void CBatchDlg::OnSelchangeComboPackage()
 	}
 }
 
+bool IsSlash(char c)
+{
+	return c == '\\';
+}
 
 void CBatchDlg::OnKillfocusEditDestDir() 
 {
-	int x = 0;
-	int iLength = 0;
-	
 	GetDlgItemText (IDC_EDIT_DEST_DIR, m_strDestinationDir);
-
-	iLength = m_strDestinationDir.GetLength();
-	x = iLength - 1;
-
-	while (m_strDestinationDir.GetAt(x) == '\\')
+	std::string sTrim = m_strDestinationDir.GetBuffer();
+	if( m_strDestinationDir.GetLength() == 0 )	
 	{
-		x--;
+		return;
 	}
-	x++;
-
-	m_strDestinationDir = m_strDestinationDir.Left(x);
+	boost::trim_right_if(sTrim, IsSlash);
+	m_strDestinationDir = sTrim.c_str();
 	SetDlgItemText (IDC_EDIT_DEST_DIR, m_strDestinationDir);
 }
 
 void CBatchDlg::OnKillfocusEditSourceDir() 
 {	
-	int x = 0;
-	int iLength = 0;
-	
 	GetDlgItemText (IDC_EDIT_SOURCE_DIR, m_strSourceDir);
-
-	iLength = m_strSourceDir.GetLength();
-	x = iLength - 1;
-
-	while (m_strSourceDir.GetAt(x) == '\\')
+	std::string sTrim = m_strSourceDir.GetBuffer();
+	if (m_strSourceDir.GetLength() == 0)
 	{
-		x--;
+		return;
 	}
-	x++;
-
-	m_strSourceDir = m_strSourceDir.Left(x);
+	boost::trim_right_if(sTrim, IsSlash);
+	m_strSourceDir = sTrim.c_str();	
 	SetDlgItemText (IDC_EDIT_SOURCE_DIR, m_strSourceDir);
 	
 }

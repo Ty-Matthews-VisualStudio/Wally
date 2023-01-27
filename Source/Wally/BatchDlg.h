@@ -34,7 +34,7 @@ private:
 
 	int m_iDestinationType;
 	CPackageDoc *m_pDestinationPackage;
-	CThreadManager m_ThreadManager;
+	CThreadManager *m_pThreadManager;
 
 public:
 	CThreadMessage m_ThreadMessage;
