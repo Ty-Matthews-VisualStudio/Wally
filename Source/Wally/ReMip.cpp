@@ -135,11 +135,13 @@ long GetRandomSeed()
 	//BOOL	g_bAutoRemipAfterEdit;	 // = FALSE
 	//BOOL	g_bRebuildSubMipsOnSave; // = FALSE;
 
+#ifndef WALLY
 	// neal - used as cache for GetNearestColor (major speed-up!)
 	int g_iOldColor = -1;
 	int g_iOldR     = -1;
 	int g_iOldG     = -1;
 	int g_iOldB     = -1;
+#endif
 
 #ifndef WALLY
 /////////////////////////////////////////////////////////////////////////////
@@ -914,11 +916,13 @@ void Convert24BitTo256Color( CWallyPalette* pPal, COLOR_IRGB* pSrcData,
 		iErrorBelowB[i] = 0;
 	}
 
+#ifndef WALLY
 	// neal - used as cache for GetNearestColor (major speed-up!)
 	g_iOldColor = -1;
 	g_iOldR     = -1;
 	g_iOldG     = -1;
 	g_iOldB     = -1;
+#endif
 
 	// now convert the pixel to 256 color
 
