@@ -30,7 +30,12 @@ void CThreadJob::CleanUp()
 	if (m_hEvent)
 	{
 		CloseHandle(m_hEvent);
-	}	
+	}
+	if (m_hThread)
+	{
+		WaitForSingleObject(m_hThread, INFINITE);
+		CloseHandle(m_hThread);		
+	}
 	m_hEvent = NULL;
 	m_hThread = NULL;
 	SetStatus(TJClosed);
@@ -69,13 +74,7 @@ void CThreadJob::Stop()
 	if( m_hEvent )
 	{
 		SetEvent( m_hEvent );
-	}
-	if (m_hThread)
-	{
-		WaitForSingleObject(m_hThread, INFINITE);
-		CloseHandle(m_hThread);
-		m_hThread = NULL;
-	}
+	}	
 }
 
 BOOL CThreadJob::Stopped()

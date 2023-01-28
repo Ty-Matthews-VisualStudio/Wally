@@ -38,6 +38,10 @@
 #include <process.h>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/spirit/include/qi.hpp>
+#include <boost/phoenix.hpp>
+#include <boost/fusion/adapted.hpp>
+
 
 #include <list>
 #include <map>

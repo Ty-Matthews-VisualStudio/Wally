@@ -439,6 +439,27 @@ BOOL LoadDefaultEditingPalette( LPBYTE pbyPalette, CWallyPalette *pPalette, int 
 
 typedef double	Vec[3];
 
+namespace qi = boost::spirit::qi;
+
+template <typename Iterator>
+struct filename_parser : qi::grammar<Iterator, std::string(), qi::space_type, qi::locals<char> >
+{
+	filename_parser() : filename_parser::base_type(any_string, "")
+	{
+		using namespace qi;
+
+		quoted_string =
+			omit[char_("'\"")[_a = _1]]
+			>> no_skip[*(char_ - char_(_a))]
+			>> lit(_a)
+			;
+
+		any_string = quoted_string | +qi::alnum;
+	}
+
+	qi::rule<Iterator, std::string(), qi::space_type, qi::locals<char> > quoted_string, any_string;
+};
+
 class CWallyApp : public CWinApp
 {
 public:

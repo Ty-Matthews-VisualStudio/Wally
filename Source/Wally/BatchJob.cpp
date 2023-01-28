@@ -108,6 +108,10 @@ void CBatchJob::Process()
 	CColorOptimizer ColorOpt;
 	BYTE byPalette[ 768 ];
 
+	CMemBuffer mbBuffer;
+	CMemBuffer mbMipData;
+	CMemBuffer mb24Bit;
+
 	LPBYTE pbyBuffer		= NULL;
 	LPBYTE pbyData			= NULL;
 	LPBYTE pbyImageBits		= NULL;
@@ -117,8 +121,8 @@ void CBatchJob::Process()
 	LPQ2_MIP_S pWalHeader	= NULL;
 	COLOR_IRGB	*pTemp24Bit = NULL;	
 
-	list<DWORD> lstBlueIndexes;
-	list<DWORD>::iterator itIndex;
+	std::vector<DWORD> lstBlueIndexes;
+	std::vector<DWORD>::iterator itIndex;
 	BOOL bSetBlueIndex = FALSE;
 	BOOL bNonBlueColor = FALSE;
 	BOOL bBlueIndex = FALSE;
@@ -278,18 +282,17 @@ void CBatchJob::Process()
 				}
 
 				// Build a .wal file, so we can ReMip
-				pbyBuffer = new BYTE[ iTotalSize ];
-
+				//pbyBuffer = new BYTE[ iTotalSize ];
+				pbyBuffer = mbBuffer.GetBuffer(iTotalSize, MEMBUFFER_FLAG_ZEROMEMORY);
 				if( !pbyBuffer )
 				{
 					throw( "Failed to allocate memory for image buffer" );
 				}
-
+				
 				pbyData = pbyBuffer + Q2_HEADER_SIZE;
-				memset( pbyBuffer, 0, Q2_HEADER_SIZE );
+				//memset( pbyBuffer, 0, Q2_HEADER_SIZE );
 				
 				pWalHeader = (LPQ2_MIP_S)pbyBuffer;
-
 				pWalHeader->height = iHeight;
 				pWalHeader->width = iWidth;
 
@@ -298,7 +301,8 @@ void CBatchJob::Process()
 				pWalHeader->offsets[2] = Q2_HEADER_SIZE + iSizes[0] + iSizes[1];
 				pWalHeader->offsets[3] = Q2_HEADER_SIZE + iSizes[0] + iSizes[1] + iSizes[2];
 
-				pTemp24Bit = new COLOR_IRGB[ iSizes[0] * sizeof( COLOR_IRGB) ];
+				pTemp24Bit = (COLOR_IRGB*)mb24Bit.GetBuffer(iSizes[0] * sizeof(COLOR_IRGB));
+				//pTemp24Bit = new COLOR_IRGB[ iSizes[0] * sizeof( COLOR_IRGB) ];
 
 				if( !pTemp24Bit )
 				{
@@ -609,6 +613,8 @@ void CBatchJob::Process()
 		}
 	}
 
+#if 0
+	// 2023-01-27: Chasing a memory leak, converted these to CMemBuffer objects
 	if( pbyBuffer )
 	{
 		delete []pbyBuffer;
@@ -626,4 +632,5 @@ void CBatchJob::Process()
 		delete []pbyMipData;
 		pbyMipData = NULL;
 	}
+#endif
 }
