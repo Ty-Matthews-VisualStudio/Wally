@@ -23,7 +23,7 @@
 
 
 // 512 is to reserve room for 512 byte header (max)
-#define MAX_DATA_SIZE (MAX_MIP_SIZE * MAX_MIP_SIZE + 512)
+#define MAX_DATA_SIZE (MAX_MIP_SIZE * MAX_MIP_SIZE + 2048)
 
 #define USE_RGB  1
 

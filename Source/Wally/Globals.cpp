@@ -39,7 +39,9 @@ CString g_strProgramBuildDate = "<not set>";
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define ADD_REG_NUM(			i,		Value,	strKey)						g_rhHelper.AddItem (	&i,		i,		0,		0,		Value,	strKey)
-#define ADD_REG_NUM_MINMAX(		i,		min,	max,	Value, strKey)		g_rhHelper.AddItem (	&i,		i,		min,	max,	Value,	strKey)
+#define ADD_REG_NUM_MIN(		i,		min,	Value, strKey)				g_rhHelper.AddItem (	&i,		i,		min,	0,		Value,	strKey, REGISTRY_MIN )
+#define ADD_REG_NUM_MAX(		i,		max,	Value, strKey)				g_rhHelper.AddItem (	&i,		i,		0,		max,	Value,	strKey, REGISTRY_MAX )
+#define ADD_REG_NUM_MINMAX(		i,		min, max,	Value, strKey)			g_rhHelper.AddItem (	&i,		i,		min,		max,	Value,	strKey, REGISTRY_MIN | REGISTRY_MAX )
 #define ADD_REG_SZ(				str,	Value,	strKey)						g_rhHelper.AddItem (	&str,	str,					Value,	strKey)
 
 CRegistryHelper		g_rhHelper;	
@@ -553,10 +555,12 @@ void RegisterBatchConversionVariables()
 {
 	CString strBatchConversionKey ("BatchSettings");
 
+	g_iMaxConversionThreads = std::thread::hardware_concurrency(); // Use number of cores as the default
+
 	ADD_REG_SZ(			g_szSourceConvertDirectory,						"SourceDirectory",				strBatchConversionKey);
 	ADD_REG_SZ(			g_szDestinationConvertDirectory,				"DestinationDirectory",			strBatchConversionKey);
 	ADD_REG_SZ(			g_szConvertWildCard,							"WildCard",						strBatchConversionKey);
-	ADD_REG_NUM(		g_iMaxConversionThreads,						"MaxThreads",					strBatchConversionKey);
+	ADD_REG_NUM_MIN(	g_iMaxConversionThreads,	1,					"MaxThreads",					strBatchConversionKey);
 	ADD_REG_NUM(		g_bOverWriteFiles,								"OverWriteFiles",				strBatchConversionKey);
 	ADD_REG_NUM(		g_bRecurseSubdirectories,						"Recurse Subdirectories",		strBatchConversionKey);	
 	ADD_REG_NUM(		g_bRetainDirectoryStructure,					"Retain Structure",				strBatchConversionKey);

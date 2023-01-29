@@ -855,9 +855,12 @@ CString CImageHelper::GetErrorText( int iCode /* = IH_NONE */ )
 		m_strErrorText +=	"\tQuake2 Texture (WAL)\n";
 		m_strErrorText +=	"\tQuake1 Texture (MIP)\n";
 		m_strErrorText +=	"\tSiN Texture (SWL)\n";
+		m_strErrorText +=	"\tSerious Sam Texture (TEX)\n";
 		m_strErrorText +=	"\tZSoft PC Paintbrush (PCX)\n";
 		m_strErrorText +=	"\tWindows Bitmap (BMP)\n";
 		m_strErrorText +=	"\tTruevision Targa (TGA)\n";
+		m_strErrorText +=	"\tJPEG - JFIF (JPG)\n";
+		m_strErrorText +=	"\tPortable Network Graphic (PNG)\n";		
 		break;
 
 	case IH_UNSUPPORTED_PACKAGE:
@@ -2695,11 +2698,8 @@ BOOL CImageHelper::EncodeMIP ()
 	}
 
 	// All the sub-mips need to be built.
-	// 2048 is to reserve room for 512 byte header (max)
-	#define MAX_DATA_SIZE (MAX_MIP_SIZE * MAX_MIP_SIZE + 2048)
-	
 	BYTE	*pbyMipData		= NULL;
-	pbyMipData = (BYTE *) malloc(MAX_DATA_SIZE);	
+	pbyMipData = (BYTE *) malloc(MAX_DATA_SIZE);
 	if (!pbyMipData)
 	{
 		SetErrorCode (IH_OUT_OF_MEMORY);
@@ -2992,10 +2992,7 @@ BOOL CImageHelper::EncodeWAL ()
 	}
 
 
-	// All the sub-mips need to be built.
-	// 2048 is to reserve room for 512 byte header (max)
-	#define MAX_DATA_SIZE (MAX_MIP_SIZE * MAX_MIP_SIZE + 2048)
-	
+	// All the sub-mips need to be built.	
 	BYTE	*pbyMipData		= NULL;
 	pbyMipData = (BYTE *) malloc(MAX_DATA_SIZE);	
 	if (!pbyMipData)
@@ -3217,10 +3214,7 @@ BOOL CImageHelper::EncodeSWL ()
 	// Calculate the color to be used
 	CalcImageColor256 (iWidth[0], iHeight[0], pbyBits[0], m_byPalette, &(lpSinHeader->color[0]), &(lpSinHeader->color[1]), &(lpSinHeader->color[2]), TRUE);
 
-	// All the sub-mips need to be built.
-	// 2048 is to reserve room for 512 byte header (max)
-	#define MAX_DATA_SIZE (MAX_MIP_SIZE * MAX_MIP_SIZE + 2048)
-	
+	// All the sub-mips need to be built.	
 	BYTE	*pbyMipData		= NULL;
 	pbyMipData = (BYTE *) malloc(MAX_DATA_SIZE);	
 	if (!pbyMipData)
@@ -3463,9 +3457,6 @@ BOOL CImageHelper::EncodeM8 ()
 	Palette.SetPalette (m_byPalette, 256);
 	
 	// All the sub-mips need to be built.
-	//  2048 is to reserve room for 512 byte header (max)
-	#define MAX_DATA_SIZE (MAX_MIP_SIZE * MAX_MIP_SIZE + 2048)
-	
 	BYTE	*pbyMipData		= NULL;
 	pbyMipData = (BYTE *) malloc(MAX_DATA_SIZE);	
 	if (!pbyMipData)

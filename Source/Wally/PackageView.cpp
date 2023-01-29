@@ -2104,10 +2104,7 @@ bool CPackageView::AddImage (unsigned char *pbyBits[], CWallyPalette *pPalette, 
 
 	if (bReMip)
 	{
-		// We've got the main image, time to rebuild the sub-mips		
-		// 512 is to reserve room for 512 byte header (max)
-		#define MAX_DATA_SIZE (MAX_MIP_SIZE * MAX_MIP_SIZE + 512)
-			
+		// We've got the main image, time to rebuild the sub-mips					
 		BYTE	*pbyMipData		= NULL;
 		pbyMipData = (BYTE *) malloc(MAX_DATA_SIZE);
 
