@@ -474,6 +474,7 @@ BOOL CWallyApp::InitInstance()
 	g_strDecalDirectory = g_szAppDirectory + "Decals";
 	g_strBrowseCacheDirectory = g_szAppDirectory + "Browser Cache";
 	g_strTempDirectory = g_szAppDirectory + "Temp";
+	g_strJSONDirectory = g_szAppDirectory + "json";
 
 	_mkdir(g_strPaletteDirectory);
 	_mkdir(g_strDecalDirectory);

@@ -186,6 +186,10 @@ public:
 	void Encrypt( const char *sKey );
 	void Decrypt( const char *sKey );
 	LPBYTE InitFromResource( WORD );
+
+#ifdef BOOST_JSON_HPP
+	boost::json::value ParseJson(boost::json::error_code& ec);
+#endif
 	
 	static std::string& TrimLeft( std::string& str, const char c );
 	static std::string& TrimRight( std::string& str, const char c );

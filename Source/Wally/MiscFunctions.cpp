@@ -657,8 +657,8 @@ void GetAllWildCards( LPSTR szWildCard, CStringArray *psaWildCards )
 
 BOOL MatchesWildCard (char *szSource, CStringArray *psaWildCards)
 {
-	register char *n;
-	register char *szUpperSource;
+	char *n;
+	char *szUpperSource;
 
 	CString strWildCard("");
 	CString strSource("");
@@ -712,8 +712,8 @@ int fnmatch (char *pattern, char *string, int flags)
 	
 */
 
-	register char *p = pattern, *n = string;
-	register char c;
+	char *p = pattern, *n = string;
+	char c;
 
 	if ((flags & ~__FNM_FLAGS) != 0)
 	{		
@@ -793,7 +793,7 @@ int fnmatch (char *pattern, char *string, int flags)
         case '[':
           {
             /* Nonzero if the sense of the character class is inverted.  */
-            register int iNot;
+            int iNot;
 
             if (*n == '\0')
               return (FNM_NOMATCH);
@@ -812,7 +812,7 @@ int fnmatch (char *pattern, char *string, int flags)
                not a closing `]'.  This code will have to be changed when
                POSIX.2 character classes are implemented. */
             {
-              register char *np;
+              char *np;
 
               for (np = p; np && *np && *np != ']'; np++)
                 ;
@@ -832,7 +832,7 @@ int fnmatch (char *pattern, char *string, int flags)
             c = *p++;
             for (;;)
               {
-                register char cstart, cend;
+                char cstart, cend;
 
                 /* Initialize cstart and cend in case `-' is the last
                    character of the pattern. */

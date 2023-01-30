@@ -102,6 +102,7 @@ CString		g_strDecalDirectory				= "";
 CString		g_strTempDirectory				= "";
 CString		g_strPaletteDirectory			= "";
 CString		g_szAppDirectory				= "";
+CString		g_strJSONDirectory				= "";
 
 CWndList		g_InvalidateList;
 CProgressCtrl	g_ctProgress;

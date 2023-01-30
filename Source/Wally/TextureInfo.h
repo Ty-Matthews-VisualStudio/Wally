@@ -75,6 +75,9 @@ public:
 // Methods
 public:
 	void Init (LPQ2_MIP_S WalHeader);
+	void LoadJSON();
+	LPVOID LoadEngineJSON(LPCTSTR szFolderName);
+	void LoadEngineFromJSON(LPCTSTR szFileName);
 
 // Implementation
 protected:
@@ -115,8 +118,11 @@ protected:
 	afx_msg void OnTranslucentCheck();
 	virtual void OnOK();
 	afx_msg void OnHintCheck();
+	afx_msg bool OnInitDialog();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
+public:
+	CComboBox m_lstEngines;
 };
 
 //{{AFX_INSERT_LOCATION}}

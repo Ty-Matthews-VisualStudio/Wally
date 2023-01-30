@@ -959,7 +959,7 @@ BEGIN
     CONTROL         "0x20",IDC_FLAGS_0X20,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,347,98,49,10
     CONTROL         "0x40",IDC_FLAGS_0X40,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,347,108,49,10
     LTEXT           "Q2 Engine:",IDC_STATIC,7,108,36,8
-    COMBOBOX        IDC_COMBO1,7,119,81,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_TEXTUREINFO_Q2ENGINE,7,119,81,103,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     CONTROL         "0x80",IDC_FLAGS_0X80,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,347,118,49,10
     CONTROL         "0x100",IDC_FLAGS_0X100,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,399,48,49,10
     CONTROL         "0x200",IDC_FLAGS_0X200,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,399,58,49,10
@@ -3329,10 +3329,6 @@ STRINGTABLE
 BEGIN
     ID_STATUSBAR_PROGRESS   "                                                                                                                  "
     IDR_MAINFRAME           "Wally"
-END
-
-STRINGTABLE
-BEGIN
     IDR_WALLYTYPE           "\nWally\nWally\nQuake2 .wal Files (*.wal)\n.wal\n\n\n"
     IDR_PACKAGE_TYPE        "\nWally\nWally\nTexture Package Files (*.wad)\n.wad\n\n\n"
     IDR_BROWSETYPE          "\nWally\nWally\nQuake2 .wal Files (*.wal)\n.wal\n\n\n"
@@ -3459,11 +3455,22 @@ END
 
 STRINGTABLE
 BEGIN
+    ID_ZOOMVALUE_STATUSBAR  " "
+    ID_CONSTRAIN_STATUSBAR  "Horizontal"
     ID_ZOOM                 "Zoom In\nZoom In"
     ID_FILE_BROWSE          "Browse Images\nBrowse"
     ID_VIEW_OPTIONS         "View Wally Options\nOptions"
     IDS_OUT_OF_MEM          "Operation Failed -- Out of Memory"
     ID_FILE_LOAD_PALETTE    "Load Palette from disk\nLoad Palette"
+    ID_TP_DROPPER           "Eye Dropper\nEye Dropper"
+    ID_TP_SELECTION         "Selection\nSelection"
+    ID_TP_PAINT             "Paint\nPaint"
+    ID_TP_ZOOM              "Zoom\nZoom"
+    ID_TP_TILE              "Tile Image\nTile Image"
+    ID_TP_FLAGS             "Set Texture Flags\nSet Texture Flags"
+    ID_PALETTE_COLORS       "Choose color\nChoose color"
+    ID_TP_ANIMATE           "Animate Texture\nAnimate"
+    ID_FILE_IMPORT_ASNEWWAL "Import graphic as new texture\nImport new"
 END
 
 STRINGTABLE
@@ -3474,105 +3481,16 @@ BEGIN
     IDS_PALETTE_OFN_TITLE   "Open Palette"
     ID_ZOOM_DIALOGBAR       "Zoom Dialog Bar"
     ID_XYPOS                " "
+END
+
+STRINGTABLE
+BEGIN
     ID_WIDTH_HEIGHT         " "
     ID_BLANK_PANE           "   "
     ID_BROWSE_BLANK         " "
     IDS_FILEOPEN_WILDCARD   "WAL - Quake2 texture files (*.wal)|*.wal|WAD3 - Half-Life texture packages (*.wad)|*.wad||"
     IDS_FILEOPEN_TITLE      "Open"
     IDS_FILEOPEN_EXTENSION  "wal"
-END
-
-STRINGTABLE
-BEGIN
-    ID_ZOOMVALUE_STATUSBAR  " "
-    ID_CONSTRAIN_STATUSBAR  "Horizontal"
-END
-
-STRINGTABLE
-BEGIN
-    ID_TP_DROPPER           "Eye Dropper\nEye Dropper"
-    ID_TP_SELECTION         "Selection\nSelection"
-    ID_TP_PAINT             "Paint\nPaint"
-    ID_TP_ZOOM              "Zoom\nZoom"
-    ID_TP_TILE              "Tile Image\nTile Image"
-    ID_TP_FLAGS             "Set Texture Flags\nSet Texture Flags"
-END
-
-STRINGTABLE
-BEGIN
-    ID_IMAGE_EDIT_TOOLBAR   "Show or hide the Tool Palette\nToggle Tool Palette"
-END
-
-STRINGTABLE
-BEGIN
-    ID_PALETTE_TOOLBAR      "Show or hide the Color Palette\nToggle Color Palette"
-    ID_TOOLSETTINGS_TOOLBAR "Show or hide the Tool Settings Toolbar\nToggle Settings"
-END
-
-STRINGTABLE
-BEGIN
-    ID_PALETTE_COLORS       "Choose color\nChoose color"
-    ID_TP_ANIMATE           "Animate Texture\nAnimate"
-    ID_FILE_IMPORT_ASNEWWAL "Import graphic as new texture\nImport new"
-END
-
-STRINGTABLE
-BEGIN
-    ID_IMAGE_EMBOSS         "Embosses the current image (3D depth effect)"
-    ID_IMAGE_EDGE_DETECT    "Hightlight the edges of the current image (image processing effect)"
-    ID_IMAGE_GENERATE_MARBLE_TEXTURE 
-                            "Creates a marbled synthetic (procedural) texture"
-    ID_IMAGE_CONVERT_TEXTURES_QUAKE_TO_FROM_UNREAL 
-                            "Swaps Quake/Unreal transparency color indexes"
-    ID_IMAGE_GENERATE_MARBLE_TILE_TEXTURE 
-                            "Creates a tiled marble synthetic (procedural) texture"
-    ID_EDIT_FREEUNDOMEMORY  "Frees up memory by discarding Undo and Redo actions"
-    ID_IMAGE_DIFFUSE        "Scatters the pixels in the current image"
-    ID_IMAGE_FLIP_HORZ      "Flip Texture Horizontally (Mirror)\nFlip Horizontally"
-    ID_IMAGE_FLIP_VERT      "Flip Texture Vertically\nFlip Vertically"
-    ID_FILE_BATCH_CONVERSION "Batch Conversion\nBatch Conversion"
-    ID_TP_RIVETS            "Rivets\nRivets"
-    ID_EDIT_PASTE_PACKAGE   "Paste Into Package File\nPaste"
-    ID_PACKAGE_OPEN         "Open Selected Items\nOpen"
-    ID_MENUITEM2943         "Rename Package File\nRename"
-END
-
-STRINGTABLE
-BEGIN
-    ID_FILE_IMPORT_INTO     "Import graphic into current texture\nImport"
-    ID_POPUP_COPY_AS_BITMAP "Copy texture into clipboard as Bitmap\nCopy "
-    ID_EDIT_PASTE_AS_NEW_IMAGE 
-                            "Paste contents of clipboard as a new Texture\nPaste New"
-    ID_TOOLBAR_MIP1         "Change to Sub-Mip 1\nSub-Mip 1"
-    ID_TOOLBAR_MIP2         "Change to Sub-Mip 2\nSub-Mip 2"
-    ID_TOOLBAR_MIP4         "Change to Sub-Mip 4\nSub-Mip 4"
-    ID_TOOLBAR_MIP3         "Change to Sub-Mip 3\nSub-Mip 3"
-END
-
-STRINGTABLE
-BEGIN
-    CG_IDS_CANNOT_OPEN_CLIPBOARD "Failed to open Clipboard!"
-    CG_IDS_CANNOT_GET_CLIPBOARD_DATA "Failed to get Clipboard data!"
-    IDS_PROPSHT_CAPTION     "Wally Options"
-END
-
-STRINGTABLE
-BEGIN
-    ID_TP_REMIP             "ReMip Deluxe (c) Neal White III\nReMip Image"
-    ID_VIEW_REMIP_OPTIONS   "View ReMipDLX (rebuilding sub-mips) Options\nReMipDLX Options"
-    ID_FILE_SELECT_FOLDER   "Select New Folder to Browse\nSelect Folder"
-    ID_FILE_CONVERT         "Convert an Image\nConvert Image"
-    ID_TP_BRUSH             "Paintbrush\nPaintbrush"
-    ID_TP_PENCIL            "Pencil\nPencil"
-    ID_TP_BIGBRUSH          "Large Paintbrush\nLarge Paintbrush"
-    ID_TP_ERASER            "Eraser\nEraser"
-    ID_TP_LIGHTEN           "Lighten\nLighten"
-    ID_TP_DARKEN            "Darken\nDarken"
-    ID_TP_SCRATCH           "Scratch\nScratch"
-END
-
-STRINGTABLE
-BEGIN
     IDS_FILEBROWSE_TITLE    "Select Browse Directory"
     IDS_FILE_CONVERT_WILDCARD 
                             "BMP - Windows Bitmap (*.bmp)|*.bmp|MIP - Quake1 texture files (*.mip)|*.mip|PCX - Zsoft Paintbrush (*.pcx)|*.pcx||"
@@ -3585,6 +3503,88 @@ END
 
 STRINGTABLE
 BEGIN
+    ID_IMAGE_EDIT_TOOLBAR   "Show or hide the Tool Palette\nToggle Tool Palette"
+    ID_PALETTE_TOOLBAR      "Show or hide the Color Palette\nToggle Color Palette"
+    ID_TOOLSETTINGS_TOOLBAR "Show or hide the Tool Settings Toolbar\nToggle Settings"
+END
+
+STRINGTABLE
+BEGIN
+    ID_DRAWINGMODE_LINE     "Draw normal unconnected lines\nLine Mode"
+    ID_DRAWINGMODE_POLYLINE "Draw connected lines (use ENTER to start new sequence)\nPolyLine Mode"
+    ID_DRAWINGMODE_RAY      "Draw rays from an initial point (use ENTER to start new sequence)\nRay Mode"
+    ID_DRAWINGMODE_HOLLOW_RECT 
+                            "Draw hollow rectangles\nDraw Hollow Rectangles"
+    ID_DRAWINGMODE_SOLID_RECT "Draw solid rectangles\nDraw Solid Rectangles"
+    ID_DRAWINGMODE_EDGED_RECT "Draw edged rectangles\nDraw Edged Rectangles"
+    ID_IMAGE_BRIGHTNESS_CONTRAST 
+                            "Adjusts the image's brightness and/or contrast"
+    ID_IMAGE_ADD_NOISE      "Adds ""noise"" (film grain effect) to the current image"
+    ID_IMAGE_BLEND          "Blends (smooths) the current image"
+    ID_IMAGE_EMBOSS         "Embosses the current image (3D depth effect)"
+    ID_IMAGE_EDGE_DETECT    "Hightlight the edges of the current image (image processing effect)"
+    ID_IMAGE_GENERATE_MARBLE_TEXTURE 
+                            "Creates a marbled synthetic (procedural) texture"
+    ID_IMAGE_CONVERT_TEXTURES_QUAKE_TO_FROM_UNREAL 
+                            "Swaps Quake/Unreal transparency color indexes"
+    ID_IMAGE_GENERATE_MARBLE_TILE_TEXTURE 
+                            "Creates a tiled marble synthetic (procedural) texture"
+    ID_EDIT_FREEUNDOMEMORY  "Frees up memory by discarding Undo and Redo actions"
+    ID_IMAGE_DIFFUSE        "Scatters the pixels in the current image"
+END
+
+STRINGTABLE
+BEGIN
+    ID_IMAGE_FLIP_HORZ      "Flip Texture Horizontally (Mirror)\nFlip Horizontally"
+    ID_IMAGE_FLIP_VERT      "Flip Texture Vertically\nFlip Vertically"
+    ID_FILE_BATCH_CONVERSION "Batch Conversion\nBatch Conversion"
+    ID_TP_RIVETS            "Rivets\nRivets"
+    ID_EDIT_PASTE_PACKAGE   "Paste Into Package File\nPaste"
+    ID_PACKAGE_OPEN         "Open Selected Items\nOpen"
+    ID_MENUITEM2943         "Rename Package File\nRename"
+    ID_EDIT_RENAME          "Renames selected item\nRename"
+    ID_POPUP_DELETE         "Delete Image\nDelete"
+    ID_PACKAGE_ADD          "Add Items to current editor\nAdd Items"
+    ID_EDIT_PASTE_OVER      "Paste Over Current Selection\nPaste Over"
+    ID_EDIT_DELETE          "Delete the Current Selection\nDelete Image"
+    ID_PACKAGE_EXPORT       "Export Images from current editor\nExport"
+    ID_IMAGE_OFFSET         "Adjusts the image's x/y offset"
+    ID_IMAGE_SHARPEN        "Sharpens the current image"
+    ID_COLORS_SWAP_INDEXES  "Swap Indexes\nSwap Indexes"
+END
+
+STRINGTABLE
+BEGIN
+    ID_FILE_IMPORT_INTO     "Import graphic into current texture\nImport"
+    ID_POPUP_COPY_AS_BITMAP "Copy texture into clipboard as Bitmap\nCopy "
+    ID_EDIT_PASTE_AS_NEW_IMAGE 
+                            "Paste contents of clipboard as a new Texture\nPaste New"
+    ID_TOOLBAR_MIP1         "Change to Sub-Mip 1\nSub-Mip 1"
+    ID_TOOLBAR_MIP2         "Change to Sub-Mip 2\nSub-Mip 2"
+    ID_TOOLBAR_MIP4         "Change to Sub-Mip 4\nSub-Mip 4"
+    ID_TOOLBAR_MIP3         "Change to Sub-Mip 3\nSub-Mip 3"
+    ID_TP_REMIP             "ReMip Deluxe (c) Neal White III\nReMip Image"
+    ID_VIEW_REMIP_OPTIONS   "View ReMipDLX (rebuilding sub-mips) Options\nReMipDLX Options"
+    ID_FILE_SELECT_FOLDER   "Select New Folder to Browse\nSelect Folder"
+    ID_FILE_CONVERT         "Convert an Image\nConvert Image"
+    ID_TP_BRUSH             "Paintbrush\nPaintbrush"
+    ID_TP_PENCIL            "Pencil\nPencil"
+    ID_TP_BIGBRUSH          "Large Paintbrush\nLarge Paintbrush"
+    ID_TP_ERASER            "Eraser\nEraser"
+    ID_TP_LIGHTEN           "Lighten\nLighten"
+END
+
+STRINGTABLE
+BEGIN
+    CG_IDS_CANNOT_OPEN_CLIPBOARD "Failed to open Clipboard!"
+    CG_IDS_CANNOT_GET_CLIPBOARD_DATA "Failed to get Clipboard data!"
+    IDS_PROPSHT_CAPTION     "Wally Options"
+END
+
+STRINGTABLE
+BEGIN
+    ID_TP_DARKEN            "Darken\nDarken"
+    ID_TP_SCRATCH           "Scratch\nScratch"
     ID_VIEW_TOOL_OPTIONS    "View Tool Options\nTool Options"
     ID_TP_BULLET_HOLES      "Bullet Holes\nBullet Holes"
     ID_TP_WIDTH             "Drawing Width\nDrawing Width"
@@ -3604,11 +3604,12 @@ BEGIN
     ID_SHAPE_SQUARE         "Draw with a square shaped tool"
     ID_SHAPE_CIRCULAR       "Draw with a circular shaped tool"
     ID_SHAPE_DIAMOND        "Draw with a diamond shaped tool"
-END
-
-STRINGTABLE
-BEGIN
-    ID_COMBO_SIZE           "For Help, press F1"
+    ID_TOOL_AMOUNT          "Set the amount of effect to apply"
+    ID_BRPOPUP_PROPERTIES   "Set Texture Properties\nProperties"
+    ID_BRPOPUP_OPEN         "Open Texture\nOpen"
+    ID_TESTPPAGE            "Test\nTest"
+    ID_FILE_EXPORT          "Export Texture to Image file\nExport"
+    ID_TP_REPLACE           "Color Replacer\nReplace"
 END
 
 STRINGTABLE
@@ -3617,16 +3618,23 @@ BEGIN
     ID_COMBO_SHAPE          "For Help, press F1"
     IDC_DT_TAB              "For Help, press F1"
     IDC_BTN_UI_AREA         "For Help, press F1"
+    ID_COMBO_SIZE           "For Help, press F1"
 END
 
 STRINGTABLE
 BEGIN
+    IDC_BUTTON_COLOR        "Click to manually select color values"
+    IDC_BUTTON_AUTO         "Click to automatically generate color values"
     IDC_TST_TAB             "For Help, press F1"
     IDC_TST1_COMBO_WAD      "For Help, press F1"
     IDC_TST1_LIST_IMAGES    "For Help, press F1"
     IDC_TST1_BUTTON_PREVIEW "For Help, press F1"
     IDC_TST1_BUTTON_MOUSE_GUI "For Help, press F1"
     IDC_TST1_STATUS         "For Help, press F1"
+END
+
+STRINGTABLE
+BEGIN
     IDC_TST2_COLOR_TOLERANCE_STATIC "For Help, press F1"
     IDC_TST2_COLOR_TOLERANCE "For Help, press F1"
     IDC_TST2_COLOR_TOLERANCE_SPIN "For Help, press F1"
@@ -3640,12 +3648,6 @@ END
 
 STRINGTABLE
 BEGIN
-    ID_TOOL_AMOUNT          "Set the amount of effect to apply"
-    ID_BRPOPUP_PROPERTIES   "Set Texture Properties\nProperties"
-    ID_BRPOPUP_OPEN         "Open Texture\nOpen"
-    ID_TESTPPAGE            "Test\nTest"
-    ID_FILE_EXPORT          "Export Texture to Image file\nExport"
-    ID_TP_REPLACE           "Color Replacer\nReplace"
     ID_TP_SPRAY             "Spray Paint\nSpray Paint"
     ID_FILTER_BLEND         "Blends the current image"
     ID_FILTER_BLEND_HEAVY   "Blends the current image a lot"
@@ -3653,10 +3655,6 @@ BEGIN
     ID_BRPOPUP_COPY         "Copy Texture to Clipboard\nCopy"
     ID_EDIT_COPYTILED       "Copy Tiled Texture to Clipboard\nCopy Tiled"
     ID_TP_FLOOD_FILL        "Flood Fill\nFlood Fill"
-END
-
-STRINGTABLE
-BEGIN
     ID_TP_PATTERNED_PAINT   "Patterned Paint\nPatterned Paint"
     ID_IMAGE_MIRROR         "Mirror Texture (reflects part of an image for symmetrical textures)\nMirror"
     ID_BRPOPUP_COPYTILED    "Copy Tiled Texture to Clipboard\nCopy Tiled"
@@ -3664,43 +3662,15 @@ BEGIN
     ID_TP_RECOLOR           "Recolor\nRecolor"
     ID_TP_SPRAY_RECOLOR     "Spray Recolor\nSpray Recolor"
     ID_DRAWINGMODE_FREEHAND "Draw normal strokes\nFreehand Mode"
-    ID_DRAWINGMODE_LINE     "Draw normal unconnected lines\nLine Mode"
-    ID_DRAWINGMODE_POLYLINE "Draw connected lines (use ENTER to start new sequence)\nPolyLine Mode"
-    ID_DRAWINGMODE_RAY      "Draw rays from an initial point (use ENTER to start new sequence)\nRay Mode"
 END
 
 STRINGTABLE
 BEGIN
-    ID_DRAWINGMODE_HOLLOW_RECT 
-                            "Draw hollow rectangles\nDraw Hollow Rectangles"
-    ID_DRAWINGMODE_SOLID_RECT "Draw solid rectangles\nDraw Solid Rectangles"
-    ID_DRAWINGMODE_EDGED_RECT "Draw edged rectangles\nDraw Edged Rectangles"
-    ID_IMAGE_BRIGHTNESS_CONTRAST 
-                            "Adjusts the image's brightness and/or contrast"
-    ID_IMAGE_ADD_NOISE      "Adds ""noise"" (film grain effect) to the current image"
-    ID_IMAGE_BLEND          "Blends (smooths) the current image"
-END
-
-STRINGTABLE
-BEGIN
-    ID_EDIT_RENAME          "Renames selected item\nRename"
-    ID_POPUP_DELETE         "Delete Image\nDelete"
-    ID_PACKAGE_ADD          "Add Items to current editor\nAdd Items"
-    ID_EDIT_PASTE_OVER      "Paste Over Current Selection\nPaste Over"
-    ID_EDIT_DELETE          "Delete the Current Selection\nDelete Image"
-    ID_PACKAGE_EXPORT       "Export Images from current editor\nExport"
-    ID_IMAGE_OFFSET         "Adjusts the image's x/y offset"
-    ID_IMAGE_SHARPEN        "Sharpens the current image"
-    ID_COLORS_SWAP_INDEXES  "Swap Indexes\nSwap Indexes"
     ID_COLORS_EDIT_PALETTE  "Edit Palette\nEdit Palette"
     ID_COLORS_LOAD_PALETTE  "Load Palette\nLoad Palette"
     ID_COLORS_SAVE_PALETTE  "Save Palette\nSave Palette"
     ID_COLORS_COUNT_COLORS_USED "Count colors used\nCount colors used"
     ID_COLORS_TRANSLATE     "Translate colors\nTranslate colors"
-END
-
-STRINGTABLE
-BEGIN
     ID_IMAGE_RESIZE         "Resize Texture\nResize"
     ID_SELECTION_SELECTALL  "Selects all of the current image"
     ID_SELECTION_SELECTNONE "Gets rid of the current selection area"
@@ -3709,20 +3679,15 @@ BEGIN
     ID_REPEAT_FILTER_PICK1  "Repeat this filter using the same settings as last time (no dialog box)"
     ID_REPEAT_FILTER_PICK2  "Repeat this filter using the same settings as last time (no dialog box)"
     ID_REPEAT_FILTER_PICK3  "Repeat this filter using the same settings as last time (no dialog box)"
+END
+
+STRINGTABLE
+BEGIN
     ID_SHOW_FINE_GRID       "Show or hide the fine grid lines\nToggle Fine Grid Lines"
     ID_SHOW_COURSE_GRID     "Show or hide the course grid lines\nToggle Course Grid Lines"
     ID_TOOLBAR_FINEGRID     "Show or hide the fine grid\nToggle Fine Grid"
     ID_BUTTON2974           "Show or hide the coarse grid\nToggle Coarse Grid"
     ID_FILE_LOAD_Q2PALETTE  "Load default Q2 palette\nLoad Q2 Palette"
-END
-
-STRINGTABLE
-BEGIN
-    IDS_WAD3_PACKAGE        "WAD3 - Half-Life texture packages (*.wad)|*.wad||"
-END
-
-STRINGTABLE
-BEGIN
     ID_FILE_LOAD_Q1PALETTE  "Load default Q1 palette\nLoad Q1 Palette"
     ID_VIEW_DECAL           "Show or hide the Decal Toolbar\nToggle Decals"
     ID_EDIT_PASTE_SPECIALEFFECTS 
@@ -3739,11 +3704,31 @@ BEGIN
                             "Copies the current source image into the pattern paint tool (left mouse button)"
     ID_USE_AS_RIGHT_PATTERN_SOURCE 
                             "Copies the current source image into the pattern paint tool (right mouse button)"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_WAD3_PACKAGE        "WAD3 - Half-Life texture packages (*.wad)|*.wad||"
+END
+
+STRINGTABLE
+BEGIN
     ID_TP_DECAL             "Decal\nDecal"
     ID_USE_AS_LEFT_DECAL_SOURCE 
                             "Copies the current source image into the pattern paint tool (left mouse button)"
     ID_USE_AS_RIGHT_DECAL_SOURCE 
                             "Copies the current source image into the pattern paint tool (right mouse button)"
+    ID_PACKAGE_REMIP_SELECTED "ReMip Selected Items\nReMip Selected"
+    ID_PACKAGE_REMIP_ALL    "ReMip All\nReMip All"
+    ID_BUILD_POPUP_COPY     "Copy to Clipboard\nCopy"
+    ID_BUILDVIEW_POPUP_COPYTILED "Copy Tiled Texture to Clipboard\nCopy Tiled"
+    ID_BUILDVIEW_POPUP_COPY "Copy to Clipboard\nCopy"
+    ID_BUILDVIEW_PROPERTIES "Set Texture Properties\nProperties"
+    ID_BUILDVIEW_POPUP_PROPERTIES "Set Texture Properties\nProperties"
+    ID_BUILDVIEW_POPUP_PASTE "Paste\nPaste"
+    ID_BUILDVIEW_POPUP_DELETE "Delete Texture\nDelete"
+    ID_FILE_WLY             "Wally Tree View\nDEBUG"
+    ID_PACKAGE_NEW_IMAGE    "Create New Image in Package\nCreate New"
 END
 
 STRINGTABLE
@@ -3751,12 +3736,19 @@ BEGIN
     IDC_CHECK_NONLIT        "Surface is lit from within, not ambient (see nonlit field)"
     IDC_DT1_LIST_IMAGES     "For Help, press F1"
     IDC_CHECK_CONVEYOR      "Surface acts like a conveyor (set translate flag and trans mag)"
+    IDC_CHECK_FENCE         "Projectiles will go through brush"
+    IDC_CHECK_RNDTIME       "Time between animations is random"
+    IDC_CHECK_ADDBLEND      "Handles alpha blending and lighting for func_volumetric entity"
 END
 
 STRINGTABLE
 BEGIN
     IDC_PUSH_RANDOM         "Enable random tiling for qualifying images"
     IDC_CHECK_NOFILTER      "Console display won't fade out with distance"
+END
+
+STRINGTABLE
+BEGIN
     IDC_DT1_BUTTON_LEFT     "For Help, press F1\nUse as left button"
     IDC_DT1_BUTTON_RIGHT    "For Help, press F1\nUse as right button"
     IDC_DT1_COMBO_WAD       "For Help, press F1\nSelect decal package"
@@ -3769,25 +3761,10 @@ END
 
 STRINGTABLE
 BEGIN
-    ID_PACKAGE_REMIP_SELECTED "ReMip Selected Items\nReMip Selected"
-    ID_PACKAGE_REMIP_ALL    "ReMip All\nReMip All"
-    ID_BUILD_POPUP_COPY     "Copy to Clipboard\nCopy"
-    ID_BUILDVIEW_POPUP_COPYTILED "Copy Tiled Texture to Clipboard\nCopy Tiled"
-    ID_BUILDVIEW_POPUP_COPY "Copy to Clipboard\nCopy"
-    ID_BUILDVIEW_PROPERTIES "Set Texture Properties\nProperties"
-    ID_BUILDVIEW_POPUP_PROPERTIES "Set Texture Properties\nProperties"
-    ID_BUILDVIEW_POPUP_PASTE "Paste\nPaste"
-    ID_BUILDVIEW_POPUP_DELETE "Delete Texture\nDelete"
-    ID_FILE_WLY             "Wally Tree View\nDEBUG"
-    ID_PACKAGE_NEW_IMAGE    "Create New Image in Package\nCreate New"
     ID_TP_BLEND             "Blend\nBlend"
     ID_FILE_BROWSE2         "BETA Browser\nBeta Browser"
     ID_POPUP_COPYRESIZE     "Copy Resize\nCopy Resize"
     ID_VIEW_SHOWSUBMIPS     "Show sub-mips in the image view\nShow sub-mips"
-END
-
-STRINGTABLE
-BEGIN
     ID_FILE_REFRESH         "Refresh View\nRefresh View"
     ID_VIEW_RULES           "View Rules\nView Rules"
     ID_FILE_TEST_TXL        "DEBUG ONLY!!! BETA BETA BETA"
@@ -3798,12 +3775,33 @@ BEGIN
     ID_BVPOPUP_PASTE        "Paste Image File(s)\nPaste"
     ID_IMAGE_ENLARGE        "Adjust Canvas Size\nCanvas"
     ID_FILE_TEST            "Package 2\nPackage 2  ***DEBUG***"
-    ID_TP_CLONE             "Clone\nClone"
-    ID_TP_RUBBER_STAMP      "Rubber Stamp\nRubber Stamp"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TP_CLONE             "Clone\nClone"
+    ID_TP_RUBBER_STAMP      "Rubber Stamp\nRubber Stamp"
+    ID_FILE_PAK             "Pak Editor\nPak Editor"
+    ID_PAKPOPUP_DELETE      "Delete Image File(s)\nDelete"
+    ID_PAKPOPUP_COPY        "Copy Image File(s)\nCopy"
+    ID_PAKPOPUP_PASTE       "Paste Image File(s)\nPaste"
+    ID_PAK_POPUP_OPEN       "Opens selected items\nOpen"
+    ID_PAK_POPUP_DELETE     "Removes the selected items\nCut "
+    ID_PAK_POPUP_CUT        "Removes the selected items and copies them to the clipboard\nCut"
+    ID_PAK_POPUP_COPY       "Copies the selected items to the clipboard\nCopy"
+    ID_PAK_POPUP_RENAME     "Renames selected item\nRename"
+    ID_PAK_POPUP_PASTE      "Paste items\nPaste"
+    ID_PAK_POPUP_NEW_FOLDER "Creates a new folder in the current directory\nNew Folder"
+    ID_PAK_POPUP_NEW_TXTFILE 
+                            "Creates a new text document in the current directory\nNew Text Document"
+    ID_PAK_POPUP_NEW_IMAGE  "Creates a new image in the current directory\nNew Image"
+END
+
+STRINGTABLE
+BEGIN
+    IDC_CHECK_SOLID         "Brush is solid (content has no meaning, do not use)"
+    IDC_CHECK_LAVA          "Brush is lava"
+    IDC_CHECK_SLIME         "Brush is slime"
     IDC_CHECK_WATER         "Brush is water"
     IDC_CHECK_MIST          "Brush is non-solid"
     IDC_CHECK_PORTAL        "Portal"
@@ -3813,6 +3811,10 @@ BEGIN
     IDC_CHECK_CURRENT90     "Brush moves actors along the positive X axis"
     IDC_CHECK_CURRENT180    "Brush moves actors along the negative Y axis"
     IDC_CHECK_CURRENT270    "Brush moves actors along the negative X axis"
+END
+
+STRINGTABLE
+BEGIN
     IDC_CHECK_CURRENTUP     "Brush moves actors along the positive Z axis"
     IDC_CHECK_CURRENTDN     "Brush moves actors along the negative Z axis"
     IDC_CHECK_ORIGIN        "Brush is physical origin of rotating entities"
@@ -3820,30 +3822,6 @@ BEGIN
     IDC_CHECK_TRANSLUCENT   "Brush is translucent (see translucent field)"
     IDC_CHECK_LADDER        "Brush is a ladder"
     IDC_CHECK_LIGHT         "Surface will emit light (see radiosity/direct fields)"
-END
-
-STRINGTABLE
-BEGIN
-    IDC_CHECK_SOLID         "Brush is solid (content has no meaning, do not use)"
-    IDC_CHECK_LAVA          "Brush is lava"
-    IDC_CHECK_SLIME         "Brush is slime"
-END
-
-STRINGTABLE
-BEGIN
-    IDC_CHECK_FENCE         "Projectiles will go through brush"
-    IDC_CHECK_RNDTIME       "Time between animations is random"
-    IDC_CHECK_ADDBLEND      "Handles alpha blending and lighting for func_volumetric entity"
-    IDC_CHECK_ENVMAP        "Surface is an environment map"
-END
-
-STRINGTABLE
-BEGIN
-    IDC_CHECK_WINDOW        "Brush is window (content has no meaning, do not use)"
-END
-
-STRINGTABLE
-BEGIN
     IDC_CHECK_SKY           "Surface is not drawn, but added to skybox"
     IDC_CHECK_WARP          "Surface has turbulent water warp"
     IDC_CHECK_NODRAW        "Surface is not drawn"
@@ -3853,6 +3831,21 @@ BEGIN
     IDC_CHECK_WAVY          "Surface has waves (see friction and restitution fields)"
     IDC_CHECK_RICOCHET      "Projectiles will bounce off this surface"
     IDC_CHECK_PRELIT        "Does not work in SiN"
+END
+
+STRINGTABLE
+BEGIN
+    IDC_CHECK_ENVMAP        "Surface is an environment map"
+    IDC_PUSH_ANIMATE        "Enable animation for qualifying images"
+END
+
+STRINGTABLE
+BEGIN
+    IDC_CHECK_WINDOW        "Brush is window (content has no meaning, do not use)"
+END
+
+STRINGTABLE
+BEGIN
     IDC_CHECK_MIRROR        "Surface acts like a mirror (does not work)"
     IDC_CHECK_CONSOLE       "Surface is a console"
     IDC_CHECK_USECOLOR      "Surface is non-lit with custom color setting (non-list must be set)"
@@ -3860,10 +3853,6 @@ BEGIN
     IDC_CHECK_DAMAGE        "Surface will respond to damage events (see weak and normal)"
     IDC_CHECK_WEAK          "Surface has weak hit points (11)"
     IDC_CHECK_NORMAL        "Surface has normal hit points (91)"
-END
-
-STRINGTABLE
-BEGIN
     IDC_CHECK_RANDOMANIMATE "Random frame chosen for 1st frame of animation"
     IDC_CHECK_ANIMATE       "Surface is animated (see next animation field)"
     IDC_CHECK_TRANSLATE     "Surface can translate (see tranlate magnitude and angle fields)"
@@ -3879,12 +3868,6 @@ END
 
 STRINGTABLE
 BEGIN
-    IDC_BUTTON_COLOR        "Click to manually select color values"
-    IDC_BUTTON_AUTO         "Click to automatically generate color values"
-END
-
-STRINGTABLE
-BEGIN
     IDC_PUSH_BROWSE_MODE    "View images in browse mode"
 END
 
@@ -3895,36 +3878,13 @@ END
 
 STRINGTABLE
 BEGIN
-    IDC_PUSH_ANIMATE        "Enable animation for qualifying images"
-END
-
-STRINGTABLE
-BEGIN
     IDC_CHECK_FILTER        "Check to enable filtering"
     IDC_EDIT_FILTER         "Enter text to filter the list by"
 END
 
 STRINGTABLE
 BEGIN
-    ID_FILE_PAK             "Pak Editor\nPak Editor"
-    ID_PAKPOPUP_DELETE      "Delete Image File(s)\nDelete"
-    ID_PAKPOPUP_COPY        "Copy Image File(s)\nCopy"
-    ID_PAKPOPUP_PASTE       "Paste Image File(s)\nPaste"
-    ID_PAK_POPUP_OPEN       "Opens selected items\nOpen"
-    ID_PAK_POPUP_DELETE     "Removes the selected items\nCut "
-    ID_PAK_POPUP_CUT        "Removes the selected items and copies them to the clipboard\nCut"
-    ID_PAK_POPUP_COPY       "Copies the selected items to the clipboard\nCopy"
-    ID_PAK_POPUP_RENAME     "Renames selected item\nRename"
-    ID_PAK_POPUP_PASTE      "Paste items\nPaste"
-    ID_PAK_POPUP_NEW_FOLDER "Creates a new folder in the current directory\nNew Folder"
-    ID_PAK_POPUP_NEW_TXTFILE 
-                            "Creates a new text document in the current directory\nNew Text Document"
-    ID_PAK_POPUP_NEW_IMAGE  "Creates a new image in the current directory\nNew Image"
     ID_PAK_PLAYSOUND        "Toggle Quick-Play\nQuick Play"
-END
-
-STRINGTABLE
-BEGIN
     ID_PAK_POPUP_EXPORT     "Export items\nExport"
     ID_PAK_POPUP_IMPORT     "Import items\nImport"
     ID_FILE_DEBUG           "DEBUG!!!!\nDEBUG"

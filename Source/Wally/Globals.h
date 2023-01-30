@@ -48,6 +48,7 @@ extern	CString		g_strBrowseCacheDirectory;
 extern	CString		g_strDecalDirectory;
 extern	CString		g_strTempDirectory;
 extern	CString		g_strPaletteDirectory;
+extern	CString		g_strJSONDirectory;
 extern	int			g_iUntitledCount;
 
 extern	int			g_iUntitledCount;

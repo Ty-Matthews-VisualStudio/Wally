@@ -37,10 +37,14 @@
 #include <time.h>
 #include <process.h>
 #include <boost/property_tree/json_parser.hpp>
+#include <boost/json.hpp>
+#include <iomanip>
+#include <iostream>
 #include <boost/algorithm/string.hpp>
 #include <boost/spirit/include/qi.hpp>
 #include <boost/phoenix.hpp>
 #include <boost/fusion/adapted.hpp>
+#include <boost/filesystem.hpp>
 
 
 #include <list>

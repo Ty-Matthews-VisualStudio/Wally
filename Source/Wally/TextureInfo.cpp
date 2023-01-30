@@ -114,6 +114,7 @@ void CTextureInfo::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_SKIP_CHECK, m_SkipFlag);
 	DDX_Check(pDX, IDC_PORTAL_CHECK, m_AreaPortalFlag);
 	//}}AFX_DATA_MAP
+	DDX_Control(pDX, IDC_TEXTUREINFO_Q2ENGINE, m_lstEngines);
 }
 
 
@@ -155,8 +156,107 @@ BEGIN_MESSAGE_MAP(CTextureInfo, CDialog)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
+void pretty_print( boost::json::value const& jv )
+{
+	std::stringstream ss;
+	switch (jv.kind())
+	{
+	case boost::json::kind::object:
+	{
+		auto const& obj = jv.get_object();
+		if (!obj.empty())
+		{
+			auto it = obj.begin();
+			for (;;)
+			{
+				ss << boost::json::serialize(it->key());
+				TRACE(ss.str().c_str());
+				pretty_print(it->value());
+				if (++it == obj.end())
+					break;
+				TRACE("\n");
+			}
+		}
+		TRACE("\n");
+		break;
+	}
+
+	case boost::json::kind::array:
+	{
+		TRACE("\n");
+		auto const& arr = jv.get_array();
+		if (!arr.empty())
+		{
+			auto it = arr.begin();
+			for (;;)
+			{
+				pretty_print(*it);
+				if (++it == arr.end())
+					break;
+				TRACE("\n");
+			}
+		}
+		TRACE("\n");
+		break;
+	}
+
+	case boost::json::kind::string:
+	{
+		ss << boost::json::serialize(jv.get_string());
+		TRACE(ss.str().c_str());
+	}
+	break;
+
+	case boost::json::kind::uint64:
+	{
+		ss << jv.get_uint64();
+		TRACE(ss.str().c_str());
+	}
+	break;
+
+	case boost::json::kind::int64:
+	{
+		ss << jv.get_int64();
+		TRACE(ss.str().c_str());
+	}
+	break;
+
+	case boost::json::kind::double_:
+	{
+		ss << jv.get_double();
+		TRACE(ss.str().c_str());
+	}
+	break;
+
+	case boost::json::kind::bool_:
+	{
+		if (jv.get_bool())
+			ss << "true";
+		else
+			ss << "false";
+		TRACE(ss.str().c_str());
+	}
+	break;
+
+	case boost::json::kind::null:
+	{
+		ss << "null";
+		TRACE(ss.str().c_str());
+	}
+	break;
+	}
+	
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CTextureInfo message handlers
+BOOL CTextureInfo::OnInitDialog()
+{
+	CDialog::OnInitDialog();
+	LoadJSON();
+	return true;
+}
+
 void CTextureInfo::Init (LPQ2_MIP_S WalHeader)
 {
 	char buffer[50];
@@ -203,7 +303,86 @@ void CTextureInfo::Init (LPQ2_MIP_S WalHeader)
 	m_OriginFlag		= (WalHeader->contents & TC_ORIGIN)			? true : false;	
 	m_DetailFlag		= (WalHeader->contents & TC_DETAIL)			? true : false;
 	m_TranslucentFlag	= (WalHeader->contents & TC_TRANSLUCENT)	? true : false;
-	m_LadderFlag		= (WalHeader->contents & TC_LADDER)			? true : false; 
+	m_LadderFlag		= (WalHeader->contents & TC_LADDER)			? true : false;	
+}
+
+LPVOID CTextureInfo::LoadEngineJSON(LPCTSTR szFolderName)
+{
+	class pred
+	{
+	public:
+		static bool ischar(char c)
+		{
+			return c == '"';
+		};
+	};
+
+	std::string sEngine;
+	CMemBuffer mbJSON;
+	char szDrive[_MAX_DRIVE];
+	char szDir[_MAX_DIR];
+	char szFileName[_MAX_FNAME];
+	char szExt[_MAX_EXT];
+
+	_splitpath_s(szFolderName, szDrive, sizeof(szDrive), szDir, sizeof(szDir), szFileName, sizeof(szFileName), szExt, sizeof(szExt));
+	sEngine = szFileName;
+	boost::algorithm::trim_if(sEngine, pred::ischar);
+#if 0
+	// Parse the JSON and return a void * if it's valid, otherwise NULL.
+	// Find flags.json and content.json, parse each of them
+	mbJSON.InitFromFile();
+	boost::json::error_code ec;
+	auto const jv = mbJSON.ParseJson(ec);
+	if (ec)
+	{
+		std::stringstream ss;
+		ss << "Error parsing " << szFileName << " JSON error code: " << ec;
+		AfxMessageBox(ss.str().c_str(), MB_ICONSTOP);
+		return nullptr;
+	}
+	else
+	{
+		// Validate the JSON and build a vector of std::pair<std::string,int>
+
+		if (jv.kind() != boost::json::kind::object)
+		{
+			auto const& obj = jv.get_object();
+			if (!obj.empty())
+			{
+				auto it = obj.begin();
+				for (;;)
+				{
+					ss << boost::json::serialize(it->key());
+					pretty_print(it->value());
+					if (++it == obj.end())
+						break;
+				}
+			}
+		}
+	}
+#endif
+	return nullptr;
+}
+
+void CTextureInfo::LoadJSON()
+{
+	CString sSourceFolder;
+	sSourceFolder.Format("%s\\.wal\\", g_strJSONDirectory);
+		
+	for (auto& p : boost::filesystem::directory_iterator(sSourceFolder.GetBuffer()))
+	{
+		std::stringstream ss;		
+		ss << p;
+		LPVOID pItemData = LoadEngineJSON(ss.str().c_str());
+		if( pItemData)
+		{
+			//m_lstEngines.AddString(sEngine.c_str());
+		}		
+	}
+}
+
+void CTextureInfo::LoadEngineFromJSON(LPCTSTR szFileName)
+{
 
 }
 
