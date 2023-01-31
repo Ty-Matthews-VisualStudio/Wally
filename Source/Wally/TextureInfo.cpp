@@ -16,6 +16,7 @@
 #include "TextureInfo.h"
 #include "ImageHelper.h"
 #include "TextureFlags.h"
+#include "resource.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -86,6 +87,8 @@ BOOL Q2Engine::LoadFile(std::stringstream& ssFileName, _NameBitmaskPair& vPairs)
 		return FALSE;
 	}
 	boost::json::error_code ec;
+
+	// Validate the JSON and build a vector of std::pair<std::string,int>
 	auto const jv = mbJSON.ParseJson(ec);
 	if (ec)
 	{
@@ -97,8 +100,7 @@ BOOL Q2Engine::LoadFile(std::stringstream& ssFileName, _NameBitmaskPair& vPairs)
 	{
 		std::stringstream ssTemp;
 		try
-		{
-			// Validate the JSON and build a vector of std::pair<std::string,int>
+		{			
 			if (jv.kind() == boost::json::kind::object)
 			{
 				auto const& obj = jv.get_object();
@@ -186,6 +188,23 @@ BOOL Q2Engine::LoadFile(std::stringstream& ssFileName, _NameBitmaskPair& vPairs)
 															}
 															break;
 															}
+
+															// Do some bounds checking on the bitmask															
+															if (ceil(log2(iBitmask)) != floor(log2(iBitmask)))
+															{
+																ssMsg << "Error parsing " << ssFileName.str() <<
+																	" : Bitmask with name '" << sName.c_str() <<
+																	"' is not a power of 2";
+																throw JSONException(ssMsg);
+															}
+
+															if ((iBitmask <= 0) || (iBitmask > pow(2,32)))
+															{
+																ssMsg << "Error parsing " << ssFileName.str() <<
+																	" : Bitmask with name '" << sName.c_str() <<
+																	"' must be >0 and <=" << std::fixed << std::setprecision(0) << pow(2,32);
+																throw JSONException(ssMsg);
+															}
 														}
 														else
 														{
@@ -209,9 +228,18 @@ BOOL Q2Engine::LoadFile(std::stringstream& ssFileName, _NameBitmaskPair& vPairs)
 										}
 										else
 										{
+											// Make sure this bitmask isn't already in the vector
+											for (std::pair< std::string, UINT > p : vPairs)
+											{
+												if (p.second == iBitmask)
+												{
+													ssMsg << "Error parsing " << ssFileName.str() <<
+														" : Entry with name '" << sName << "' has a duplicate bitmask ('" << p.first << "')";
+													throw JSONException(ssMsg);
+												}
+											}
 											vPairs.push_back(std::make_pair(sName, iBitmask));
-										}
-										
+										}										
 										if (++itArr == arr.end())
 											break;
 									}
@@ -378,113 +406,56 @@ BEGIN_MESSAGE_MAP(CTextureInfo, CDialog)
 	ON_BN_CLICKED(IDC_TRANSLUCENT_CHECK, OnTranslucentCheck)
 	ON_BN_CLICKED(IDC_HINT_CHECK, OnHintCheck)
 	//}}AFX_MSG_MAP
+	ON_CBN_SELCHANGE(IDC_TEXTUREINFO_Q2ENGINE, &CTextureInfo::OnCbnSelchangeTextureinfoQ2engine)
 END_MESSAGE_MAP()
 
-void pretty_print( boost::json::value const& jv )
-{
-	std::stringstream ss;
-	switch (jv.kind())
-	{
-	case boost::json::kind::object:
-	{
-		auto const& obj = jv.get_object();
-		if (!obj.empty())
-		{
-			auto it = obj.begin();
-			for (;;)
-			{
-				ss << boost::json::serialize(it->key());
-				TRACE(ss.str().c_str());
-				pretty_print(it->value());
-				if (++it == obj.end())
-					break;
-				TRACE("\n");
-			}
-		}
-		TRACE("\n");
-		break;
-	}
-
-	case boost::json::kind::array:
-	{
-		TRACE("\n");
-		auto const& arr = jv.get_array();
-		if (!arr.empty())
-		{
-			auto it = arr.begin();
-			for (;;)
-			{
-				pretty_print(*it);
-				if (++it == arr.end())
-					break;
-				TRACE("\n");
-			}
-		}
-		TRACE("\n");
-		break;
-	}
-
-	case boost::json::kind::string:
-	{
-		ss << boost::json::serialize(jv.get_string());
-		TRACE(ss.str().c_str());
-	}
-	break;
-
-	case boost::json::kind::uint64:
-	{
-		ss << jv.get_uint64();
-		TRACE(ss.str().c_str());
-	}
-	break;
-
-	case boost::json::kind::int64:
-	{
-		ss << jv.get_int64();
-		TRACE(ss.str().c_str());
-	}
-	break;
-
-	case boost::json::kind::double_:
-	{
-		ss << jv.get_double();
-		TRACE(ss.str().c_str());
-	}
-	break;
-
-	case boost::json::kind::bool_:
-	{
-		if (jv.get_bool())
-			ss << "true";
-		else
-			ss << "false";
-		TRACE(ss.str().c_str());
-	}
-	break;
-
-	case boost::json::kind::null:
-	{
-		ss << "null";
-		TRACE(ss.str().c_str());
-	}
-	break;
-	}
-	
-}
 
 /////////////////////////////////////////////////////////////////////////////
 // CTextureInfo message handlers
 BOOL CTextureInfo::OnInitDialog()
 {
 	CDialog::OnInitDialog();
-	LoadJSON();
+	LoadJSON();	
 	return true;
+}
+
+void CTextureInfo::EnableDisableFlagsContent()
+{
+	int i = m_cbEngines.GetCurSel();
+	Q2Engine* pEngine = reinterpret_cast<Q2Engine *>(m_cbEngines.GetItemData(i));
+
+	m_mID2Flags.erase(m_mID2Flags.begin(), m_mID2Flags.end());
+		
+	UINT iFirstID = IDC_FLAGS_0X1;
+	UINT iLastID = IDC_FLAGS_0X80000000;
+	UINT iID = IDC_FLAGS_0X1;
+
+	ASSERT(iFirstID == 1388);	// If this ASSERT fails, it's possible resource.h was fudged by Visual Studio.  These checkbox IDs need to be sequential for this code to not be a horrible mess
+
+	for (iID = iFirstID; iID <= iLastID; iID++)
+	{
+		CWnd* pCheck = GetDlgItem(iID);
+		pCheck->ShowWindow(SW_HIDE);
+	}
+	iID = iFirstID;
+	for (std::pair< std::string, UINT > p : pEngine->m_vFlags)
+	{
+		CWnd *pCheck = GetDlgItem(iID);
+		pCheck->ShowWindow(SW_SHOWNORMAL);
+		SetDlgItemTextA(iID, p.first.c_str());
+		CheckDlgButton(iID, m_Q2Header.flags & p.second);
+
+		m_mID2Flags[iID] = p.second;
+		iID++;
+	}	
 }
 
 void CTextureInfo::Init (LPQ2_MIP_S WalHeader)
 {
 	char buffer[50];
 	DocWalHeader = WalHeader;
+	
+	memcpy((void*)&m_Q2Header, WalHeader, sizeof(q2_miptex_s));
 
 	m_TextureName = WalHeader->name;	
 	
@@ -553,6 +524,7 @@ void CTextureInfo::LoadJSON()
 				if (!_stricmp(pNew->m_sName.c_str(), g_strDefaultTexInfoQ2Engine.GetBuffer()))
 				{
 					m_cbEngines.SetCurSel(i);
+					EnableDisableFlagsContent();
 				}
 			}
 			else
@@ -769,6 +741,13 @@ void CTextureInfo::OnOK()
 	strcpy_s (DocWalHeader->name, sizeof(DocWalHeader->name), (LPCSTR)m_TextureName);
 	DocWalHeader->value = m_Value;	
 		
+#if 1
+	if (DocWalHeader->flags != m_Q2Header.flags)
+	{
+		ModifiedFlag = TRUE;
+		DocWalHeader->flags = m_Q2Header.flags;
+	}	
+#else
 	DocWalHeader->flags = 0;
 	DocWalHeader->flags |= (m_LightFlag);
 	DocWalHeader->flags |= (m_SlickFlag		<< 1);
@@ -780,7 +759,7 @@ void CTextureInfo::OnOK()
 	DocWalHeader->flags |= (m_NoDrawFlag	<< 7);
 	DocWalHeader->flags |= (m_HintFlag		<< 8);
 	DocWalHeader->flags |= (m_SkipFlag		<< 9);
-
+#endif
 
 	DocWalHeader->contents = 0;
 	DocWalHeader->contents |= (m_SolidFlag);
@@ -814,3 +793,42 @@ void CTextureInfo::OnOK()
 	CDialog::OnOK();
 }
 
+
+
+void CTextureInfo::OnCbnSelchangeTextureinfoQ2engine()
+{
+	EnableDisableFlagsContent();
+}
+
+BOOL CTextureInfo::PreTranslateMessage(MSG* pMsg)
+{
+	if (pMsg->message == WM_COMMAND)
+	{
+		UINT iID = LOWORD(pMsg->wParam);
+		UINT iStatus = HIWORD(pMsg->wParam);
+	}
+	int i = 0;
+	return CDialog::PreTranslateMessage(pMsg);	
+}
+
+BOOL CTextureInfo::OnCommand(WPARAM w, LPARAM l)
+{
+	UINT iID = LOWORD(w);
+	UINT iStatus = 0;	
+	if ((iID >= IDC_FLAGS_0X1) && (iID <= IDC_FLAGS_0X80000000))
+	{
+		// Find the corresponding bitmask from the map
+		UINT iBit = m_mID2Flags[iID];
+		iStatus = IsDlgButtonChecked(iID);		
+		if (iStatus)
+		{
+			m_Q2Header.flags |= iBit;
+		}
+		else
+		{
+			m_Q2Header.flags &= ~(iBit);
+		}
+		
+	}
+	return CDialog::OnCommand(w, l);
+}

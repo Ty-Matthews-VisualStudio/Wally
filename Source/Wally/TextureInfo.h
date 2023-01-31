@@ -18,7 +18,7 @@ public:
 	std::string m_sName;
 	std::string m_sErrorMessage;
 
-	typedef std::vector< std::pair< std::string, int > > _NameBitmaskPair;
+	typedef std::vector< std::pair< std::string, UINT > > _NameBitmaskPair;
 	_NameBitmaskPair m_vFlags;
 	_NameBitmaskPair m_vContent;
 
@@ -37,6 +37,7 @@ public:
 	virtual ~CTextureInfo();
 
 	std::vector< Q2Engine* > m_vEngines;
+	std::map<UINT, UINT> m_mID2Flags;
 
 // Dialog Data
 	//{{AFX_DATA(CTextureInfo)
@@ -89,12 +90,14 @@ public:
 	//}}AFX_VIRTUAL
 // Members
 	LPQ2_MIP_S DocWalHeader;
+	q2_miptex_s m_Q2Header;
 
 // Methods
 public:
 	void Init (LPQ2_MIP_S WalHeader);
 	void LoadJSON();
 	void CleanUp();
+	void EnableDisableFlagsContent();
 	
 // Implementation
 protected:
@@ -140,6 +143,9 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	CComboBox m_cbEngines;
+	afx_msg void OnCbnSelchangeTextureinfoQ2engine();
+	virtual BOOL OnCommand(WPARAM w, LPARAM l);
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };
 
 //{{AFX_INSERT_LOCATION}}
