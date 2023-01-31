@@ -1766,7 +1766,7 @@ CString CBrowserCacheList::GenerateRandomFileName(int iLength)
 		dt = div (rand(), 16);
 		iNum = dt.rem;
 		
-		sprintf_s(szName + j, iLength - j, "%x", iNum); 
+		sprintf_s(szName + j, iLength + 1 - j, "%x", iNum); 
 	}
 
 	CString strName(szName);

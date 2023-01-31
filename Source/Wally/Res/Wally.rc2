@@ -10,4 +10,6 @@
 /////////////////////////////////////////////////////////////////////////////
 // Add manually edited resources here...
 IDR_DEFAULT_PALETTE			RCDATA					"res\\blend.lmp"
+IDR_DEFAULT_Q2FLAGS_JSON	RCDATA					"res\\baseq2flags.json"
+IDR_DEFAULT_Q2CONTENTS_JSON	RCDATA					"res\\baseq2contents.json"
 /////////////////////////////////////////////////////////////////////////////

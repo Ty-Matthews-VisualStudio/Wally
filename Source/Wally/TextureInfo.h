@@ -24,6 +24,7 @@ public:
 
 	BOOL LoadJSON(LPCTSTR szFolderName);
 	BOOL LoadFile(std::stringstream &ssFileName, _NameBitmaskPair& vPairs);
+	static BOOL CreateDefaultJSON();
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -38,6 +39,7 @@ public:
 
 	std::vector< Q2Engine* > m_vEngines;
 	std::map<UINT, UINT> m_mID2Flags;
+	std::map<UINT, UINT> m_mID2Contents;
 
 // Dialog Data
 	//{{AFX_DATA(CTextureInfo)

@@ -214,7 +214,6 @@ Completed:
 #include <mmsystem.h>	// requires linking with "winmm.lib"
 #include "Wally.h"
 #include "Afxext.h"
-
 #include "MainFrm.h"
 #include "Tool.h"
 
@@ -480,7 +479,8 @@ BOOL CWallyApp::InitInstance()
 	_mkdir(g_strDecalDirectory);
 	_mkdir(g_strBrowseCacheDirectory);
 	_mkdir(g_strTempDirectory);
-
+	_mkdir(g_strJSONDirectory);
+	
 	SetRegistryKey(_T("Team BDP"));
 	m_nClipboardFormat = ::RegisterClipboardFormat(_T("Quake2 .wal file"));
 
@@ -3416,18 +3416,7 @@ void CWallyApp::OnWizardTest()
 
 void CWallyApp::OnWizardTest()
 {
-	boost::property_tree::ptree parser;
-	const string str = "{ \"user\": { \"Name\": \"John\", \"Balance\": \"2000.53\" } }";
-	stringstream ss(str);
-	boost::property_tree::json_parser::read_json(ss, parser);
-
-	//get "user"
-	boost::property_tree::ptree user_array = parser.get_child("user");
-
-	//get "Name"
-	const string name = user_array.get<string>("Name");
-	//get "Balance"
-	const string balance = user_array.get<string>("Balance");	
+	
 }
 
 #if 0

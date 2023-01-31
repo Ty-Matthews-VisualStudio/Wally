@@ -77,6 +77,15 @@ BOOL Q2Engine::LoadFile(std::stringstream& ssFileName, _NameBitmaskPair& vPairs)
 			return m_sWhat.c_str();
 		}
 	};
+
+	class PairSort
+	{
+	public:
+		static bool sort(std::pair< std::string, UINT > a, std::pair< std::string, UINT > b)
+		{
+			return a.second < b.second;
+		}
+	};
 	
 	CMemBuffer mbJSON;
 	std::stringstream ssMsg;
@@ -258,7 +267,37 @@ BOOL Q2Engine::LoadFile(std::stringstream& ssFileName, _NameBitmaskPair& vPairs)
 			return FALSE;
 		}
 	}
+
+	// Sort by bitmask value
+	std::sort(vPairs.begin(), vPairs.end(), PairSort::sort);
 	return TRUE;
+}
+
+/*static */ BOOL Q2Engine::CreateDefaultJSON()
+{
+	CMemBuffer mbData;
+	std::stringstream ssFolder;
+	std::stringstream ssTemp;
+	std::stringstream ssFile;
+	
+	ssTemp << g_strJSONDirectory.GetBuffer() << "\\.wal";
+	_mkdir(ssTemp.str().c_str());
+	ssTemp << "\\baseq2";
+	_mkdir(ssTemp.str().c_str());
+
+	ssFile << ssTemp.str() << "\\flags.json";	
+	if (mbData.InitFromResource(IDR_DEFAULT_Q2FLAGS_JSON))
+	{
+		mbData.WriteToFile(ssFile.str().c_str());
+		ssFile.str("");
+		ssFile << ssTemp.str() << "\\content.json";
+		if (mbData.InitFromResource(IDR_DEFAULT_Q2CONTENTS_JSON))
+		{
+			mbData.WriteToFile(ssFile.str().c_str());
+			return TRUE;
+		}
+	}
+	return FALSE;
 }
 
 
@@ -275,36 +314,6 @@ CTextureInfo::CTextureInfo(CWnd* pParent /*=NULL*/)
 	m_TextureName = _T("");
 	m_Value = 0;
 	m_TextureWidth = _T("");
-	m_SkyFlag = FALSE;
-	m_FlowingFlag = FALSE;
-	m_LightFlag = FALSE;
-	m_NoDrawFlag = FALSE;
-	m_SlickFlag = FALSE;
-	m_Trans33Flag = FALSE;
-	m_Trans66Flag = FALSE;
-	m_WarpFlag = FALSE;
-	m_AuxFlag = FALSE;
-	m_LavaFlag = FALSE;
-	m_MistFlag = FALSE;
-	m_SlimeFlag = FALSE;
-	m_SolidFlag = FALSE;
-	m_WaterFlag = FALSE;
-	m_WindowFlag = FALSE;
-	m_LadderFlag = FALSE;
-	m_Current0Flag = FALSE;
-	m_Current180Flag = FALSE;
-	m_Current270Flag = FALSE;
-	m_Current90Flag = FALSE;
-	m_CurrentUpFlag = FALSE;
-	m_DetailFlag = FALSE;
-	m_MonsterClipFlag = FALSE;
-	m_OriginFlag = FALSE;
-	m_PlayerClipFlag = FALSE;
-	m_CurrentDnFlag = FALSE;
-	m_TranslucentFlag = FALSE;
-	m_HintFlag = FALSE;
-	m_SkipFlag = FALSE;
-	m_AreaPortalFlag = FALSE;
 	//}}AFX_DATA_INIT
 	ModifiedFlag = FALSE;
 }
@@ -334,37 +343,7 @@ void CTextureInfo::DoDataExchange(CDataExchange* pDX)
 	DDV_MaxChars(pDX, m_TextureName, 31);
 	DDX_Text(pDX, IDC_VALUE, m_Value);
 	DDV_MinMaxInt(pDX, m_Value, 0, 32767);
-	DDX_Text(pDX, IDC_WIDTH, m_TextureWidth);
-	DDX_Check(pDX, IDC_SKY_CHECK, m_SkyFlag);
-	DDX_Check(pDX, IDC_FLOWING_CHECK, m_FlowingFlag);
-	DDX_Check(pDX, IDC_LIGHT_CHECK, m_LightFlag);
-	DDX_Check(pDX, IDC_NODRAW_CHECK, m_NoDrawFlag);
-	DDX_Check(pDX, IDC_SLICK_CHECK, m_SlickFlag);
-	DDX_Check(pDX, IDC_TRANS33_CHECK, m_Trans33Flag);
-	DDX_Check(pDX, IDC_TRANS66_CHECK, m_Trans66Flag);
-	DDX_Check(pDX, IDC_WARP_CHECK, m_WarpFlag);
-	DDX_Check(pDX, IDC_AUX_CHECK, m_AuxFlag);
-	DDX_Check(pDX, IDC_LAVA_CHECK, m_LavaFlag);
-	DDX_Check(pDX, IDC_MIST_CHECK, m_MistFlag);
-	DDX_Check(pDX, IDC_SLIME_CHECK, m_SlimeFlag);
-	DDX_Check(pDX, IDC_SOLID_CHECK, m_SolidFlag);
-	DDX_Check(pDX, IDC_WATER_CHECK, m_WaterFlag);
-	DDX_Check(pDX, IDC_WINDOW_CHECK, m_WindowFlag);
-	DDX_Check(pDX, IDC_LADDER_CHECK, m_LadderFlag);
-	DDX_Check(pDX, IDC_CURRENT0_CHECK, m_Current0Flag);
-	DDX_Check(pDX, IDC_CURRENT180_CHECK, m_Current180Flag);
-	DDX_Check(pDX, IDC_CURRENT270_CHECK, m_Current270Flag);
-	DDX_Check(pDX, IDC_CURRENT90_CHECK, m_Current90Flag);
-	DDX_Check(pDX, IDC_CURRENTUP_CHECK, m_CurrentUpFlag);
-	DDX_Check(pDX, IDC_DETAIL_CHECK, m_DetailFlag);
-	DDX_Check(pDX, IDC_MONSTERCLIP_CHECK, m_MonsterClipFlag);
-	DDX_Check(pDX, IDC_ORIGIN_CHECK, m_OriginFlag);
-	DDX_Check(pDX, IDC_PLAYERCLIP_CHECK, m_PlayerClipFlag);
-	DDX_Check(pDX, IDC_CURRENTDN_CHECK, m_CurrentDnFlag);
-	DDX_Check(pDX, IDC_TRANSLUCENT_CHECK, m_TranslucentFlag);
-	DDX_Check(pDX, IDC_HINT_CHECK, m_HintFlag);
-	DDX_Check(pDX, IDC_SKIP_CHECK, m_SkipFlag);
-	DDX_Check(pDX, IDC_PORTAL_CHECK, m_AreaPortalFlag);
+	DDX_Text(pDX, IDC_WIDTH, m_TextureWidth);	
 	//}}AFX_DATA_MAP
 	DDX_Control(pDX, IDC_TEXTUREINFO_Q2ENGINE, m_cbEngines);
 }
@@ -374,39 +353,9 @@ BEGIN_MESSAGE_MAP(CTextureInfo, CDialog)
 	//{{AFX_MSG_MAP(CTextureInfo)
 	ON_EN_CHANGE(IDC_TEXTURE_NAME, OnChangeTextureName)
 	ON_EN_CHANGE(IDC_ANIMNAME, OnChangeAnimname)
-	ON_EN_CHANGE(IDC_VALUE, OnChangeValue)	
-	ON_BN_CLICKED(IDC_AUX_CHECK, OnAuxCheck)
-	ON_BN_CLICKED(IDC_FLOWING_CHECK, OnFlowingCheck)
-	ON_BN_CLICKED(IDC_LAVA_CHECK, OnLavaCheck)
-	ON_BN_CLICKED(IDC_LIGHT_CHECK, OnLightCheck)
-	ON_BN_CLICKED(IDC_MIST_CHECK, OnMistCheck)
-	ON_BN_CLICKED(IDC_NODRAW_CHECK, OnNodrawCheck)
-	ON_BN_CLICKED(IDC_SKY_CHECK, OnSkyCheck)
-	ON_BN_CLICKED(IDC_SLICK_CHECK, OnSlickCheck)
-	ON_BN_CLICKED(IDC_SLIME_CHECK, OnSlimeCheck)
-	ON_BN_CLICKED(IDC_SOLID_CHECK, OnSolidCheck)
-	ON_BN_CLICKED(IDC_TRANS33_CHECK, OnTrans33Check)
-	ON_BN_CLICKED(IDC_TRANS66_CHECK, OnTrans66Check)
-	ON_BN_CLICKED(IDC_WARP_CHECK, OnWarpCheck)
-	ON_BN_CLICKED(IDC_WATER_CHECK, OnWaterCheck)
-	ON_BN_CLICKED(IDC_WINDOW_CHECK, OnWindowCheck)
-	ON_BN_CLICKED(IDC_CURRENT0_CHECK, OnCurrent0Check)
-	ON_BN_CLICKED(IDC_CURRENT180_CHECK, OnCurrent180Check)
-	ON_BN_CLICKED(IDC_CURRENT270_CHECK, OnCurrent270Check)
-	ON_BN_CLICKED(IDC_CURRENT90_CHECK, OnCurrent90Check)
-	ON_BN_CLICKED(IDC_CURRENTDN_CHECK, OnCurrentdnCheck)
-	ON_BN_CLICKED(IDC_CURRENTUP_CHECK, OnCurrentupCheck)
-	ON_BN_CLICKED(IDC_DETAIL_CHECK, OnDetailCheck)
-	ON_BN_CLICKED(IDC_LADDER_CHECK, OnLadderCheck)
-	ON_BN_CLICKED(IDC_ORIGIN_CHECK, OnOriginCheck)
-	ON_BN_CLICKED(IDC_MONSTERCLIP_CHECK, OnMonsterclipCheck)
-	ON_BN_CLICKED(IDC_PLAYERCLIP_CHECK, OnPlayerclipCheck)
-	ON_BN_CLICKED(IDC_PORTAL_CHECK, OnPortalCheck)
-	ON_BN_CLICKED(IDC_SKIP_CHECK, OnSkipCheck)
-	ON_BN_CLICKED(IDC_TRANSLUCENT_CHECK, OnTranslucentCheck)
-	ON_BN_CLICKED(IDC_HINT_CHECK, OnHintCheck)
-	//}}AFX_MSG_MAP
+	ON_EN_CHANGE(IDC_VALUE, OnChangeValue)		
 	ON_CBN_SELCHANGE(IDC_TEXTUREINFO_Q2ENGINE, &CTextureInfo::OnCbnSelchangeTextureinfoQ2engine)
+	//}}AFX_MSG_MAP	
 END_MESSAGE_MAP()
 
 
@@ -440,14 +389,38 @@ void CTextureInfo::EnableDisableFlagsContent()
 	iID = iFirstID;
 	for (std::pair< std::string, UINT > p : pEngine->m_vFlags)
 	{
-		CWnd *pCheck = GetDlgItem(iID);
+		CWnd* pCheck = GetDlgItem(iID);
 		pCheck->ShowWindow(SW_SHOWNORMAL);
 		SetDlgItemTextA(iID, p.first.c_str());
 		CheckDlgButton(iID, m_Q2Header.flags & p.second);
 
 		m_mID2Flags[iID] = p.second;
 		iID++;
-	}	
+	}
+
+	iFirstID = IDC_CONTENT_0X1;
+	iLastID = IDC_CONTENT_0X80000000;
+	iID = IDC_CONTENT_0X1;
+
+	ASSERT(iFirstID == 1420);	// If this ASSERT fails, it's possible resource.h was fudged by Visual Studio.  These checkbox IDs need to be sequential for this code to not be a horrible mess
+
+	for (iID = iFirstID; iID <= iLastID; iID++)
+	{
+		CWnd* pCheck = GetDlgItem(iID);
+		pCheck->ShowWindow(SW_HIDE);
+	}
+	iID = iFirstID;
+	for (std::pair< std::string, UINT > p : pEngine->m_vContent)
+	{
+		CWnd* pCheck = GetDlgItem(iID);
+		pCheck->ShowWindow(SW_SHOWNORMAL);
+		SetDlgItemTextA(iID, p.first.c_str());
+		CheckDlgButton(iID, m_Q2Header.contents & p.second);
+
+		m_mID2Contents[iID] = p.second;
+		iID++;
+	}
+
 }
 
 void CTextureInfo::Init (LPQ2_MIP_S WalHeader)
@@ -467,38 +440,6 @@ void CTextureInfo::Init (LPQ2_MIP_S WalHeader)
 	
 	m_AnimationName = WalHeader->animname;
 	m_Value = WalHeader->value;	
-
-	m_LightFlag		= (WalHeader->flags & TF_LIGHT)   ? true : false;		
-	m_SlickFlag		= (WalHeader->flags & TF_SLICK)   ? true : false; 	
-	m_SkyFlag		= (WalHeader->flags & TF_SKY)     ? true : false;		
-	m_WarpFlag		= (WalHeader->flags & TF_WARP)    ? true : false;
-	m_Trans33Flag	= (WalHeader->flags & TF_TRANS33) ? true : false;	
-	m_Trans66Flag	= (WalHeader->flags & TF_TRANS66) ? true : false;
-	m_FlowingFlag	= (WalHeader->flags & TF_FLOWING) ? true : false;
-	m_NoDrawFlag	= (WalHeader->flags & TF_NODRAW)  ? true : false;
-	m_HintFlag		= (WalHeader->flags & TF_HINT)    ? true : false;	
-	m_SkipFlag		= (WalHeader->flags & TF_SKIP)    ? true : false;	
-	
-	m_SolidFlag			= (WalHeader->contents & TC_SOLID)			? true : false;
-	m_WindowFlag		= (WalHeader->contents & TC_WINDOW)			? true : false;
-	m_AuxFlag			= (WalHeader->contents & TC_AUX)			? true : false;
-	m_LavaFlag			= (WalHeader->contents & TC_LAVA)			? true : false;
-	m_SlimeFlag			= (WalHeader->contents & TC_SLIME)			? true : false;
-	m_WaterFlag			= (WalHeader->contents & TC_WATER)			? true : false;
-	m_MistFlag			= (WalHeader->contents & TC_MIST)			? true : false;
-	m_AreaPortalFlag	= (WalHeader->contents & TC_AREAPORTAL)		? true : false;
-	m_PlayerClipFlag	= (WalHeader->contents & TC_PLAYERCLIP)		? true : false;
-	m_MonsterClipFlag	= (WalHeader->contents & TC_MONSTERCLIP)	? true : false;
-	m_Current0Flag		= (WalHeader->contents & TC_CURRENT_0)		? true : false;
-	m_Current90Flag		= (WalHeader->contents & TC_CURRENT_90)		? true : false;
-	m_Current180Flag	= (WalHeader->contents & TC_CURRENT_180)	? true : false;
-	m_Current270Flag	= (WalHeader->contents & TC_CURRENT_270)	? true : false;
-	m_CurrentUpFlag		= (WalHeader->contents & TC_CURRENT_UP)		? true : false;
-	m_CurrentDnFlag		= (WalHeader->contents & TC_CURRENT_DN)		? true : false;
-	m_OriginFlag		= (WalHeader->contents & TC_ORIGIN)			? true : false;	
-	m_DetailFlag		= (WalHeader->contents & TC_DETAIL)			? true : false;
-	m_TranslucentFlag	= (WalHeader->contents & TC_TRANSLUCENT)	? true : false;
-	m_LadderFlag		= (WalHeader->contents & TC_LADDER)			? true : false;	
 }
 
 void CTextureInfo::LoadJSON()
@@ -506,8 +447,10 @@ void CTextureInfo::LoadJSON()
 	CString sSourceFolder;
 	sSourceFolder.Format("%s\\.wal\\", g_strJSONDirectory.GetBuffer());
 	bool bOnce = false;
+	bool bSelected = false;
+	bool bValid = false;
 	CleanUp(); // Erase any existing.  This function should only ever be called once, but just in case a refresh button is added later
-		
+	
 	for (auto& p : boost::filesystem::directory_iterator(sSourceFolder.GetBuffer()))
 	{
 		std::stringstream ss;		
@@ -520,11 +463,13 @@ void CTextureInfo::LoadJSON()
 				m_vEngines.push_back(pNew);
 				int i = m_cbEngines.AddString(pNew->m_sName.c_str());
 				m_cbEngines.SetItemDataPtr(i, (void*)pNew);
+				bValid = true;
 
 				if (!_stricmp(pNew->m_sName.c_str(), g_strDefaultTexInfoQ2Engine.GetBuffer()))
 				{
 					m_cbEngines.SetCurSel(i);
 					EnableDisableFlagsContent();
+					bSelected = true;
 				}
 			}
 			else
@@ -543,6 +488,29 @@ void CTextureInfo::LoadJSON()
 			ASSERT(FALSE);
 		}		
 	}
+
+	if (!bSelected)
+	{
+		if (m_cbEngines.GetCount() > 0)
+		{
+			m_cbEngines.SetCurSel(0);
+			EnableDisableFlagsContent();
+		}		
+	}
+
+	if (!bValid)
+	{
+		// No valid JSON was found, create the default and try again		
+		if( Q2Engine::CreateDefaultJSON() )
+		{
+			return LoadJSON();
+		}
+		else
+		{
+			// Couldn't make the default flags and content.json for some reason?
+			ASSERT(FALSE);
+		}
+	}
 }
 
 void CTextureInfo::OnChangeTextureName() 
@@ -560,179 +528,6 @@ void CTextureInfo::OnChangeValue()
 	ModifiedFlag = TRUE;		
 }
 
-
-void CTextureInfo::OnAuxCheck() 
-{
-	ModifiedFlag = TRUE;		
-	
-}
-
-void CTextureInfo::OnFlowingCheck() 
-{
-	ModifiedFlag = TRUE;		
-	
-}
-
-void CTextureInfo::OnLavaCheck() 
-{
-	ModifiedFlag = TRUE;		
-	
-}
-
-void CTextureInfo::OnLightCheck() 
-{
-	ModifiedFlag = TRUE;		
-	
-}
-
-void CTextureInfo::OnMistCheck() 
-{
-	ModifiedFlag = TRUE;		
-	
-}
-
-void CTextureInfo::OnNodrawCheck() 
-{
-	ModifiedFlag = TRUE;		
-	
-}
-
-void CTextureInfo::OnSkyCheck() 
-{
-	ModifiedFlag = TRUE;		
-	
-}
-
-void CTextureInfo::OnSlickCheck() 
-{
-	ModifiedFlag = TRUE;		
-	
-}
-
-void CTextureInfo::OnSlimeCheck() 
-{
-	ModifiedFlag = TRUE;		
-	
-}
-
-void CTextureInfo::OnSolidCheck() 
-{
-	ModifiedFlag = TRUE;		
-	
-}
-
-void CTextureInfo::OnTrans33Check() 
-{
-	ModifiedFlag = TRUE;		
-	
-}
-
-void CTextureInfo::OnTrans66Check() 
-{
-	ModifiedFlag = TRUE;		
-	
-}
-
-void CTextureInfo::OnWarpCheck() 
-{
-	ModifiedFlag = TRUE;		
-	
-}
-
-void CTextureInfo::OnWaterCheck() 
-{
-	ModifiedFlag = TRUE;		
-	
-}
-
-void CTextureInfo::OnWindowCheck() 
-{
-	ModifiedFlag = TRUE;
-}
-
-void CTextureInfo::OnCurrent0Check() 
-{
-	ModifiedFlag = TRUE;		
-	
-}
-
-void CTextureInfo::OnCurrent180Check() 
-{
-	ModifiedFlag = TRUE;		
-	
-}
-
-void CTextureInfo::OnCurrent270Check() 
-{
-	ModifiedFlag = TRUE;		
-	
-}
-
-void CTextureInfo::OnCurrent90Check() 
-{
-	ModifiedFlag = TRUE;		
-	
-}
-
-void CTextureInfo::OnCurrentdnCheck() 
-{
-	ModifiedFlag = TRUE;		
-	
-}
-
-void CTextureInfo::OnCurrentupCheck() 
-{
-	ModifiedFlag = TRUE;		
-	
-}
-
-void CTextureInfo::OnDetailCheck() 
-{
-	ModifiedFlag = TRUE;		
-	
-}
-
-void CTextureInfo::OnLadderCheck() 
-{
-	ModifiedFlag = TRUE;		
-}
-
-void CTextureInfo::OnOriginCheck() 
-{
-	ModifiedFlag = TRUE;		
-}
-
-void CTextureInfo::OnMonsterclipCheck() 
-{
-	ModifiedFlag = TRUE;		
-}
-
-void CTextureInfo::OnPlayerclipCheck() 
-{
-	ModifiedFlag = TRUE;		
-}
-
-void CTextureInfo::OnPortalCheck() 
-{
-	ModifiedFlag = TRUE;		
-}
-
-void CTextureInfo::OnSkipCheck() 
-{
-	ModifiedFlag = TRUE;		
-}
-
-void CTextureInfo::OnTranslucentCheck() 
-{
-	ModifiedFlag = TRUE;		
-}
-
-void CTextureInfo::OnHintCheck() 
-{
-	ModifiedFlag = TRUE;	
-}
-
-
 void CTextureInfo::OnOK() 
 {
 	
@@ -746,7 +541,15 @@ void CTextureInfo::OnOK()
 	{
 		ModifiedFlag = TRUE;
 		DocWalHeader->flags = m_Q2Header.flags;
-	}	
+	}
+
+	if (DocWalHeader->contents != m_Q2Header.contents)
+	{
+		ModifiedFlag = TRUE;
+		DocWalHeader->contents = m_Q2Header.contents;
+	}
+
+
 #else
 	DocWalHeader->flags = 0;
 	DocWalHeader->flags |= (m_LightFlag);
@@ -759,7 +562,6 @@ void CTextureInfo::OnOK()
 	DocWalHeader->flags |= (m_NoDrawFlag	<< 7);
 	DocWalHeader->flags |= (m_HintFlag		<< 8);
 	DocWalHeader->flags |= (m_SkipFlag		<< 9);
-#endif
 
 	DocWalHeader->contents = 0;
 	DocWalHeader->contents |= (m_SolidFlag);
@@ -782,6 +584,7 @@ void CTextureInfo::OnOK()
 	DocWalHeader->contents |= (m_DetailFlag			<< 27);
 	DocWalHeader->contents |= (m_TranslucentFlag	<< 28);
 	DocWalHeader->contents |= (m_LadderFlag			<< 29);	
+#endif
 
 	int i = m_cbEngines.GetCurSel();
 	Q2Engine* pSel = reinterpret_cast<Q2Engine * >(m_cbEngines.GetItemData(i));
@@ -827,8 +630,21 @@ BOOL CTextureInfo::OnCommand(WPARAM w, LPARAM l)
 		else
 		{
 			m_Q2Header.flags &= ~(iBit);
+		}		
+	}
+	if ((iID >= IDC_CONTENT_0X1) && (iID <= IDC_CONTENT_0X80000000))
+	{
+		// Find the corresponding bitmask from the map
+		UINT iBit = m_mID2Contents[iID];
+		iStatus = IsDlgButtonChecked(iID);
+		if (iStatus)
+		{
+			m_Q2Header.contents |= iBit;
 		}
-		
+		else
+		{
+			m_Q2Header.contents &= ~(iBit);
+		}
 	}
 	return CDialog::OnCommand(w, l);
 }

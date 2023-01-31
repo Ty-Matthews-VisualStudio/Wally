@@ -1,0 +1,93 @@
+{
+	"$schema": "https://ty-matthews.github.io/Wally/json/schema/texture_properties.wal.json",
+	"entries": [
+	{
+	  "name": "Solid",
+	  "bitmask": 1
+	},
+	{
+	  "name": "Window",
+	  "bitmask": 2
+	},
+	{
+	  "name": "Aux",
+	  "bitmask": 4
+	},
+	{
+	  "name": "Lava",
+	  "bitmask": 8
+	},
+	{
+	  "name": "Slime",
+	  "bitmask": 16
+	},
+	{
+	  "name": "Water",
+	  "bitmask": 32
+	},
+	{
+	  "name": "Mist",
+	  "bitmask": 64
+	},
+	{
+	  "name": "AreaPortal",
+	  "bitmask": 32768
+	},
+	{
+	  "name": "PlayerClip",
+	  "bitmask": 65536
+	},
+	{
+	  "name": "MonsterClip",
+	  "bitmask": 131072
+	},
+	{
+	  "name": "Current_0",
+	  "bitmask": 262144
+	},
+	{
+	  "name": "Current_90",
+	  "bitmask": 524288
+	},
+	{
+	  "name": "Current_180",
+	  "bitmask": 1048576
+	},
+	{
+	  "name": "Current_270",
+	  "bitmask": 2097152
+	},
+	{
+	  "name": "Current_Up",
+	  "bitmask": 4194304
+	},
+	{
+	  "name": "Current_Dn",
+	  "bitmask": 8388608
+	},
+	{
+	  "name": "Origin",
+	  "bitmask": 16777216
+	},
+	{
+	  "name": "Monster",
+	  "bitmask": 33554432
+	},
+	{
+	  "name": "Corpse",
+	  "bitmask": 67108864
+	},
+	{
+	  "name": "Detail",
+	  "bitmask": 134217728
+	},
+	{
+	  "name": "Translucent",
+	  "bitmask": 268435456
+	},
+	{
+	  "name": "Ladder",
+	  "bitmask": 536870912
+	}
+	]
+}
