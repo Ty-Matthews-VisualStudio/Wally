@@ -48,3 +48,16 @@ under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 specific language governing permissions and limitations under the License.
 ```
+
+## Revision History
+###2023-01-31 (current debug release):
+- Added support for custom Quake2 engine flags and contents when editing .WAL file properties.  Users can now specify their own custom bitmask settings using JSON following [this schema](https://ty-matthews.github.io/Wally/json/schema/texture_properties.wal.json), or just copy and edit the default files.  The application will search for folders underneath the .\Wally\json\.wal folder structure.  Any folder found there will be searched for two files: **flags.json** and **content.json**.  If those files are found and the JSON is valid, the application will add that folder name as a custom engine that is selectable when viewing the .WAL file properties dialog box.  Changing the engine will dynamically enable/disable the appropriate flags and contents checkboxes.
+- Corrected some memory leak issues with CColorOptimizer
+- Rebuilt many parts of Batch Conversion multi-threading to correct for spurious crashes
+- Rebuilt Visual Studio solution using source files for Visual Studio 2022
+- Updated JPEG library to version 9e
+- Updated libpng library to version 1.6.39
+- Updated zlib library to version 1.2.13
+- Added boost library version 1.81.0 for a variety of useful functions (JSON parsing a primary one)
+- Updated RegistryHelper and MemBuffer classes to more modern versions
+- Added InitFromResource function to MemBuffer class to support loading of RCDATA objects out of .exe file
