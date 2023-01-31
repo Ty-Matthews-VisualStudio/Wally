@@ -23,6 +23,217 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+class pred
+{
+public:
+	static bool ischar(char c)
+	{
+		return c == '"';
+	};
+};
+
+BOOL Q2Engine::LoadJSON(LPCTSTR szFolderName)
+{
+	std::stringstream ssTemp;
+	std::stringstream ssMsg;
+	std::string sDir;
+	char szDrive[_MAX_DRIVE];
+	char szDir[_MAX_DIR];
+	char szFileName[_MAX_FNAME];
+	char szExt[_MAX_EXT];
+
+	m_sFolderName = szFolderName;
+	_splitpath_s(szFolderName, szDrive, sizeof(szDrive), szDir, sizeof(szDir), szFileName, sizeof(szFileName), szExt, sizeof(szExt));
+	m_sName = szFileName;
+	sDir = szDir;
+	boost::algorithm::trim_if(m_sName, pred::ischar);
+	boost::algorithm::trim_if(sDir, pred::ischar);
+
+	// Parse the JSON and return TRUE if it's valid, otherwise FALSE and set ErrorMessage.
+	// Find flags.json and content.json, parse them separately
+	ssTemp << sDir << m_sName << "\\flags.json";
+	if (LoadFile(ssTemp, m_vFlags))
+	{
+		ssTemp.str("");
+		ssTemp << sDir << m_sName << "\\content.json";
+		return LoadFile(ssTemp, m_vContent);
+	}
+	return FALSE;
+}
+
+BOOL Q2Engine::LoadFile(std::stringstream& ssFileName, _NameBitmaskPair& vPairs)
+{
+
+	class JSONException : public std::exception
+	{
+	private:
+		std::string m_sWhat;
+	public:
+		JSONException(LPCTSTR szMessage) { m_sWhat = szMessage; }
+		JSONException(std::stringstream &sMessage) { m_sWhat = sMessage.str(); }
+		const char* What()
+		{
+			return m_sWhat.c_str();
+		}
+	};
+	
+	CMemBuffer mbJSON;
+	std::stringstream ssMsg;
+	if (!mbJSON.InitFromFile(ssFileName))
+	{		
+		ssMsg << "Error loading " << ssFileName.str();
+		m_sErrorMessage = ssMsg.str();
+		return FALSE;
+	}
+	boost::json::error_code ec;
+	auto const jv = mbJSON.ParseJson(ec);
+	if (ec)
+	{
+		ssMsg << "Error parsing " << ssFileName.str() << " JSON error code: " << ec;
+		m_sErrorMessage = ssMsg.str();
+		return FALSE;
+	}
+	else
+	{
+		std::stringstream ssTemp;
+		try
+		{
+			// Validate the JSON and build a vector of std::pair<std::string,int>
+			if (jv.kind() == boost::json::kind::object)
+			{
+				auto const& obj = jv.get_object();
+				if (!obj.empty())
+				{
+					auto it = obj.begin();
+					for (;;)
+					{
+						ssTemp.str("");
+						ssTemp << boost::json::serialize(it->key());
+						if (!_stricmp(ssTemp.str().c_str(), "\"entries\""))
+						{
+							if (it->value().kind() != boost::json::kind::array)
+							{
+								ssMsg << "Error parsing " << ssFileName.str() <<
+									" : Unrecognized data type for 'entries' object," << 
+									"  expected array received " << it->value().kind();
+								throw JSONException(ssMsg);
+							}
+							else
+							{
+								auto const& arr = it->value().get_array();
+								if (arr.empty())
+								{
+									ssMsg << "Error parsing " << ssFileName.str() <<
+										" : 'entries' array is empty";
+									throw JSONException(ssMsg);
+								}
+								else
+								{
+									auto itArr = arr.begin();
+									for (int index = 0;;index++)
+									{	
+										std::string sName;
+										unsigned int iBitmask = 0;
+										
+										if ((*itArr).kind() != boost::json::kind::object)
+										{
+											ssMsg << "Error parsing " << ssFileName.str() <<
+												" : Unrecognized data type for array entry index[" << index <<
+												"]  Expected object received " << (*itArr).kind();
+											throw JSONException(ssMsg);
+										}
+										else
+										{
+											auto const& oEntry = (*itArr).get_object();
+											if (!obj.empty())
+											{
+												auto itEntry = oEntry.begin();
+												for (;;)
+												{
+													std::stringstream ssKey;
+													std::stringstream ssName;
+													ssKey << boost::json::serialize(itEntry->key());
+													if (!_stricmp(ssKey.str().c_str(), "\"name\""))
+													{
+														ssName << boost::json::serialize(itEntry->value());
+														sName = ssName.str();
+														boost::algorithm::trim_if(sName, pred::ischar);
+													}
+													else
+													{
+														if (!_stricmp(ssKey.str().c_str(), "\"bitmask\""))
+														{
+															switch (itEntry->value().kind())
+															{
+															case boost::json::kind::uint64:
+															{
+																iBitmask = itEntry->value().get_uint64();
+															}
+															break;
+
+															case boost::json::kind::int64:
+															{
+																iBitmask = itEntry->value().get_int64();
+															}
+															break;
+
+															default:
+															{
+																ssMsg << "Error parsing " << ssFileName.str() <<
+																	" : Unrecognized bitmask data type for entry with name '" << sName.c_str() <<
+																	"'  Received kind " << itEntry->value().kind();
+																throw JSONException(ssMsg);
+															}
+															break;
+															}
+														}
+														else
+														{
+															ssMsg << "Error parsing " << ssFileName.str() <<
+																" : Unrecognized key/value pair <" << boost::json::serialize(itEntry->key()) << 
+																" :  " << boost::json::serialize(itEntry->value()) << ">";
+															throw JSONException(ssMsg);
+														}
+													}													
+													if (++itEntry == oEntry.end())
+														break;												
+												}
+											}
+										}
+										
+										if (sName.size() == 0 || iBitmask == 0)
+										{
+											ssMsg << "Error parsing " << ssFileName.str() <<
+												" : Malformed array entry with index[" << index << "]";												
+											throw JSONException(ssMsg);
+										}
+										else
+										{
+											vPairs.push_back(std::make_pair(sName, iBitmask));
+										}
+										
+										if (++itArr == arr.end())
+											break;
+									}
+								}
+							}
+						}
+						if (++it == obj.end())
+							break;
+					}
+				}
+			}
+		}
+		catch (JSONException e)
+		{
+			m_sErrorMessage = e.What();
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+
 /////////////////////////////////////////////////////////////////////////////
 // CTextureInfo dialog
 
@@ -70,6 +281,19 @@ CTextureInfo::CTextureInfo(CWnd* pParent /*=NULL*/)
 	ModifiedFlag = FALSE;
 }
 
+CTextureInfo::~CTextureInfo()
+{
+	CleanUp();
+}
+
+void CTextureInfo::CleanUp()
+{
+	for (Q2Engine* p : m_vEngines)
+	{
+		if( p ) delete p;
+	}
+	m_vEngines.erase(m_vEngines.begin(), m_vEngines.end());
+}
 
 void CTextureInfo::DoDataExchange(CDataExchange* pDX)
 {
@@ -114,7 +338,7 @@ void CTextureInfo::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_SKIP_CHECK, m_SkipFlag);
 	DDX_Check(pDX, IDC_PORTAL_CHECK, m_AreaPortalFlag);
 	//}}AFX_DATA_MAP
-	DDX_Control(pDX, IDC_TEXTUREINFO_Q2ENGINE, m_lstEngines);
+	DDX_Control(pDX, IDC_TEXTUREINFO_Q2ENGINE, m_cbEngines);
 }
 
 
@@ -306,84 +530,47 @@ void CTextureInfo::Init (LPQ2_MIP_S WalHeader)
 	m_LadderFlag		= (WalHeader->contents & TC_LADDER)			? true : false;	
 }
 
-LPVOID CTextureInfo::LoadEngineJSON(LPCTSTR szFolderName)
-{
-	class pred
-	{
-	public:
-		static bool ischar(char c)
-		{
-			return c == '"';
-		};
-	};
-
-	std::string sEngine;
-	CMemBuffer mbJSON;
-	char szDrive[_MAX_DRIVE];
-	char szDir[_MAX_DIR];
-	char szFileName[_MAX_FNAME];
-	char szExt[_MAX_EXT];
-
-	_splitpath_s(szFolderName, szDrive, sizeof(szDrive), szDir, sizeof(szDir), szFileName, sizeof(szFileName), szExt, sizeof(szExt));
-	sEngine = szFileName;
-	boost::algorithm::trim_if(sEngine, pred::ischar);
-#if 0
-	// Parse the JSON and return a void * if it's valid, otherwise NULL.
-	// Find flags.json and content.json, parse each of them
-	mbJSON.InitFromFile();
-	boost::json::error_code ec;
-	auto const jv = mbJSON.ParseJson(ec);
-	if (ec)
-	{
-		std::stringstream ss;
-		ss << "Error parsing " << szFileName << " JSON error code: " << ec;
-		AfxMessageBox(ss.str().c_str(), MB_ICONSTOP);
-		return nullptr;
-	}
-	else
-	{
-		// Validate the JSON and build a vector of std::pair<std::string,int>
-
-		if (jv.kind() != boost::json::kind::object)
-		{
-			auto const& obj = jv.get_object();
-			if (!obj.empty())
-			{
-				auto it = obj.begin();
-				for (;;)
-				{
-					ss << boost::json::serialize(it->key());
-					pretty_print(it->value());
-					if (++it == obj.end())
-						break;
-				}
-			}
-		}
-	}
-#endif
-	return nullptr;
-}
-
 void CTextureInfo::LoadJSON()
 {
 	CString sSourceFolder;
-	sSourceFolder.Format("%s\\.wal\\", g_strJSONDirectory);
+	sSourceFolder.Format("%s\\.wal\\", g_strJSONDirectory.GetBuffer());
+	bool bOnce = false;
+	CleanUp(); // Erase any existing.  This function should only ever be called once, but just in case a refresh button is added later
 		
 	for (auto& p : boost::filesystem::directory_iterator(sSourceFolder.GetBuffer()))
 	{
 		std::stringstream ss;		
 		ss << p;
-		LPVOID pItemData = LoadEngineJSON(ss.str().c_str());
-		if( pItemData)
+		Q2Engine* pNew = new Q2Engine();
+		if (pNew)
 		{
-			//m_lstEngines.AddString(sEngine.c_str());
+			if (pNew->LoadJSON(ss.str().c_str()))
+			{
+				m_vEngines.push_back(pNew);
+				int i = m_cbEngines.AddString(pNew->m_sName.c_str());
+				m_cbEngines.SetItemDataPtr(i, (void*)pNew);
+
+				if (!_stricmp(pNew->m_sName.c_str(), g_strDefaultTexInfoQ2Engine.GetBuffer()))
+				{
+					m_cbEngines.SetCurSel(i);
+				}
+			}
+			else
+			{
+				if (!bOnce)
+				{
+					// We'll ignore any additional failures, correct them one-by-one
+					AfxMessageBox(pNew->m_sErrorMessage.c_str(), MB_ICONSTOP);
+					bOnce = true;
+				}				
+				delete pNew;				
+			}
+		}
+		else
+		{
+			ASSERT(FALSE);
 		}		
 	}
-}
-
-void CTextureInfo::LoadEngineFromJSON(LPCTSTR szFileName)
-{
-
 }
 
 void CTextureInfo::OnChangeTextureName() 
@@ -616,6 +803,13 @@ void CTextureInfo::OnOK()
 	DocWalHeader->contents |= (m_DetailFlag			<< 27);
 	DocWalHeader->contents |= (m_TranslucentFlag	<< 28);
 	DocWalHeader->contents |= (m_LadderFlag			<< 29);	
+
+	int i = m_cbEngines.GetCurSel();
+	Q2Engine* pSel = reinterpret_cast<Q2Engine * >(m_cbEngines.GetItemData(i));
+	if (pSel)
+	{
+		g_strDefaultTexInfoQ2Engine = pSel->m_sName.c_str();
+	}
 	
 	CDialog::OnOK();
 }

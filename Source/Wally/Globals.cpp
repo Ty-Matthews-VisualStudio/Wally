@@ -248,6 +248,8 @@ CString		g_strFileConvertDirectory		= "";
 CString		g_strFileOpenDirectory			= "";
 CString		g_strHalfLifeDirectory			= "";
 CString		g_strModSelection				= "";
+CString		g_strDefaultTexInfoQ2Engine		= "baseq2";
+
 int			g_iColorDecalSelection			= 0;
 int			g_iColorDecalBlendRed			= 255;
 int			g_iColorDecalBlendGreen			= 0;
@@ -331,6 +333,8 @@ void RegisterWallyVariables()
 	ADD_REG_SZ(			g_strFileOpenDirectory,				"DefaultFileOpenDirectory",				strWallyKey);
 	ADD_REG_SZ(			g_strHalfLifeDirectory,				"Half-Life Directory",					strWallyKey);
 	ADD_REG_SZ(			g_strModSelection,					"Color Decal Mod Directory",			strWallyKey);
+	ADD_REG_SZ(			g_strDefaultTexInfoQ2Engine,		"DefaultQ2EngineTextureInfo",			strWallyKey);
+		
 	ADD_REG_NUM(		g_iColorDecalSelection,				"Color Decal Options",					strWallyKey);
 	ADD_REG_NUM(		g_iColorDecalBlendRed,				"Color Decal Blend Red Color",			strWallyKey);
 	ADD_REG_NUM(		g_iColorDecalBlendGreen,			"Color Decal Blend Green Color",		strWallyKey);

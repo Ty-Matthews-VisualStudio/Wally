@@ -188,6 +188,7 @@ extern	CString		g_strBrowseDirectory;
 extern	CString		g_strFileConvertDirectory;
 extern	CString		g_strFileOpenDirectory;
 extern	CString		g_strHalfLifeDirectory;
+extern	CString		g_strDefaultTexInfoQ2Engine;	// 2023-01-30: adding custom Q2 engine support to things like CTextureInfo flags and content
 
 extern	CString		g_strQuake2Palette;
 extern	CString		g_strQuake1Palette;

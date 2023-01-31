@@ -139,6 +139,8 @@ public:
 	CMemBuffer(LPCTSTR szFileName, DWORD dwFlags = MEMBUFFER_FLAG_ZEROMEMORY);
 	LPBYTE InitFromFile(CFile *fp, DWORD dwFlags = 0);
 	LPBYTE InitFromFile(const LPCTSTR szFileName, DWORD dwFlags = 0);
+	LPBYTE InitFromFile(std::string& sFileName, DWORD dwFlags = 0);
+	LPBYTE InitFromFile(std::stringstream& sFileName, DWORD dwFlags = 0);
 	BOOL AddFile(const LPCTSTR szFileName, DWORD dwFlags = 0);
 	BOOL WriteToFile(const LPCSTR szFileName, DWORD dwFlags = MEMBUFFER_FLAG_WRITEFILE_OVERWRITE);
 	BOOL WriteToFile(const wchar_t *szFileName, DWORD dwFlags = MEMBUFFER_FLAG_WRITEFILE_OVERWRITE);

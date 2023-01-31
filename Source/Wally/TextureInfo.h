@@ -11,6 +11,21 @@
 	#include "ImageHelper.h"
 #endif
 
+class Q2Engine
+{
+public:
+	std::string m_sFolderName;
+	std::string m_sName;
+	std::string m_sErrorMessage;
+
+	typedef std::vector< std::pair< std::string, int > > _NameBitmaskPair;
+	_NameBitmaskPair m_vFlags;
+	_NameBitmaskPair m_vContent;
+
+	BOOL LoadJSON(LPCTSTR szFolderName);
+	BOOL LoadFile(std::stringstream &ssFileName, _NameBitmaskPair& vPairs);
+};
+
 /////////////////////////////////////////////////////////////////////////////
 // CTextureInfo dialog
 
@@ -19,6 +34,9 @@ class CTextureInfo : public CDialog
 // Construction
 public:
 	CTextureInfo(CWnd* pParent = NULL);   // standard constructor
+	virtual ~CTextureInfo();
+
+	std::vector< Q2Engine* > m_vEngines;
 
 // Dialog Data
 	//{{AFX_DATA(CTextureInfo)
@@ -76,9 +94,8 @@ public:
 public:
 	void Init (LPQ2_MIP_S WalHeader);
 	void LoadJSON();
-	LPVOID LoadEngineJSON(LPCTSTR szFolderName);
-	void LoadEngineFromJSON(LPCTSTR szFileName);
-
+	void CleanUp();
+	
 // Implementation
 protected:
 
@@ -122,7 +139,7 @@ protected:
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 public:
-	CComboBox m_lstEngines;
+	CComboBox m_cbEngines;
 };
 
 //{{AFX_INSERT_LOCATION}}

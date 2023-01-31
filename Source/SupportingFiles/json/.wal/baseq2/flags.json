@@ -3,43 +3,43 @@
 	"entries": [
 	{
 	  "name": "Light",
-	  "bitmask": "1"
+	  "bitmask": 1
 	},
 	{
 	  "name": "Slick",
-	  "bitmask": "2"
+	  "bitmask": 2
 	},
 	{
 	  "name": "Sky",
-	  "bitmask": "4"
+	  "bitmask": 4
 	},
 	{
 	  "name": "Warp",
-	  "bitmask": "8"
+	  "bitmask": 8
 	},
 	{
 	  "name": "Trans33",
-	  "bitmask": "16"
+	  "bitmask": 16
 	},
 	{
 	  "name": "Trans66",
-	  "bitmask": "32"
+	  "bitmask": 32
 	},
 	{
 	  "name": "Flowing",
-	  "bitmask": "64"
+	  "bitmask": 64
 	},
 	{
 	  "name": "NoDraw",
-	  "bitmask": "128"
+	  "bitmask": 128
 	},
 	{
 	  "name": "Hint",
-	  "bitmask": "256"
+	  "bitmask": 256
 	},
 	{
 	  "name": "Skip",
-	  "bitmask": "512"
+	  "bitmask": 512
 	}
 	]
 }

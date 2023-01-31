@@ -288,6 +288,17 @@ LPBYTE CMemBuffer::InitFromFile( LPCTSTR szFileName, DWORD dwFlags /* = 0 */)
 
 	return pbyBuffer;
 }
+
+LPBYTE CMemBuffer::InitFromFile(std::string& sFileName, DWORD dwFlags /* = 0 */)
+{
+	return InitFromFile(sFileName.c_str(), dwFlags);
+}
+
+LPBYTE CMemBuffer::InitFromFile(std::stringstream& sFileName, DWORD dwFlags /* = 0 */)
+{
+	return InitFromFile(sFileName.str().c_str(), dwFlags);
+}
+
 BOOL CMemBuffer::AddFile(const LPCTSTR szFileName, DWORD dwFlags /* = 0 */)
 {
 	assert(szFileName);
