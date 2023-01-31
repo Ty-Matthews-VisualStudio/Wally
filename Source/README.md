@@ -10,7 +10,7 @@ Wally welcomes contributions. When contributing, please follow the code below.
 
 ### Issues
 
-Feel free to submit issues and enhancement requests.
+Feel free to submit issues and enhancement requests to [Ty Matthews](mailto:onehotseat@gmail.com).
 
 Please help us by providing **minimal reproducible examples**, because source code is easier to let other people understand what happens.
 For crash problems on certain platforms, please bring stack dump content with the detail of the OS, compiler, etc.
@@ -24,7 +24,7 @@ In general, we follow the "fork-and-pull" Git workflow.
  1. **Fork** the repo on GitHub
  2. **Clone** the project to your own machine
  3. **Checkout** a new branch on your fork, start developing on the branch
- 4. **Test** the change before commit, Make sure the changes pass all the tests, including `unittest` and `preftest`, please add test case for each new feature or bug-fix if needed.
+ 4. **Test** the change before commit
  5. **Commit** changes to your own branch
  6. **Push** your work back up to your fork
  7. Submit a **Pull request** so that we can review your changes
@@ -50,8 +50,8 @@ specific language governing permissions and limitations under the License.
 ```
 
 ## Revision History
-###2023-01-31 (current debug release):
-- Added support for custom Quake2 engine flags and contents when editing .WAL file properties.  Users can now specify their own custom bitmask settings using JSON following [this schema](https://ty-matthews.github.io/Wally/json/schema/texture_properties.wal.json), or just copy and edit the default files.  The application will search for folders underneath the .\Wally\json\.wal folder structure.  Any folder found there will be searched for two files: **flags.json** and **content.json**.  If those files are found and the JSON is valid, the application will add that folder name as a custom engine that is selectable when viewing the .WAL file properties dialog box.  Changing the engine will dynamically enable/disable the appropriate flags and contents checkboxes.
+### 2023-01-31 (current [debug release](../Binaries)):
+- Added support for custom Quake2 engine flags and contents when editing .WAL file properties.  Users can now specify their own custom bitmask settings using JSON following [this schema](https://ty-matthews.github.io/Wally/json/schema/texture_properties.wal.json), or just copy and edit the default files.  The application will search for folders underneath the .\Wally\json\\.wal folder structure.  Any folder found there will be searched for two files: **flags.json** and **content.json**.  If those files are found and the JSON is valid, the application will add that folder name as a custom engine that is selectable when viewing the .WAL file properties dialog box.  Changing the engine will dynamically enable/disable the appropriate flags and contents checkboxes.
 - Corrected some memory leak issues with CColorOptimizer
 - Rebuilt many parts of Batch Conversion multi-threading to correct for spurious crashes
 - Rebuilt Visual Studio solution using source files for Visual Studio 2022
