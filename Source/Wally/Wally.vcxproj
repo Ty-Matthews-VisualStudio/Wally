@@ -609,6 +609,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="singleinstance.cpp" />
     <ClCompile Include="SinRuleFlagDlg.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
@@ -884,6 +885,7 @@
     <ClInclude Include="SharpenDlg.h" />
     <ClInclude Include="SinFlagsColorWnd.h" />
     <ClInclude Include="SinFlagsDlg.h" />
+    <ClInclude Include="singleinstance.h" />
     <ClInclude Include="SinRuleFlagDlg.h" />
     <ClInclude Include="SortStringArray.h" />
     <ClInclude Include="Splash.h" />

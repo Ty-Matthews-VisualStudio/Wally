@@ -23,6 +23,8 @@
 #include "DecalToolbar.h"
 #include "ToolSettingsToolbar.h"
 
+class CWallyApp;
+
 class CMainFrame : public CMDIFrameWnd
 {
 	DECLARE_DYNCREATE(CMainFrame)
@@ -32,6 +34,7 @@ public:
 
 // Attributes
 public:
+	CWallyApp* m_pWallyApp;
 
 // Operations
 public:

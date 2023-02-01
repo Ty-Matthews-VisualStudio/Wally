@@ -48,37 +48,7 @@ public:
 	CString	m_TextureHeight;
 	CString	m_TextureName;
 	int		m_Value;
-	CString	m_TextureWidth;
-	BOOL	m_SkyFlag;
-	BOOL	m_FlowingFlag;
-	BOOL	m_LightFlag;
-	BOOL	m_NoDrawFlag;
-	BOOL	m_SlickFlag;
-	BOOL	m_Trans33Flag;
-	BOOL	m_Trans66Flag;
-	BOOL	m_WarpFlag;
-	BOOL	m_AuxFlag;
-	BOOL	m_LavaFlag;
-	BOOL	m_MistFlag;
-	BOOL	m_SlimeFlag;
-	BOOL	m_SolidFlag;
-	BOOL	m_WaterFlag;
-	BOOL	m_WindowFlag;
-	BOOL	m_LadderFlag;
-	BOOL	m_Current0Flag;
-	BOOL	m_Current180Flag;
-	BOOL	m_Current270Flag;
-	BOOL	m_Current90Flag;
-	BOOL	m_CurrentUpFlag;
-	BOOL	m_DetailFlag;
-	BOOL	m_MonsterClipFlag;
-	BOOL	m_OriginFlag;
-	BOOL	m_PlayerClipFlag;
-	BOOL	m_CurrentDnFlag;
-	BOOL	m_TranslucentFlag;
-	BOOL	m_HintFlag;
-	BOOL	m_SkipFlag;
-	BOOL	m_AreaPortalFlag;
+	CString	m_TextureWidth;	
 	//}}AFX_DATA
 
 	bool ModifiedFlag;
@@ -108,38 +78,8 @@ protected:
 	//{{AFX_MSG(CTextureInfo)
 	afx_msg void OnChangeTextureName();
 	afx_msg void OnChangeAnimname();
-	afx_msg void OnChangeValue();
-	afx_msg void OnAuxCheck();
-	afx_msg void OnFlowingCheck();
-	afx_msg void OnLavaCheck();
-	afx_msg void OnLightCheck();
-	afx_msg void OnMistCheck();
-	afx_msg void OnNodrawCheck();
-	afx_msg void OnSkyCheck();
-	afx_msg void OnSlickCheck();
-	afx_msg void OnSlimeCheck();
-	afx_msg void OnSolidCheck();
-	afx_msg void OnTrans33Check();
-	afx_msg void OnTrans66Check();
-	afx_msg void OnWarpCheck();
-	afx_msg void OnWaterCheck();
-	afx_msg void OnWindowCheck();
-	afx_msg void OnCurrent0Check();
-	afx_msg void OnCurrent180Check();
-	afx_msg void OnCurrent270Check();
-	afx_msg void OnCurrent90Check();
-	afx_msg void OnCurrentdnCheck();
-	afx_msg void OnCurrentupCheck();
-	afx_msg void OnDetailCheck();
-	afx_msg void OnLadderCheck();
-	afx_msg void OnOriginCheck();
-	afx_msg void OnMonsterclipCheck();
-	afx_msg void OnPlayerclipCheck();
-	afx_msg void OnPortalCheck();
-	afx_msg void OnSkipCheck();
-	afx_msg void OnTranslucentCheck();
+	afx_msg void OnChangeValue();	
 	virtual void OnOK();
-	afx_msg void OnHintCheck();
 	afx_msg bool OnInitDialog();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
