@@ -94,7 +94,6 @@ Other Games And Image File Formats:
 </font>
 <ul>
 <li>Quake 3: Arena (full 32 bit support with alpha channel)
-<li>PNG file format
 <li>Tribes ???
 <li>Unreal
 <li>Alien Vs Predator
@@ -296,28 +295,15 @@ void WhatsNew(void)
 //		""
 		"What's New in version 1.57 of Wally?\n"
 		"\n"
-		" * Adjustable image thumbnail size in WAD viewer\n"
-		
-		"\n"
-		"Bugs fixed:\n"
-		"\n"
-		" * BMPs File / New initial size is wrong (first time only)\n"
-		" * Scrolled view windows have clipping problem\n"
-		" * Zoom way out, view is too small\n"
-		" * Missing sub-mips (in view) on File New\n"
-		" * Mis-aligned background when scrolling\n"
-		" * Export to 8-bit PCX has entirely black palette\n"
-/*
-
-		"What's New in version 1.56B of Wally?\n"
-		"\n"
 		" * Image Resize can now stretch to any size (whole image only)\n"
 		" * Print and Print Preview\n"
 		" * New Fix Uneven Lighting Filter, for photographic textures,\n"
 		"    works best on images that are basically the same color shade.\n"
 		" * Much faster Color Optimization, for quicker loads of 24 bit images\n"
 		" * New Crop, Resize, and Transparency Blend features in Decal Wizard\n"
-		" * Slider control for size of thumbnails in WAD viewer browse mode\n"
+		" * Slider control for size of thumbnails in WAD viewer browse mode\n"		
+		" * Removed legacy File Associations property page\n"
+		" * Support for custom Quake2 .wal file flags/contents using JSON\n"
 		" * This automatic \"what's new\" message\n"
 		"\n"
 		"Bugs fixed:\n"
@@ -328,7 +314,8 @@ void WhatsNew(void)
 		" * Missing sub-mips (in view) on File New\n"
 		" * Mis-aligned background when scrolling\n"
 		" * Export to 8-bit PCX has entirely black palette\n"
-*/
+		" * Batch conversion failing on modern OSes\n"
+
 		, MB_OK | MB_ICONINFORMATION);
 }
 
@@ -426,12 +413,114 @@ CWallyApp theApp;
 	return &theApp;
 }
 
+void CWallyApp::WakeUp(LPCTSTR aCommandLine) const
+{
+	// Call parent class to handle the basic
+	// functionality, (set foreground)
+	CSingleInstance::WakeUp(aCommandLine);
+
+	// Process command line, for this sample send
+	// new command line to the dialog
+	CMainFrame* pMain = (CMainFrame*)m_pMainWnd;	
+	if (pMain->m_pWallyApp)
+	{
+		pMain->m_pWallyApp->ProcessCommandLine(aCommandLine);
+		/*
+		CCommandLineInfo cmdInfo;
+		CString sCommandLine = aCommandLine;
+		pApp->m_lpCmdLine = sCommandLine.GetBuffer();
+		pApp->ParseCommandLine(cmdInfo);
+		// Dispatch commands specified on the command line
+		if (!pApp->ProcessShellCommand(cmdInfo))
+			return;			
+		pApp->OpenFile(cmdInfo.m_strFileName);
+		*/
+	}
+}
+
+void CWallyApp::ProcessCommandLine(LPCTSTR szCmdLine)
+{
+	class pred
+	{
+	public:
+		static bool ischar(char c)
+		{
+			return c == '"';
+		};
+	};
+
+	// Split using any match to " "
+	std::string str(szCmdLine);	
+	typedef boost::split_iterator<string::iterator> string_split_iterator;
+	for (string_split_iterator It =
+		boost::make_split_iterator(str, boost::first_finder("\" \"", boost::is_iequal()));
+		It != string_split_iterator();
+		++It)
+	{
+		std::stringstream ss;
+		std::string sFileName;
+		ss << copy_range<std::string>(*It);
+		sFileName = ss.str();
+		boost::trim_if(sFileName, pred::ischar);
+
+		ss.str("");
+		ss << "\"" << sFileName << "\"";
+
+		char szDrive[_MAX_DRIVE];
+		char szDir[_MAX_DIR];
+		char szFileName[_MAX_FNAME];
+		char szExt[_MAX_EXT];
+
+		_splitpath_s(sFileName.c_str(), szDrive, sizeof(szDrive), szDir, sizeof(szDir), szFileName, sizeof(szFileName), szExt, sizeof(szExt));
+		if (_stricmp(szExt, ".exe"))
+		{
+			OpenFile(sFileName.c_str());
+		}
+	}
+}
+
+void CWallyApp::OpenFile(LPCTSTR sFileName)
+{
+	// Go grab the file extension
+	CString strFileExtension = GetExtension(sFileName);
+	if (
+		(strFileExtension == ".wal") ||
+		(strFileExtension == ".mip") ||
+		(strFileExtension == ".swl") ||
+		(strFileExtension == ".m8")
+		)
+	{
+		m_pWallyDocTemplate->OpenDocumentFile(sFileName);
+	}
+	else
+	{
+		if (strFileExtension == ".pak")
+		{
+			PakDocTemplate->OpenDocumentFile(sFileName);
+		}
+		else
+		{
+			if (strFileExtension == ".wad")
+			{
+				PackageDocTemplate->OpenDocumentFile(sFileName);
+			}
+			else
+			{
+				OpenNonWalFile(sFileName);
+			}
+		}
+	}
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CWallyApp initialization
 
 BOOL CWallyApp::InitInstance()
 {
-
+	if (!CSingleInstance::Create(_T("{D7B4E7DF-A661-4468-BA25-5CFEBF27ADA0-WallyApplication}")))
+	{
+		return FALSE;
+	}
 #ifndef _DEBUG
 	{
 		CCommandLineInfo cmdInfo;
@@ -592,6 +681,7 @@ BOOL CWallyApp::InitInstance()
 	if (!pMainFrame->LoadFrame(IDR_MAINFRAME))
 		return FALSE;
 	m_pMainWnd = pMainFrame;
+	pMainFrame->m_pWallyApp = this;
 	// Enable drag/drop open
 	pMainFrame->DragAcceptFiles();
 
@@ -629,38 +719,16 @@ BOOL CWallyApp::InitInstance()
 
 	BeginWaitCursor();
 #if 1
+	if (strlen(m_lpCmdLine) > 0)
+	{
+		ProcessCommandLine(m_lpCmdLine);
+	}
+	/*
 	if (cmdInfo.m_strFileName.GetLength() > 0)
 	{
-		// Go grab the file extension
-		CString strFileExtension = GetExtension(cmdInfo.m_strFileName);
-		if (
-			(strFileExtension == ".wal") ||
-			(strFileExtension == ".mip") ||
-			(strFileExtension == ".swl") ||
-			(strFileExtension == ".m8")
-			)
-		{
-			m_pWallyDocTemplate->OpenDocumentFile(cmdInfo.m_strFileName);
-		}
-		else
-		{
-			if (strFileExtension == ".pak")
-			{
-				PakDocTemplate->OpenDocumentFile(cmdInfo.m_strFileName);
-			}
-			else
-			{
-				if (strFileExtension == ".wad")
-				{
-					PackageDocTemplate->OpenDocumentFile(cmdInfo.m_strFileName);
-				}
-				else
-				{
-					OpenNonWalFile(cmdInfo.m_strFileName);
-				}
-			}
-		}
+		OpenFile(cmdInfo.m_strFileName);
 	}
+	*/
 	
 #else
 	// Set a char pointer to the first string in the command line	
@@ -3745,3 +3813,4 @@ CDocument* CWallyApp::OpenDocumentFile(LPCTSTR lpszFileName)
 	// our single-image types
 	return m_pWallyDocTemplate->OpenDocumentFile(lpszFileName);
 }
+

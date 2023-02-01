@@ -60,7 +60,7 @@ extern int fnmatch(char *pattern, char *string, int flags);
 
 
 void StripNewLine (char *Source);
-void DebugOut (char *text, bool overwrite);
+void DebugOut (const char *text, bool overwrite);
 inline int PadDWORD (int x)  { return ((x+3) & ~3); }
 inline int PadWORD (int x)   { return ((x+1) & ~1); }
 

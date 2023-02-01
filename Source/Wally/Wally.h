@@ -13,6 +13,7 @@
 
 #include "resource.h"       // main symbols
 //#include "MiscFunctions.h"
+#include "singleinstance.h"
 
 class CParseCommandLine;
 /////////////////////////////////////////////////////////////////////////////
@@ -460,7 +461,7 @@ struct filename_parser : qi::grammar<Iterator, std::string(), qi::space_type, qi
 	qi::rule<Iterator, std::string(), qi::space_type, qi::locals<char> > quoted_string, any_string;
 };
 
-class CWallyApp : public CWinApp
+class CWallyApp : public CWinApp, public CSingleInstance
 {
 public:
 	CWallyApp();
@@ -497,6 +498,9 @@ public:
 	virtual CDocument* OpenDocumentFile(LPCTSTR lpszFileName);
 	
 	BOOL GetBackgroundWindowPlacement (LPWINDOWPLACEMENT lpWindow);	
+	virtual void WakeUp(LPCTSTR aCommandLine) const;
+	void OpenFile(LPCTSTR sFileName);
+	void ProcessCommandLine(LPCTSTR szCmdLine);
 	
 // Members
 public:	
@@ -506,7 +510,7 @@ public:
 
 private:	
 	void ReturnErrorOnFileNew();
-
+	
 // Overrides
 	// ClassWizard generated virtual function overrides
 	//{{AFX_VIRTUAL(CWallyApp)
@@ -542,7 +546,7 @@ private:
 	afx_msg void OnWizardWadmerge();
 	afx_msg void OnWizardTest();
 	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()	
+	DECLARE_MESSAGE_MAP()
 };
 
 

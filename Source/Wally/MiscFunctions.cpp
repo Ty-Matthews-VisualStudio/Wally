@@ -24,15 +24,15 @@ static char THIS_FILE[] = __FILE__;
 // that can be used by any class.  IE string manipulation, etc.
 
 
-void DebugOut(char* text, bool overwrite)
+void DebugOut(const char* text, bool overwrite)
 {
 #ifdef _DEBUG
 	FILE* wp = NULL;
 	errno_t err = 0;
 	if (overwrite)
-		err = fopen_s(&wp, "c:\\temp\\wallyout.txt", "w");
+		err = fopen_s(&wp, "D:\\temp\\wallyout.txt", "w");
 	else
-		err = fopen_s(&wp, "c:\\temp\\wallyout.txt", "a");
+		err = fopen_s(&wp, "D:\\temp\\wallyout.txt", "a");
 
 	if (err == 0)
 	{ 
