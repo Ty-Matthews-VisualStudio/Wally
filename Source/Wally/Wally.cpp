@@ -277,7 +277,6 @@ Completed:
 
 using namespace std;
 
-
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -394,7 +393,7 @@ BEGIN_MESSAGE_MAP(CWallyApp, CWinApp)
 	// Standard file based document commands
 	ON_COMMAND(ID_FILE_NEW, CWinApp::OnFileNew)
 	ON_COMMAND(ID_FILE_OPEN, CWinApp::OnFileOpen)
-	ON_COMMAND(ID_FILE_PRINT_SETUP, CWinApp::OnFilePrintSetup)
+	ON_COMMAND(ID_FILE_PRINT_SETUP, CWinApp::OnFilePrintSetup)	
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -424,7 +423,9 @@ void CWallyApp::WakeUp(LPCTSTR aCommandLine) const
 	CMainFrame* pMain = (CMainFrame*)m_pMainWnd;	
 	if (pMain->m_pWallyApp)
 	{
-		pMain->m_pWallyApp->ProcessCommandLine(aCommandLine);
+		//pMain->m_pWallyApp->ProcessCommandLine(aCommandLine);		
+		pMain->PostSingleInstance(aCommandLine);
+		
 		/*
 		CCommandLineInfo cmdInfo;
 		CString sCommandLine = aCommandLine;
@@ -474,12 +475,12 @@ void CWallyApp::ProcessCommandLine(LPCTSTR szCmdLine)
 		_splitpath_s(sFileName.c_str(), szDrive, sizeof(szDrive), szDir, sizeof(szDir), szFileName, sizeof(szFileName), szExt, sizeof(szExt));
 		if (_stricmp(szExt, ".exe"))
 		{
-			OpenFile(sFileName.c_str());
+			_OpenFile(sFileName.c_str());
 		}
 	}
 }
 
-void CWallyApp::OpenFile(LPCTSTR sFileName)
+void CWallyApp::_OpenFile(LPCTSTR sFileName)
 {
 	// Go grab the file extension
 	CString strFileExtension = GetExtension(sFileName);

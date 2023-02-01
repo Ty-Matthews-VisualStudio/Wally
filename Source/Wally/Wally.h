@@ -479,6 +479,7 @@ public:
 	
 	CBrowseDoc *m_pBrowseDoc;
 	BOOL m_bBrowseOpen;
+	std::string m_sSingleInstanceCommandLine;
 	
 	//CParseCommandLine CommandLineParser;
 
@@ -499,7 +500,7 @@ public:
 	
 	BOOL GetBackgroundWindowPlacement (LPWINDOWPLACEMENT lpWindow);	
 	virtual void WakeUp(LPCTSTR aCommandLine) const;
-	void OpenFile(LPCTSTR sFileName);
+	void _OpenFile(LPCTSTR sFileName);
 	void ProcessCommandLine(LPCTSTR szCmdLine);
 	
 // Members
@@ -544,7 +545,7 @@ private:
 	afx_msg void OnUpdateFileDebug(CCmdUI* pCmdUI);
 	afx_msg void OnWizardColorDecal();
 	afx_msg void OnWizardWadmerge();
-	afx_msg void OnWizardTest();
+	afx_msg void OnWizardTest();	
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

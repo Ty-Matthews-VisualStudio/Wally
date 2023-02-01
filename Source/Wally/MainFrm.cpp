@@ -24,6 +24,8 @@
 #include "GameSelectDlg.h"
 #include "PackageView.h"
 
+static UINT NEAR WM_SINGLE_INSTANCE_CUSTOM = RegisterWindowMessage("WM_WALLY_SINGLE_INSTANCE_CUSTOM");
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -90,6 +92,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWnd)
 	ON_UPDATE_COMMAND_UI( ID_MODES_TOOLBAR,		 OnUpdateModesBar)	
 	ON_UPDATE_COMMAND_UI( ID_SHOW_FINE_GRID,     OnUpdateShowFineGrid)
 	ON_UPDATE_COMMAND_UI( ID_SHOW_COURSE_GRID,   OnUpdateShowCourseGrid)
+	ON_REGISTERED_MESSAGE(WM_SINGLE_INSTANCE_CUSTOM, OnSingleInstanceCustomMessage)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -105,15 +108,58 @@ static UINT indicators[] =
 /////////////////////////////////////////////////////////////////////////////
 // CMainFrame construction/destruction
 
-CMainFrame::CMainFrame()
+void CMainFrame::PostSingleInstance(LPCTSTR szCommandLine)
 {
-	m_bProgressCreated = false;	
+#if 0
+	CString sFormat;
+	DWORD dwStart = ::GetTickCount();
+	if (m_pMutex)
+	{
+		CSingleLock lLock(m_pMutex, FALSE);
+		if( lLock.Lock(10000) )		
+		{
+			DebugOut("We're in, locked", FALSE);
+			theApp.m_sSingleInstanceCommandLine = szCommandLine;
+			::SendMessage(m_hWnd, WM_SINGLE_INSTANCE_CUSTOM, 0, 0);
+			lLock.Unlock();
+		}
+		else
+		{
+			sFormat.Format("Failed to lock.  Duration wait: %d", ::GetTickCount() - dwStart);
+			DebugOut(sFormat.GetBuffer(), FALSE);
+		}
+	}	
+#endif
+	theApp.m_sSingleInstanceCommandLine = szCommandLine;
+	::SendMessage(m_hWnd, WM_SINGLE_INSTANCE_CUSTOM, 0, 0);
+}
+
+LRESULT CMainFrame::OnSingleInstanceCustomMessage(WPARAM w, LPARAM l)
+{	
+	theApp.ProcessCommandLine(theApp.m_sSingleInstanceCommandLine.c_str());
+	return 0;
+}
+
+
+CMainFrame::CMainFrame() : m_pMutex(NULL)
+{
+	m_bProgressCreated = false;
+	
+	// Create mutex, global scope	
+	//m_pMutex = new CMutex(FALSE, "{D7B4E7DF-A661-4468-BA25-5CFEBF27ADA0-WallyApplication-CommandLineMutex}");
+	m_pMutex = new CMutex(FALSE, NULL);
 }
 
 CMainFrame::~CMainFrame()
 {
 	if (m_WndMdiClient.m_hWnd)
 		m_WndMdiClient.UnsubclassWindow();	
+
+	if (m_pMutex)
+	{
+		delete m_pMutex;
+		m_pMutex = NULL;
+	}
 }
 
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)

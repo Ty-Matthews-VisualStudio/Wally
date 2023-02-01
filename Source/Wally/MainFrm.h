@@ -7,6 +7,8 @@
 #include "MdiClient.h"
 #endif
 
+// MFC multi-threaded extensions
+#include <afxmt.h>
 
 #ifndef _WALLYTOOLBAR_H_
 	#include "WallyToolBar.h"
@@ -65,12 +67,15 @@ protected:  // control bar embedded members
 	
 	void ApplyAmount( int iAmount);
 	void OnUpdateApply( CCmdUI* pCmdUI, int iTestAmount);
+
+	CMutex* m_pMutex;
 	
 // Public methods
 public:
 	bool RestoreWindowState( void);
 	void SaveWindowState( void);
 	bool m_bProgressCreated;
+	void PostSingleInstance(LPCTSTR szCommandLine);
 
 	CWndMdiClient *GetMdiClient()
 	{
@@ -126,6 +131,7 @@ protected:
 	afx_msg void OnUpdateShowFineGrid(CCmdUI* pCmdUI);
 	afx_msg void OnShowCourseGrid();
 	afx_msg void OnUpdateShowCourseGrid(CCmdUI* pCmdUI);
+	afx_msg LRESULT OnSingleInstanceCustomMessage(WPARAM w, LPARAM l);
 	DECLARE_MESSAGE_MAP()	
 };
 

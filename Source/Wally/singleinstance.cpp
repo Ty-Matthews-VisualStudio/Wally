@@ -12,6 +12,7 @@
 
 // Single Instance header
 #include "singleinstance.h"
+#include "MiscFunctions.h"
 
 //------------------------------------------------------------------------------
 
@@ -71,34 +72,34 @@ CSingleInstanceData::CSingleInstanceData ( LPCTSTR aName )
 	lMutexName += _T("-Data-Mapping-Mutex") ;
 
 	// Create mutex, global scope
-	mMutex = new CMutex ( FALSE, lMutexName ) ;
+	mMutex = new CMutex ( FALSE, lMutexName ) ;	
 
 	// Create file mapping
-	mMap = CreateFileMapping ( (HANDLE)0xFFFFFFFF, 
-			                     NULL, 
-			                     PAGE_READWRITE, 
-			                     0,
-										sizeof ( TCHAR ) * MAX_DATA,
-										lFileName ) ;
+	mMap = CreateFileMapping((HANDLE)0xFFFFFFFF,
+		NULL,
+		PAGE_READWRITE,
+		0,
+		sizeof(TCHAR) * MAX_DATA,
+		lFileName);
 
-	if ( GetLastError () == ERROR_ALREADY_EXISTS ) 
+	if (GetLastError() == ERROR_ALREADY_EXISTS)
 	{
 		// Close handle
-		CloseHandle ( mMap ) ; 
+		CloseHandle(mMap);
 
 		// Open existing file mapping
-		mMap = OpenFileMapping ( FILE_MAP_WRITE, FALSE, lFileName ) ;			
+		mMap = OpenFileMapping(FILE_MAP_WRITE, FALSE, lFileName);
 	}
 
 	// Set up data mapping
-	mData = (LPTSTR) MapViewOfFile ( mMap, FILE_MAP_WRITE, 0, 0, sizeof ( TCHAR ) * MAX_DATA ) ;
+	mData = (LPTSTR)MapViewOfFile(mMap, FILE_MAP_WRITE, 0, 0, sizeof(TCHAR) * MAX_DATA);
 
 	// Lock file
-	CSingleLock lLock ( mMutex, TRUE ) ;
-	if ( lLock . IsLocked () )
+	CSingleLock lLock(mMutex, TRUE);
+	if (lLock.IsLocked())
 	{
 		// Clear data
-		ZeroMemory ( mData, sizeof ( TCHAR ) * MAX_DATA ) ;
+		ZeroMemory(mData, sizeof(TCHAR) * MAX_DATA);
 	}
 }
 
@@ -117,7 +118,7 @@ CSingleInstanceData::~CSingleInstanceData ()
 		// Close file
 		CloseHandle ( mMap ) ;
 	}
-
+		
 	// Clean up mutex
 	if ( mMutex )
 	{
@@ -287,6 +288,7 @@ UINT CSingleInstanceImpl::Sleeper ( LPVOID aObject )
 
 //------------------------------------------------------------------------------
 
+
 BOOL CSingleInstanceImpl::Create ( LPCTSTR aName ) 
 // Name:        Create
 // Type:        Function
@@ -312,21 +314,36 @@ BOOL CSingleInstanceImpl::Create ( LPCTSTR aName )
 		// Check last error status
 		if ( lLastError == ERROR_ALREADY_EXISTS )
 		{
-			// Set command line data
-			mData -> SetValue ( GetCommandLine () ) ;
+			DebugOut("Instance already exists", FALSE);
+			
+			CString lMutexName = aName;
+			lMutexName += _T("-Data-Mapping-Mutex-MultiDocument");
+			// Create mutex, global scope
+			CMutex *pMutex = new CMutex(FALSE, lMutexName);
+			//CSingleLock lLock(pMutex, FALSE);
+			if (pMutex->Lock())
+			{				
+				DebugOut("Locking SetValue() and PulseEvent()", FALSE);
+				// Set command line data
+				mData->SetValue(GetCommandLine());
 
-			// Not our event, so an instance is already running, signal thread in other instance to wake up
-			if ( mEvent -> PulseEvent () )
-			{		
-				// Close open handles
-				delete mEvent ;
+				// Not our event, so an instance is already running, signal thread in other instance to wake up
+				if (mEvent->PulseEvent())
+				{
+					// Close open handles
+					delete mEvent;
 
-				// Reset event handle
-				mEvent = NULL ;
+					// Reset event handle
+					mEvent = NULL;
+				}
+				pMutex->Unlock();
+				DebugOut("Unlocking SetValue() and PulseEvent()", FALSE);
 			}
+			delete pMutex;
 		}
 		else
 		{
+			DebugOut("Creating thread", FALSE);
 			// Create event of thread syncronization, nameless local scope
 			mSignal = new CEvent ;
 			if ( mSignal )
