@@ -67,8 +67,6 @@ protected:  // control bar embedded members
 	
 	void ApplyAmount( int iAmount);
 	void OnUpdateApply( CCmdUI* pCmdUI, int iTestAmount);
-
-	CMutex* m_pMutex;
 	
 // Public methods
 public:

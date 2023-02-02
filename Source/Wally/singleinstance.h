@@ -32,7 +32,7 @@ class CSingleInstance
 
 		// Callback when the instance is woken up by another
 		virtual void WakeUp ( LPCTSTR aCommandLine ) const ;
-
+			
 	private :
 
 		// The implementation handler, "pimple"

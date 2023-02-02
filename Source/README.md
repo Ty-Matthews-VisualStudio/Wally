@@ -50,7 +50,7 @@ specific language governing permissions and limitations under the License.
 ```
 
 ## Revision History
-### 2023-01-31 (current [debug release](../Binaries)):
+### 2023-02-02 (current [debug release](../Binaries)):
 - Added support for custom Quake2 engine flags and contents when editing .WAL file properties.  Users can now specify their own custom bitmask settings using JSON following [this schema](https://ty-matthews.github.io/Wally/json/schema/texture_properties.wal.json), or just copy and edit the default files.  The application will search for folders underneath the .\Wally\json\\.wal folder structure.  Any folder found there will be searched for two files: **flags.json** and **content.json**.  If those files are found and the JSON is valid, the application will add that folder name as a custom engine that is selectable when viewing the .WAL file properties dialog box.  Changing the engine will dynamically enable/disable the appropriate flags and contents checkboxes.
 - Corrected some memory leak issues with CColorOptimizer
 - Rebuilt many parts of Batch Conversion multi-threading to correct for spurious crashes
@@ -61,3 +61,5 @@ specific language governing permissions and limitations under the License.
 - Added boost library version 1.81.0 for a variety of useful functions (JSON parsing a primary one)
 - Updated RegistryHelper and MemBuffer classes to more modern versions
 - Added InitFromResource function to MemBuffer class to support loading of RCDATA objects out of .exe file
+- Moved Wally to a single-instance format to allow for multiple files opening at the same time
+- Fixed drag and drop not working with Windows UAC

@@ -209,6 +209,8 @@ Completed:
 */
 /////////////////////////////////////////////////////////////////////////////
 
+#include <stdlib.h>
+#include <crtdbg.h>
 #include "stdafx.h"
 #include <mmsystem.h>	// requires linking with "winmm.lib"
 #include "Wally.h"
@@ -304,6 +306,7 @@ void WhatsNew(void)
 		" * Removed legacy File Associations property page\n"
 		" * Support for custom Quake2 .wal file flags/contents using JSON\n"
 		" * This automatic \"what's new\" message\n"
+		" * Wally is now single-instance only\n"
 		"\n"
 		"Bugs fixed:\n"
 		"\n"
@@ -314,7 +317,8 @@ void WhatsNew(void)
 		" * Mis-aligned background when scrolling\n"
 		" * Export to 8-bit PCX has entirely black palette\n"
 		" * Batch conversion failing on modern OSes\n"
-
+		" * Drag-n-drop no longer worked with Windows UAC\n"
+		" * Opening multiple files from Windows Explorer now opens in single instance\n"
 		, MB_OK | MB_ICONINFORMATION);
 }
 
@@ -423,19 +427,7 @@ void CWallyApp::WakeUp(LPCTSTR aCommandLine) const
 	CMainFrame* pMain = (CMainFrame*)m_pMainWnd;	
 	if (pMain->m_pWallyApp)
 	{
-		//pMain->m_pWallyApp->ProcessCommandLine(aCommandLine);		
-		pMain->PostSingleInstance(aCommandLine);
-		
-		/*
-		CCommandLineInfo cmdInfo;
-		CString sCommandLine = aCommandLine;
-		pApp->m_lpCmdLine = sCommandLine.GetBuffer();
-		pApp->ParseCommandLine(cmdInfo);
-		// Dispatch commands specified on the command line
-		if (!pApp->ProcessShellCommand(cmdInfo))
-			return;			
-		pApp->OpenFile(cmdInfo.m_strFileName);
-		*/
+		pMain->PostSingleInstance(aCommandLine);		
 	}
 }
 
@@ -3253,6 +3245,13 @@ int CWallyApp::Run()
 	{
 		::MessageBox( NULL, we.GetErrorMessage(), "Wally", MB_ICONSTOP);		
 	}
+	catch (boost::interprocess::interprocess_exception& ex)
+	{
+		strError.Format("Caught boost::interprocess::interprocess_exception: %s", ex.what());
+		::MessageBox(NULL, strError, "Wally", MB_ICONSTOP);
+	}
+
+	_CrtDumpMemoryLeaks();
 	/*
 	catch(...)
 	{

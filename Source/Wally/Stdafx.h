@@ -15,6 +15,8 @@
 
 #pragma warning(disable: 4786)
 
+#define _CRTDBG_MAP_ALLOC
+
 #define VC_EXTRALEAN		// Exclude rarely-used stuff from Windows headers
 
 #include <afxwin.h>         // MFC core and standard components
@@ -37,6 +39,9 @@
 #include <time.h>
 #include <process.h>
 #include <boost/property_tree/json_parser.hpp>
+#include <boost/interprocess/sync/interprocess_mutex.hpp>
+#include <boost/interprocess/sync/scoped_lock.hpp>
+#include <boost/interprocess/sync/named_mutex.hpp>
 #include <boost/json.hpp>
 #include <iomanip>
 #include <iostream>

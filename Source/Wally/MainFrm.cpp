@@ -131,7 +131,7 @@ void CMainFrame::PostSingleInstance(LPCTSTR szCommandLine)
 	}	
 #endif
 	theApp.m_sSingleInstanceCommandLine = szCommandLine;
-	::SendMessage(m_hWnd, WM_SINGLE_INSTANCE_CUSTOM, 0, 0);
+	::SendMessage(m_hWnd, WM_SINGLE_INSTANCE_CUSTOM, 0, 0);	
 }
 
 LRESULT CMainFrame::OnSingleInstanceCustomMessage(WPARAM w, LPARAM l)
@@ -141,25 +141,16 @@ LRESULT CMainFrame::OnSingleInstanceCustomMessage(WPARAM w, LPARAM l)
 }
 
 
-CMainFrame::CMainFrame() : m_pMutex(NULL)
+CMainFrame::CMainFrame()
 {
-	m_bProgressCreated = false;
+	m_bProgressCreated = false;	
 	
-	// Create mutex, global scope	
-	//m_pMutex = new CMutex(FALSE, "{D7B4E7DF-A661-4468-BA25-5CFEBF27ADA0-WallyApplication-CommandLineMutex}");
-	m_pMutex = new CMutex(FALSE, NULL);
 }
 
 CMainFrame::~CMainFrame()
 {
 	if (m_WndMdiClient.m_hWnd)
 		m_WndMdiClient.UnsubclassWindow();	
-
-	if (m_pMutex)
-	{
-		delete m_pMutex;
-		m_pMutex = NULL;
-	}
 }
 
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
@@ -311,6 +302,11 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	// CG: The following line was added by the Splash Screen component.
 	CSplashWnd::ShowSplashScreen(this);
+
+	ChangeWindowMessageFilter(WM_DROPFILES, MSGFLT_ADD);
+	ChangeWindowMessageFilter(WM_COPYDATA, MSGFLT_ADD);
+	ChangeWindowMessageFilter(0x0049, MSGFLT_ADD);
+
 	return 0;
 }
 

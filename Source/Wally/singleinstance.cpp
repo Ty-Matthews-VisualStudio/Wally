@@ -171,7 +171,8 @@ class CSingleInstanceImpl
 // Description: Implementation to manage single instance activation
 {
 	public :
-
+		CString m_sNamedMutex;
+		
 		// Constructor/Destructor
 		CSingleInstanceImpl ( const CSingleInstance* aOwner ) ;
 		virtual ~CSingleInstanceImpl () ;
@@ -185,24 +186,28 @@ class CSingleInstanceImpl
 	public :
 
 		// Events to singal new instance, and kill thread
-		CEvent* mEvent ;
-		CEvent* mSignal ;
-		CSingleInstanceData* mData ;
-
+		CEvent* mEvent;
+		CEvent* mSignal;
+		CEvent* mReturn;
+		CSingleInstanceData* mData;
+		
 		// Owner, so we can get at virtual callbacks
 		const CSingleInstance* mOwner ;
 } ;
 
 //------------------------------------------------------------------------------
 
-CSingleInstanceImpl::CSingleInstanceImpl ( const CSingleInstance* aOwner ) 
+CSingleInstanceImpl::CSingleInstanceImpl ( const CSingleInstance* aOwner)
 : mOwner  ( aOwner ),
-  mEvent  ( NULL ),
-  mSignal ( NULL )
+	mEvent  ( NULL ),
+	mSignal ( NULL ),
+	mReturn(NULL),
+	mData (NULL)	
 // Name:        CSingleInstanceImpl 
 // Type:        Constructor
 // Description: Initialise member attributes
 {
+	
 }
 
 //------------------------------------------------------------------------------
@@ -225,9 +230,11 @@ CSingleInstanceImpl::~CSingleInstanceImpl ()
 		// Close all open handles
 		delete mEvent ;
 		delete mSignal ;
-
-	}		
-
+	}
+	if (mReturn)
+	{
+		delete mReturn;
+	}	
 	if ( mData )
 	{
 		delete mData ;
@@ -251,38 +258,69 @@ UINT CSingleInstanceImpl::Sleeper ( LPVOID aObject )
 		lSingleInstanceImpl -> mEvent, 
 		lSingleInstanceImpl -> mSignal 
 	} ;
-	
-	// Forever
-	BOOL lForever = TRUE ;
-	while ( lForever )
+
+	try
 	{
-		CMultiLock lWaitForEvents ( lEvents, sizeof ( lEvents ) / sizeof ( CSyncObject* ) ) ;
-
-		// Goto sleep until one of the events signals, zero CPU overhead
-		DWORD lResult = lWaitForEvents . Lock ( INFINITE, FALSE ) ;
-
-		// What signaled, 0 = event, another instance started
-		if ( lResult == WAIT_OBJECT_0 + 0 )
+		class MutexRemove
 		{
-			if ( lSingleInstanceImpl -> mOwner )
-			{	
-				// Wake up the owner with the data (last command line)
-				lSingleInstanceImpl -> mOwner -> WakeUp ( lSingleInstanceImpl -> mData -> GetValue () ) ;
+		public:
+			CString m_sName;
+			MutexRemove(CString sName)
+			{
+				m_sName = sName;
+				boost::interprocess::permissions allow_all;
+				allow_all.set_unrestricted();
+				boost::interprocess::named_mutex::remove(m_sName.GetBuffer());
+				boost::interprocess::named_mutex mutex(::boost::interprocess::create_only, m_sName.GetBuffer(), allow_all);
 			}
-		}
-		// 1 = signal, time to exit the thread
-		else if ( lResult == WAIT_OBJECT_0 + 1 )
+			~MutexRemove()
+			{
+				boost::interprocess::named_mutex::remove(m_sName.GetBuffer());
+			}
+		};
+
+		MutexRemove mRemove(lSingleInstanceImpl->m_sNamedMutex);
+
+		// Forever
+		BOOL lForever = TRUE;
+		while (lForever)
 		{
-			// Break the forever loop
-			lForever = FALSE ;	
+			CMultiLock lWaitForEvents(lEvents, sizeof(lEvents) / sizeof(CSyncObject*));
+
+			// Goto sleep until one of the events signals, zero CPU overhead
+			DWORD lResult = lWaitForEvents.Lock(INFINITE, FALSE);
+
+			// What signaled, 0 = event, another instance started
+			if (lResult == WAIT_OBJECT_0 + 0)
+			{
+				if (lSingleInstanceImpl->mOwner)
+				{
+					// Wake up the owner with the data (last command line)
+					lSingleInstanceImpl->mOwner->WakeUp(lSingleInstanceImpl->mData->GetValue());
+
+					// The above call to WakeUp() is serial, so we will block waiting for its return.
+					// This is how we prevent the other threads from stomping on CWallyApp::m_sSingleInstanceCommandLine
+					// Once WakeUp() is done, we know the file has been opened.  Set this event to tell the
+					// calling thread to continue and release the global mutex lock
+					lSingleInstanceImpl->mReturn->SetEvent();
+				}
+			}
+			// 1 = signal, time to exit the thread
+			else if (lResult == WAIT_OBJECT_0 + 1)
+			{
+				// Break the forever loop
+				lForever = FALSE;
+			}
+
+			lWaitForEvents.Unlock();
 		}
 
-		lWaitForEvents . Unlock () ;
-	}	
-
-	// Set event to say thread is exiting
-	lSingleInstanceImpl -> mEvent -> SetEvent () ;
-
+		// Set event to say thread is exiting
+		lSingleInstanceImpl->mEvent->SetEvent();
+	}
+	catch (boost::interprocess::interprocess_exception& ex)
+	{		
+	}
 	return 0 ;
 }
 
@@ -306,7 +344,14 @@ BOOL CSingleInstanceImpl::Create ( LPCTSTR aName )
 
 	// Create named event, global scope
 	mEvent = new CEvent ( FALSE, FALSE, lEventName  ) ;
-	DWORD lLastError = GetLastError () ;
+	DWORD lLastError = GetLastError ();
+
+	lEventName = aName;
+	lEventName += _T("-Return-Event");
+	mReturn = new CEvent(FALSE, FALSE, lEventName);	
+	
+	m_sNamedMutex = aName;
+	m_sNamedMutex += _T("-Boost-Named-Mutex");
 
 	// Check we have a handle to a valid event
 	if ( mEvent ) 
@@ -314,46 +359,60 @@ BOOL CSingleInstanceImpl::Create ( LPCTSTR aName )
 		// Check last error status
 		if ( lLastError == ERROR_ALREADY_EXISTS )
 		{
-			DebugOut("Instance already exists", FALSE);
-			
-			CString lMutexName = aName;
-			lMutexName += _T("-Data-Mapping-Mutex-MultiDocument");
-			// Create mutex, global scope
-			CMutex *pMutex = new CMutex(FALSE, lMutexName);
-			//CSingleLock lLock(pMutex, FALSE);
-			if (pMutex->Lock())
-			{				
-				DebugOut("Locking SetValue() and PulseEvent()", FALSE);
-				// Set command line data
-				mData->SetValue(GetCommandLine());
-
-				// Not our event, so an instance is already running, signal thread in other instance to wake up
-				if (mEvent->PulseEvent())
+			try
+			{	
+				// Open the named mutex
+				boost::interprocess::permissions allow_all;
+				allow_all.set_unrestricted();
+				boost::interprocess::named_mutex mutex(::boost::interprocess::open_or_create, m_sNamedMutex.GetBuffer(), allow_all);
+				
+				while (1)
 				{
-					// Close open handles
-					delete mEvent;
+					boost::interprocess::scoped_lock<::boost::interprocess::named_mutex> lock(mutex, boost::interprocess::try_to_lock);
+					if (lock)
+					{
+						// Set command line data
+						mData->SetValue(GetCommandLine());
 
-					// Reset event handle
-					mEvent = NULL;
-				}
-				pMutex->Unlock();
-				DebugOut("Unlocking SetValue() and PulseEvent()", FALSE);
+						// Not our event, so an instance is already running, signal thread in other instance to wake up
+						if (mEvent->PulseEvent())
+						{
+							// Close open handles
+							delete mEvent;
+
+							// Reset event handle
+							mEvent = NULL;
+						}
+
+						CSingleLock lWaitForReturn(mReturn);
+						// Go to sleep until the return event is signalled then reset it
+						DWORD lResult = lWaitForReturn.Lock(INFINITE);
+						mReturn->ResetEvent();						
+						break;
+					}
+					else
+					{
+						Sleep(100);
+					}
+				}				
 			}
-			delete pMutex;
+			catch (boost::interprocess::interprocess_exception& ex)
+			{
+			}
 		}
 		else
-		{
-			DebugOut("Creating thread", FALSE);
+		{			
 			// Create event of thread syncronization, nameless local scope
-			mSignal = new CEvent ;
-			if ( mSignal )
+			mSignal = new CEvent;
+			if (mSignal)
 			{
 				// Create thread
-				AfxBeginThread ( Sleeper, this ) ;
+				AfxBeginThread(Sleeper, this);
 
 				// Set pass condition
-				lResult = TRUE ;
+				lResult = TRUE;
 			}
+			
 		}
 	}
 	return lResult ;
