@@ -685,20 +685,10 @@ BOOL CWallyApp::InitInstance()
 	// Parse command line for standard shell commands, DDE, file open
 	CCommandLineInfo cmdInfo;
 	ParseCommandLine(cmdInfo);
-
-	CParseCommandLine CommandLineParser;
-
+	
 	if ((cmdInfo.m_nShellCommand != CCommandLineInfo::FileDDE) && (!cmdInfo.m_bRunAutomated))
 	{
-		cmdInfo.m_nShellCommand = CCommandLineInfo::FileNothing;
-		if (m_lpCmdLine[0] == '\0')
-		{
-		}
-		else
-		{
-			// Setup the commandline parser class, to be used shortly...
-			//CommandLineParser.Parse(m_lpCmdLine);	
-		}
+		cmdInfo.m_nShellCommand = CCommandLineInfo::FileNothing;		
 	}
 
 	// Dispatch commands specified on the command line
@@ -710,58 +700,12 @@ BOOL CWallyApp::InitInstance()
 		pMainFrame->ShowWindow(m_nCmdShow);
 	pMainFrame->UpdateWindow();
 
+	// Go open any files passed in (e.g. opening a file associated with Wally)
 	BeginWaitCursor();
-#if 1
 	if (strlen(m_lpCmdLine) > 0)
 	{
 		ProcessCommandLine(m_lpCmdLine);
 	}
-	/*
-	if (cmdInfo.m_strFileName.GetLength() > 0)
-	{
-		OpenFile(cmdInfo.m_strFileName);
-	}
-	*/
-	
-#else
-	// Set a char pointer to the first string in the command line	
-	CommandLineParser.GetFirst();
-	char *FileName = CommandLineParser.GetNext();				
-	
-	// Spin through the list of filenames, our CommandLineParser routines.
-	// This code is for opening of non-Wal files.  We need to be able to determine
-	// the file extension type, and call the appropriate loading of the document.
-
-	while (FileName != NULL)			
-	{							
-		// Go grab the file extension
-		CString strFileExtension = GetExtension(FileName);		
-		if(
-			(strFileExtension == ".wal") || 
-			(strFileExtension == ".mip") || 
-			(strFileExtension == ".swl") || 
-			(strFileExtension == ".m8")			
-		)			
-		{
-			WallyDocTemplate->OpenDocumentFile(FileName);
-		}
-		else
-		if( strFileExtension == ".pak" )
-		{
-			PakDocTemplate->OpenDocumentFile(FileName);			
-		}
-		else
-		if (strFileExtension == ".wad")
-		{
-			PackageDocTemplate->OpenDocumentFile( FileName);
-		}
-		else
-		{
-			OpenNonWalFile (FileName);
-		}
-		FileName = CommandLineParser.GetNext();
-	}
-#endif
 	EndWaitCursor();
 
 	return TRUE;
@@ -957,7 +901,7 @@ void CWallyApp::OnEditPasteAsNewImage()
 		}
 		// Go create a new document/view
 		g_iDocColorDepth = 8;
-		pWallyDoc = (CWallyDoc*)m_pWallyDocTemplate->OpenDocumentFile( NULL, TRUE);
+		pWallyDoc = (CWallyDoc*)m_pWallyDocTemplate->OpenDocumentFile( NULL, TRUE, iFileType);
 		pWallyDoc->SetGameType (FILE_TYPE_QUAKE1);
 		pWallyDoc->SetName (strName);
 		pWallyDoc->SetTitle (strName);
@@ -986,7 +930,7 @@ void CWallyApp::OnEditPasteAsNewImage()
 		}
 		// Go create a new document/view
 		g_iDocColorDepth = 8;
-		pWallyDoc = (CWallyDoc*)m_pWallyDocTemplate->OpenDocumentFile( NULL, TRUE);
+		pWallyDoc = (CWallyDoc*)m_pWallyDocTemplate->OpenDocumentFile( NULL, TRUE, iFileType);
 		
 		pWallyDoc->SetGameType (FILE_TYPE_HALF_LIFE);
 		pWallyDoc->SetName (strName);
@@ -996,7 +940,7 @@ void CWallyApp::OnEditPasteAsNewImage()
 	case FILE_TYPE_QUAKE2:
 		// Go create a new document/view
 		g_iDocColorDepth = 8;
-		pWallyDoc = (CWallyDoc*)m_pWallyDocTemplate->OpenDocumentFile( NULL, TRUE);
+		pWallyDoc = (CWallyDoc*)m_pWallyDocTemplate->OpenDocumentFile( NULL, TRUE, iFileType);
 
 		pWallyDoc->SetGameType( iFileType);
 		pWallyDoc->SetTitle( strTitle);
@@ -1006,7 +950,7 @@ void CWallyApp::OnEditPasteAsNewImage()
 	case FILE_TYPE_SIN:
 		// Go create a new document/view
 		g_iDocColorDepth = 8;
-		pWallyDoc = (CWallyDoc*)m_pWallyDocTemplate->OpenDocumentFile( NULL, TRUE);
+		pWallyDoc = (CWallyDoc*)m_pWallyDocTemplate->OpenDocumentFile( NULL, TRUE, iFileType);
 		
 		pWallyDoc->SetGameType (iFileType);
 		pWallyDoc->SetTitle (strTitle);
@@ -1016,7 +960,7 @@ void CWallyApp::OnEditPasteAsNewImage()
 	case FILE_TYPE_HERETIC2:
 		g_iDocColorDepth = 8;
 		// Go create a new document/view
-		pWallyDoc = (CWallyDoc*)m_pWallyDocTemplate->OpenDocumentFile( NULL, TRUE);
+		pWallyDoc = (CWallyDoc*)m_pWallyDocTemplate->OpenDocumentFile( NULL, TRUE, iFileType);
 		
 		pWallyDoc->SetGameType (iFileType);
 		pWallyDoc->SetTitle (strTitle);
@@ -1029,7 +973,7 @@ void CWallyApp::OnEditPasteAsNewImage()
 	case FILE_TYPE_JPG:
 	case FILE_TYPE_PNG:
 	case FILE_TYPE_TEX:
-		pWallyDoc = (CWallyDoc*)m_pWallyDocTemplate->OpenDocumentFile( NULL, TRUE);
+		pWallyDoc = (CWallyDoc*)m_pWallyDocTemplate->OpenDocumentFile( NULL, TRUE, iFileType);
 		
 		pWallyDoc->SetGameType (iFileType);
 		pWallyDoc->SetTitle (strTitle);
@@ -1355,7 +1299,160 @@ void CWallyApp::OnEditPasteAsNewImage()
 			}
 		}
 		break;	// case 24:
-		
+	
+	case 32:
+	{
+		BYTE byPalette[256 * 3];
+		CColorOptimizer ColorOpt;
+
+		// Build the buffer so we can work with it
+		pbyClipboardData = mbClipboardData.GetBuffer(iSize * 4);
+
+		if (!pbyClipboardData)
+		{
+			AfxMessageBox("Error: CWallyApp::OnEditPasteAsNewImage() - Out of Memory - pbyClipboardData == NULL");
+			return;
+		}
+
+		ClipboardDIB.GetRawBits(pbyClipboardData);
+
+		// This is the 8-bit reduced data
+		CMemBuffer mb8BitData;
+		LPBYTE pby8BitData = mb8BitData.GetBuffer(iSize);
+
+		if (!pby8BitData)
+		{
+			AfxMessageBox("Error: CWallyApp::OnEditPasteAsNewImage() - Out of Memory - pbyClipboardData == NULL");
+			return;
+		}
+
+		// Build the initial IRGB array
+		for (j = 0; j < iSize; j++)
+		{
+			r = pbyClipboardData[j * 4];
+			g = pbyClipboardData[j * 4 + 1];
+			b = pbyClipboardData[j * 4 + 2];
+
+
+			if (iFileType == FILE_TYPE_QUAKE2)
+			{
+
+				if ((r != 159) || (g != 91) || (b != 83))
+				{
+					pIRGBData[j] = IRGB(0, r, g, b);
+				}
+				else
+				{
+					pIRGBData[j] = IRGB(255, r, g, b);
+				}
+			}
+			else
+			{
+				pIRGBData[j] = IRGB(0, r, g, b);
+			}
+		}
+
+		switch (iFileType)
+		{
+		case FILE_TYPE_QUAKE1:
+		case FILE_TYPE_QUAKE1_WAD:
+			// Ty- use the default Q1 palette here, so we can still paste 24-bit
+			// images to Quake1 docs
+			pDocPalette->SetPalette(quake1_pal, 256);
+			break;
+
+		case FILE_TYPE_QUAKE2:
+			// Ty- use the default Q2 palette here, so we can still paste 24-bit
+			// images to Quake2 docs
+			pDocPalette->SetPalette(quake2_pal, 256);
+			break;
+
+		case FILE_TYPE_HERETIC2:
+		case FILE_TYPE_SIN:
+		{
+			ColorOpt.Optimize(pIRGBData, iWidth, iHeight, byPalette, 256, TRUE);
+
+			// SetPalette ASSERTs with anything other than 256 colors
+			pWallyDoc->SetPalette(byPalette, 256);
+		}
+		break;
+
+		case FILE_TYPE_HALF_LIFE:
+		case FILE_TYPE_HALF_LIFE_WAD:
+		{
+			char cFlag = strName.GetAt(0);
+			int iNumColors = (cFlag == '{' ? 255 : 256);
+
+			ColorOpt.Optimize(pIRGBData, iWidth, iHeight, byPalette, iNumColors, TRUE);
+
+			if (iNumColors == 255)
+			{
+				// Set the last index to pure blue, for transparency
+				byPalette[765] = 0;
+				byPalette[766] = 0;
+				byPalette[767] = 255;
+			}
+
+			// SetPalette ASSERTs with anything other than 256 colors
+			pWallyDoc->SetPalette(byPalette, 256);
+		}
+		break;
+
+		case FILE_TYPE_TGA:
+		case FILE_TYPE_BMP:
+		case FILE_TYPE_PCX:
+		case FILE_TYPE_JPG:
+		case FILE_TYPE_PNG:
+		case FILE_TYPE_TEX:
+		{
+			// These are true 24-bit images.  For the 8-bit display, we still need to come 
+			// up with a palette
+			BOOL bPaletteLoaded = FALSE;
+
+			if (!g_bBuildOptimizedPalette)
+			{
+				bPaletteLoaded = LoadDefaultEditingPalette(NULL, pWallyDoc->GetPalette(), 256);
+			}
+
+			if (!bPaletteLoaded)
+			{
+				ColorOpt.Optimize(pIRGBData, iWidth, iHeight, byPalette, 256, TRUE);
+
+				// SetPalette ASSERTs with anything other than 256 colors
+				pWallyDoc->SetPalette(byPalette, 256);
+			}
+		}
+		break;
+
+		default:
+			ASSERT(FALSE);		// Unhandled game type?
+			return;
+			break;
+		}
+
+		// Neal - we need to do this for 24 bit images too (builds index values)
+		//
+		pWallyDoc->Convert24BitTo256Color(pIRGBData, pby8BitData,
+			iWidth, iHeight, 0, GetDitherType(), FALSE);
+
+		// Build the IRGB data
+		pDocPalette->GetPalette(byDocPalette, 256);
+		UINT i8BitOffset = 0;
+
+		for (y = 0; y < iHeight; y++)
+		{
+			for (x = 0; x < iWidth; x++)
+			{
+				iOffset = y * iWidth + x;
+				i8BitOffset = pby8BitData[iOffset];
+
+				SetIValue(pIRGBData[iOffset], i8BitOffset);
+				pDocLayer->SetPixel(pWallyView, x, y, pIRGBData[iOffset]);
+			}
+		}
+	}
+	break;
+	
 	default:
 		{
 			ASSERT (FALSE);

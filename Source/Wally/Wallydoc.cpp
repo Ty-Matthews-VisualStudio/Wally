@@ -442,11 +442,8 @@ void CWallyDoc::Serialize( CArchive& ar)
 			if (byHasEffects)
 			{
 				// Neal - first, free left-over mip buffer
-
 				FreeEffectsData();
-
 				// Neal - next, alloc buffer
-
 				m_pEffectLayer = new CLayer;
 
 				if (m_pEffectLayer)

@@ -141,6 +141,8 @@ IDB_COLOR_DECAL         BITMAP                  "res\\colordec.bmp"
 
 IDB_PACKAGE_TREE_IMAGE  BITMAP                  "res\\package_.bmp"
 
+IDR_NEW_MAINFRAME       BITMAP                  "res\\new_mainframe.bmp"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -221,6 +223,12 @@ BEGIN
     BUTTON      ID_DRAWINGMODE_HOLLOW_RECT
     BUTTON      ID_DRAWINGMODE_SOLID_RECT
     BUTTON      ID_DRAWINGMODE_EDGED_RECT
+END
+
+IDR_NEW_MAINFRAME TOOLBAR 24, 24
+BEGIN
+    BUTTON      ID_FILE_NEW
+    BUTTON      ID_FILE_OPEN
 END
 
 

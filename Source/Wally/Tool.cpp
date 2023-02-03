@@ -4447,10 +4447,7 @@ void CTool::InitTool( CWallyView* pView, int iToolMode)
 	if (IsAnyEffect( g_iCurrentTool))
 	{
 		CWallyDoc* pDoc = pView->GetDocument();
-
-		// neal - first, free left-over mip buffer
-
-		pDoc->FreeEffectsData();
+				
 
 		// neal - next, alloc mip buffer
 
@@ -4458,6 +4455,8 @@ void CTool::InitTool( CWallyView* pView, int iToolMode)
 		int iHeight = pDoc->Height();
 //		int iSize = pDoc->Width() * pDoc->Height();
 
+		// neal - first, free left-over mip buffer
+		pDoc->FreeEffectsData();
 		pDoc->m_pEffectLayer = new CLayer;
 
 		// neal - then, copy current mip image there

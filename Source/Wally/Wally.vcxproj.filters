@@ -916,13 +916,7 @@
     <ClInclude Include="TextureInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ThreadItem.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ThreadJob.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ThreadList.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ThreadManager.h">
@@ -1108,6 +1102,9 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="res\package_.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\new_mainframe.bmp">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

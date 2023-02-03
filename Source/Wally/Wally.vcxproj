@@ -895,9 +895,7 @@
     <ClInclude Include="test_delete.h" />
     <ClInclude Include="TextureFlags.h" />
     <ClInclude Include="TextureInfo.h" />
-    <ClInclude Include="ThreadItem.h" />
     <ClInclude Include="ThreadJob.h" />
-    <ClInclude Include="ThreadList.h" />
     <ClInclude Include="ThreadManager.h" />
     <ClInclude Include="ThreadSpooler.h" />
     <ClInclude Include="Tool.h" />
@@ -941,6 +939,7 @@
     <Image Include="res\imageedi.bmp" />
     <Image Include="res\modes_to.bmp" />
     <Image Include="res\newtexs.bmp" />
+    <Image Include="res\new_mainframe.bmp" />
     <Image Include="res\options.bmp" />
     <Image Include="res\packaged.bmp" />
     <Image Include="res\package_.bmp" />

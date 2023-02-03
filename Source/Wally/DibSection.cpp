@@ -641,6 +641,20 @@ BOOL CDibSection::InitFromClipboard(CWnd *pWnd)
 		}
 		break;
 
+	case 32:
+	{
+		pbyDataOffset = uClipData.pbyClipboardData + BMHeaderSize;
+
+		if (!Init(iWidth, iHeight, 32, NULL))
+		{
+			::GlobalFree((HGLOBAL)pbyTempBuffer);
+			return FALSE;
+		}
+
+		SetRawBits(pbyDataOffset, DIB_FLAG_WITH_PADDING);
+	}
+	break;
+
 	default:
 		{
 			ASSERT (FALSE);

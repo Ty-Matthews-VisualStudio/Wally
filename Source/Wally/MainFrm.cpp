@@ -159,7 +159,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		return -1;
 
 	m_WndMdiClient.SubclassWindow( m_hWndMDIClient);
-	
+#if 1
 	if (!m_wndToolBar.Create(this, WS_CHILD | CBRS_TOP | WS_VISIBLE | CBRS_TOOLTIPS | CBRS_SIZE_DYNAMIC | CBRS_FLYBY, ID_VIEW_TOOLBAR) ||
 		!m_wndToolBar.LoadToolBar(IDR_MAINFRAME))
 	{
@@ -170,6 +170,18 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	{
 		m_wndToolBar.SetWindowText("File");
 	}
+#else
+	if (!m_wndToolBar.Create(this, WS_CHILD | CBRS_TOP | WS_VISIBLE | CBRS_TOOLTIPS | CBRS_SIZE_DYNAMIC | CBRS_FLYBY, ID_VIEW_TOOLBAR) ||
+		!m_wndToolBar.LoadToolBar(IDR_NEW_MAINFRAME))
+	{
+		TRACE0("Failed to create MAINFRAME toolbar\n");
+		return -1;      // fail to create
+	}
+	else
+	{
+		m_wndToolBar.SetWindowText("File");
+	}
+#endif
 	
 
 	if (!m_wndImageEditToolBar.Create(this, WS_CHILD | CBRS_TOP | WS_VISIBLE | CBRS_TOOLTIPS | CBRS_SIZE_DYNAMIC | CBRS_FLYBY,ID_IMAGE_EDIT_TOOLBAR) ||

@@ -171,6 +171,7 @@
 #define IDR_DEFAULT_PALETTE             264
 #define IDR_DEFAULT_Q2FLAGS_JSON        265
 #define IDR_DEFAULT_Q2CONTENTS_JSON     266
+#define IDR_NEW_MAINFRAME               269
 #define IDC_TEXTURE_NAME                1000
 #define IDC_WIDTH                       1001
 #define IDC_HEIGHT                      1002
@@ -1027,7 +1028,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
-#define _APS_NEXT_RESOURCE_VALUE        269
+#define _APS_NEXT_RESOURCE_VALUE        271
 #define _APS_NEXT_COMMAND_VALUE         2202
 #define _APS_NEXT_CONTROL_VALUE         1625
 #define _APS_NEXT_SYMED_VALUE           268

@@ -10,14 +10,18 @@
 
 class CWallyDocTemplate : public CMultiDocTemplate
 {
+private:
+    int m_iGameType;
+
 // Methods
 public:
 	CWallyDocTemplate( 
 
       UINT nIDResource, CRuntimeClass* pDocClass,
       CRuntimeClass* pFrameClass, CRuntimeClass* pViewClass ) :
-      CMultiDocTemplate(nIDResource, pDocClass, pFrameClass, pViewClass)
+      CMultiDocTemplate(nIDResource, pDocClass, pFrameClass, pViewClass), m_iGameType (-1)
       { };
+      CDocument* OpenDocumentFile(LPCTSTR lpszPathName, BOOL bMakeVisible, int iGameType);
 	  CDocument* OpenDocumentFile(LPCTSTR lpszPathName,	BOOL bMakeVisible);
  	  void SetDefaultTitle(CDocument* pDocument);
 	

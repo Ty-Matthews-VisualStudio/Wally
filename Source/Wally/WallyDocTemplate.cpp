@@ -31,6 +31,14 @@ extern BOOL g_bAutoRemip;
 //				.wal or not a .wal.  This of course causes problems when the image 
 //				doesn't match what we're expecting.
 ///////////////////////////////////////////////////////////////////////////////
+CDocument* CWallyDocTemplate::OpenDocumentFile(LPCTSTR lpszPathName, BOOL bMakeVisible, int iGameType)
+{
+	m_iGameType = iGameType;
+	CDocument* pReturn = OpenDocumentFile(lpszPathName, bMakeVisible);
+	m_iGameType = -1;
+	return pReturn;
+}
+
 CDocument* CWallyDocTemplate::OpenDocumentFile(LPCTSTR lpszPathName, BOOL bMakeVisible)
 {		
 	CString strFileName;
@@ -120,8 +128,16 @@ CDocument* CWallyDocTemplate::OpenDocumentFile(LPCTSTR lpszPathName, BOOL bMakeV
 		//  because CWallyDoc is derived from CDocument.  If the image type is not a .wal,
 		//  call CWallyDoc::LoadImage to bring it in.
 		pWallyDoc = (CWallyDoc*)pDocument;
-		pWallyDoc->SetGameType( g_iFileTypeDefault);	// Neal - fixes missing submips on new wal view
 
+		if (m_iGameType == -1)
+		{
+			pWallyDoc->SetGameType(g_iFileTypeDefault);	// Neal - fixes missing submips on new wal view
+		}
+		else
+		{
+			pWallyDoc->SetGameType(m_iGameType);
+		}
+		
 		if (bIsExisting)
 		{
 			pWallyDoc->LoadImage(&ihHelper);
