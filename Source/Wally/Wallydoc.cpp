@@ -615,6 +615,26 @@ void CWallyDoc::SerializeImage (CArchive& ar)
 				}
 				break;
 
+			case 32:
+			{
+				UINT x, y;
+				UINT iOffset = 0;
+
+				for (y = 0; y < iHeight; y++)
+				{
+					for (x = 0; x < iWidth; x++)
+					{
+						iOffset = (y * iWidth) + x;
+
+						IRGBData = pLayer->GetPixel(x, y);						
+						pbyImageData[iOffset * 4 + 0] = GetRValue(IRGBData);
+						pbyImageData[iOffset * 4 + 1] = GetGValue(IRGBData);
+						pbyImageData[iOffset * 4 + 2] = GetBValue(IRGBData);
+					}
+				}
+			}
+			break;
+
 			default:
 				ASSERT (FALSE);
 				break;

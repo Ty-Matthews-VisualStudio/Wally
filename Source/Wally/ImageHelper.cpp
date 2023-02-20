@@ -1775,8 +1775,7 @@ void CImageHelper::SaveImage (int iColorDepth, CArchive *parFile, LPBYTE pbyRawD
 	{
 		ASSERT (pbyRawData);		// Must pass in valid data	
 		ASSERT (iHeight > 0);
-		ASSERT (iWidth > 0);
-		ASSERT ((iColorDepth == IH_8BIT) || (iColorDepth == IH_24BIT));
+		ASSERT (iWidth > 0);		
 		SetImageHeight (iHeight);
 		SetImageWidth (iWidth);
 		SetColorDepth (iColorDepth);
@@ -1792,53 +1791,89 @@ void CImageHelper::SaveImage (int iColorDepth, CArchive *parFile, LPBYTE pbyRawD
 	switch (iType)
 	{
 	case IH_PCX_TYPE :
-		EncodePCX ();
-		break;
+	{
+		ASSERT((iColorDepth == IH_8BIT) || (iColorDepth == IH_24BIT));
+		EncodePCX();
+	}
+	break;
 
 	case IH_BMP_TYPE :
-		EncodeBMP ();
-		break;
+	{
+		ASSERT((iColorDepth == IH_8BIT) || (iColorDepth == IH_24BIT));
+		EncodeBMP();
+	}
+	break;
 
 	case IH_TGA_TYPE:
+	{
+		ASSERT((iColorDepth == IH_8BIT) || (iColorDepth == IH_24BIT));
 		EncodeTGA();
-		break;
+	}
+	break;
 
 	case IH_LMP_TYPE:
 	case IH_ACT_TYPE:
-		EncodeRawData ();
-		break;
+	{
+		ASSERT((iColorDepth == IH_8BIT) || (iColorDepth == IH_24BIT));
+		EncodeRawData();
+	}
+	break;
 
 	case IH_PAL_TYPE:
-		EncodePAL ();
-		break;
+	{
+		ASSERT((iColorDepth == IH_8BIT) || (iColorDepth == IH_24BIT));
+		EncodePAL();
+	}
+	break;
 
 	case IH_MIP_TYPE:
+	{
+		ASSERT((iColorDepth == IH_8BIT) || (iColorDepth == IH_24BIT));
 		EncodeMIP();
-		break;
+	}
+	break;
 
 	case IH_WAL_TYPE:
+	{
+		ASSERT((iColorDepth == IH_8BIT) || (iColorDepth == IH_24BIT));
 		EncodeWAL();
-		break;
+	}
+	break;
 
 	case IH_SWL_TYPE:
+	{
+		ASSERT((iColorDepth == IH_8BIT) || (iColorDepth == IH_24BIT));
 		EncodeSWL();
-		break;
+	}
+	break;
 
 	case IH_M8_TYPE:
+	{
+		ASSERT((iColorDepth == IH_8BIT) || (iColorDepth == IH_24BIT));
 		EncodeM8();
-		break;
+	}
+	break;
 
 	case IH_PNG_TYPE:
+	{
+		ASSERT((iColorDepth == IH_8BIT) || (iColorDepth == IH_24BIT) || (iColorDepth == IH_32BIT));
 		EncodePNG();
-		break;
+	}
+	break;
 
 	case IH_JPG_TYPE:
+	{
+		ASSERT((iColorDepth == IH_8BIT) || (iColorDepth == IH_24BIT));
 		EncodeJPG();
-		break;
+	}
+	break;
 
 	case IH_TEX_TYPE:
+	{
+		ASSERT((iColorDepth == IH_8BIT) || (iColorDepth == IH_24BIT));
 		EncodeTEX();
-		break;
+	}
+	break;
 	
 	default:
 		ASSERT (FALSE);		// Unhandled implementation

@@ -771,7 +771,7 @@ BOOL CImageHelper::EncodePNG ()
 
 	case IH_32BIT:
 		{
-			ASSERT (FALSE);
+			//ASSERT (FALSE);
 
 			// TODO:  Where will the alpha channel be coming from?  Is it the first index, I? 
 			png_bytepp row_pointers = new png_bytep[iHeight];
