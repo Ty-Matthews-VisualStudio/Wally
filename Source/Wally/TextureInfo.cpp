@@ -449,45 +449,61 @@ void CTextureInfo::LoadJSON()
 	bool bOnce = false;
 	bool bSelected = false;
 	bool bValid = false;
-	CleanUp(); // Erase any existing.  This function should only ever be called once, but just in case a refresh button is added later
+	boost::system::error_code ec;
 	
-	for (auto& p : boost::filesystem::directory_iterator(sSourceFolder.GetBuffer()))
-	{
-		std::stringstream ss;		
-		ss << p;
-		Q2Engine* pNew = new Q2Engine();
-		if (pNew)
-		{
-			if (pNew->LoadJSON(ss.str().c_str()))
-			{
-				m_vEngines.push_back(pNew);
-				int i = m_cbEngines.AddString(pNew->m_sName.c_str());
-				m_cbEngines.SetItemDataPtr(i, (void*)pNew);
-				bValid = true;
+	CleanUp(); // Erase any existing.  This function should only ever be called once, but just in case a refresh button is added later
 
-				if (!_stricmp(pNew->m_sName.c_str(), g_strDefaultTexInfoQ2Engine.GetBuffer()))
+	try
+	{
+		if (!boost::filesystem::is_directory(sSourceFolder.GetBuffer(), ec))
+		{
+			// Create the default JSON 
+			if (!Q2Engine::CreateDefaultJSON())
+			{
+				return;
+			}
+		}
+		for (auto& p : boost::filesystem::directory_iterator(sSourceFolder.GetBuffer()))
+		{
+			std::stringstream ss;
+			ss << p;
+			Q2Engine* pNew = new Q2Engine();
+			if (pNew)
+			{
+				if (pNew->LoadJSON(ss.str().c_str()))
 				{
-					m_cbEngines.SetCurSel(i);
-					EnableDisableFlagsContent();
-					bSelected = true;
+					m_vEngines.push_back(pNew);
+					int i = m_cbEngines.AddString(pNew->m_sName.c_str());
+					m_cbEngines.SetItemDataPtr(i, (void*)pNew);
+					bValid = true;
+
+					if (!_stricmp(pNew->m_sName.c_str(), g_strDefaultTexInfoQ2Engine.GetBuffer()))
+					{
+						m_cbEngines.SetCurSel(i);
+						EnableDisableFlagsContent();
+						bSelected = true;
+					}
+				}
+				else
+				{
+					if (!bOnce)
+					{
+						// We'll ignore any additional failures, correct them one-by-one
+						AfxMessageBox(pNew->m_sErrorMessage.c_str(), MB_ICONSTOP);
+						bOnce = true;
+					}
+					delete pNew;
 				}
 			}
 			else
 			{
-				if (!bOnce)
-				{
-					// We'll ignore any additional failures, correct them one-by-one
-					AfxMessageBox(pNew->m_sErrorMessage.c_str(), MB_ICONSTOP);
-					bOnce = true;
-				}				
-				delete pNew;				
+				ASSERT(FALSE);
 			}
-		}
-		else
-		{
-			ASSERT(FALSE);
 		}		
 	}
+	catch (boost::filesystem::filesystem_error& fe)
+	{
+	}	
 
 	if (!bSelected)
 	{
