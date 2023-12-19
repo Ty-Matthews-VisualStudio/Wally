@@ -10,7 +10,7 @@ Wally welcomes contributions. When contributing, please follow the code below.
 
 ### Issues
 
-Feel free to submit issues and enhancement requests to [Ty Matthews](mailto:onehotseat@gmail.com).
+Feel free to submit issues and enhancement requests to [Ty Matthews](mailto:onehotseat@gmail.com), and come visit our [Discord](https://discord.gg/xsEHsqdX) for community support.
 
 Please help us by providing **minimal reproducible examples**, because source code is easier to let other people understand what happens.
 For crash problems on certain platforms, please bring stack dump content with the detail of the OS, compiler, etc.
