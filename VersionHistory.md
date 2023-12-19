@@ -1,7 +1,7 @@
 Program Name:   Wally 
-Version:        1.55B
-Date:           7/09/2001
-Authors:        Ty Matthews (ty@wwa.com)
+Version:        1.57
+Date:           12/18/2023
+Authors:        Ty Matthews (onehotseat@gmail.com)
                 Neal White III (neal_white_iii@hotmail.com)
 
 Purpose:
@@ -13,9 +13,10 @@ Purpose:
 		For a more detailed list, check the revision history or the 
 		FAQ page on our site.
 
-Compiler:       Visual C++ 6.0
+Compiler:       Visual Studio 2022 (version 17.4)
 
-Where to Get:   http://www.telefragged.com/wally                
+Where to Get:   https://github.com/Ty-Matthews-VisualStudio/Wally/
+Discord:		https://discord.gg/xsEHsqdX
 
 Misc:           Wally is freeware.  As always per the standard legal rhetoric, 
 		this program is given AS-IS.  No fitness of merchantibility is 
@@ -489,3 +490,19 @@ Revision History:
 
 		New:
 			- Serious Sam TEX file support
+			
+	1.57 (12/18/2023)
+		Bug Fixes:
+			- Browsing image crashes/inconsistencies
+			- Corrected some memory leak issues			
+			- Fixed drag and drop not working with Windows UAC
+		
+		Improved:
+			- Rebuilt many parts of Batch Conversion multi-threading to correct for spurious crashes
+			- Entire project recreated from scratch in modern compiler (Visual Studio 2022)
+			- Updated JPEG library to version 9e
+			- Updated libpng library to version 1.6.39
+			- Updated zlib library to version 1.2.13
+			
+		New:
+			- Custom WAL texture flags and contents possible using JSON (schema available here https://ty-matthews.github.io/Wally/json/schema/texture_properties.wal.json, and the Q2 default versions available here https://github.com/Ty-Matthews-VisualStudio/Wally/tree/main/Source/SupportingFiles/json/.wal/baseq2)
