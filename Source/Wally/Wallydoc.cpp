@@ -254,6 +254,7 @@ BOOL CWallyDoc::OnNewDocument()
 	memset (&Q1Header, 0, Q1HeaderSize);
 	memset (&SinHeader, 0, SinHeaderSize);
 	memset (&M8Header, 0, M8HeaderSize);
+	M8Header.version = M8_VERSION;
 
 	SinHeader.nonlit = (float)0.5;
 	SinHeader.friction = (float)1.0;
@@ -2936,7 +2937,7 @@ void CWallyDoc::OnFileExport()
 					int   iHeaderSize = M8_HEADER_SIZE;
 					BYTE* pbyHeader   = new BYTE[iHeaderSize];
 					memset( pbyHeader, 0, iHeaderSize);
-					LPM8_MIPTEX_S pM8Header = (LPM8_MIPTEX_S)pbyHeader;
+					LPM8_MIPTEX_S pM8Header = (LPM8_MIPTEX_S)pbyHeader;					
 					
 					memcpy( pM8Header, &M8Header, iHeaderSize);
 					ihExport.MapGameFlags( IH_M8_TYPE, pbyHeader);

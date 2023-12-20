@@ -146,6 +146,7 @@ typedef struct
 #define _M8_STRUCT_
 
 #define M8_MIPLEVELS		16
+#define M8_VERSION 0x2
 typedef struct
 {
 	int			version;

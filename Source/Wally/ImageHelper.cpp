@@ -3397,6 +3397,7 @@ BOOL CImageHelper::EncodeM8 ()
 		m_lpM8ExportHeader = new M8_MIPTEX_S;
 		memset (m_lpM8ExportHeader, 0, iHeaderSize);
 	}
+	m_lpM8ExportHeader->version = M8_VERSION;
 
 	BYTE* pbyPackedData = NULL;
 	BYTE* pbyBits[M8_MIPLEVELS];
@@ -3977,6 +3978,7 @@ void CImageHelper::MapGameFlags (int iSourceType, unsigned char *pbyData, LPCTST
 
 	m_lpM8ExportHeader = new M8_MIPTEX_S;
 	memset (m_lpM8ExportHeader, 0, M8_HEADER_SIZE);
+	m_lpM8ExportHeader->version = M8_VERSION;
 
 	m_lpSinExportHeader->nonlit = (float)0.5;
 	m_lpSinExportHeader->friction = (float)1.0;
