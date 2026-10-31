@@ -82,7 +82,7 @@ If the search list also shows **C++ MFC for x64/x86 (MSVC v14.50)** or a later p
 
 These are all the components that were installed during the creation of this markdown file:
 
-![Visual Studio Installer Options](./VS2026 Installer Options.png)
+![Visual Studio Installer Options](./VS2026%20Installer%20Options.png)
 
 
 ## 4. Open Wally and confirm the IDE can see the toolset
@@ -129,4 +129,4 @@ Change BOOSTDIR to the root folder, where files such as `boost.css` and `boost.p
 
 Both Debug and Release configurations of Wally write their executable output to `$(USER_TEMP)\Wally\Configuration\Win32`. Intermediate files for all of these projects go to `$(USER_TEMP)\Wally`.  You can delete this entire `$(USER_TEMP)\Wally` folder structure to start clean and not affect any of the source code, assuming you chose different folders for the solution and `$(USER_TEMP)`
 
-![Boost Binaries](./Boost Windows Binaries.png)
+![Boost Binaries](./Boost%20Windows%20Binaries.png)
