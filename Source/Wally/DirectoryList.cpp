@@ -5,7 +5,7 @@
 #include "stdafx.h"
 #include "Wally.h"
 #include "DirectoryList.h"
-#include "FileList.h"
+#include <set>
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -19,93 +19,17 @@ static char THIS_FILE[]=__FILE__;
 
 CDirectoryList::CDirectoryList(BOOL bRecurseSubdirectories /* = FALSE */)
 {
-	SetFirst (NULL);
-	SetWrite (NULL);
-
 	m_bRecurseSubdirectories = bRecurseSubdirectories;
 
 	m_strRoot = "";
-}
-
-CDirectoryList::~CDirectoryList()
-{	
-	PurgeList();
-}
-
-void CDirectoryList::PurgeList()
-{
-	CDirectoryEntry *pTemp = NULL;
-
-	pTemp = GetFirst();
-
-	while (pTemp)
-	{
-		SetFirst(pTemp->GetNext());
-		delete pTemp;
-		pTemp = GetFirst();
-	}
-
-	pTemp = NULL;
-	SetFirst (NULL);
-	SetWrite (NULL);
-}
-
-void CDirectoryList::AddDirectory(LPCTSTR szDirectory)
-{
-	CDirectoryEntry *pNewDirectory = new CDirectoryEntry(szDirectory, this);
-
-	if (!GetFirst())
-	{
-		SetFirst (pNewDirectory);
-		SetWrite (pNewDirectory);		
-	}
-	else
-	{
-		GetWrite()->SetNext(pNewDirectory);
-		pNewDirectory->SetPrevious(GetWrite());
-		SetWrite(pNewDirectory);
-	}
-
-	pNewDirectory = NULL;
-}
-
-int CDirectoryList::FindFile (LPCTSTR szFile, CStringArray *pStringArray)
-{
-	CDirectoryEntry *pTemp = GetFirst();
-	CString strFileName("");
-	CString strDirectory("");	
-	FILE *rp = NULL;
-
-	while (pTemp)
-	{
-		if (pTemp->HasFile(szFile))
-		{
-			strDirectory = pTemp->GetDirectory();
-			
-			strFileName.Format ("%s\\%s", strDirectory, szFile);
-
-			// Make sure it's really there
-			errno_t err = fopen_s(&rp, strFileName, "rb");
-
-			if (err == 0)
-			{
-				// Add the directory to the StringArray
-				pStringArray->Add(strDirectory);				
-				fclose (rp);
-			}			
-		}
-		pTemp = pTemp->GetNext();
-	}
-
-	return pStringArray->GetSize();
 }
 
 void CDirectoryList::SearchDirectories()
 {	
 	ASSERT (m_strRoot != "");
 
-	PurgeList();
-	AddDirectory (m_strRoot);
+	m_Files.clear();
+	SearchDirectory (m_strRoot);
 }
 
 void CDirectoryList::AddWildcard (LPCTSTR szWildcard)
@@ -119,178 +43,78 @@ void CDirectoryList::ClearWildcards ()
 	m_saWildcards.RemoveAll();
 }
 
-CStringArray *CDirectoryList::GetWildcards()
-{
-	return &m_saWildcards;
-}
-
 int CDirectoryList::GetFileCount()
 {
-	CDirectoryEntry *pDir = GetFirst();
-	CFileList *pList = NULL;
-	CFileItem *pFile = NULL;
-	int iCount = 0;
-
-	while (pDir)
-	{
-		pList = pDir->GetFileList();
-		pFile = pList->GetFirst();
-
-		while (pFile)
-		{
-			iCount++;
-			pFile = pFile->GetNext();
-		}
-
-		pDir = pDir->GetNext();
-	}
-
-	return iCount;
+	return (int)m_Files.size();
 }
 
 void CDirectoryList::GetAllFiles (CStringArray *pStringArray)
 {
-	CDirectoryEntry *pDir = GetFirst();
-	CFileList *pList = NULL;
-	CFileItem *pFile = NULL;
-
-	while (pDir)
+	for (const CString &strFile : m_Files)
 	{
-		pList = pDir->GetFileList();
-		pFile = pList->GetFirst();
-
-		while (pFile)
-		{
-			pStringArray->Add (pFile->GetFileName());			
-			pFile = pFile->GetNext();
-		}
-
-		pDir = pDir->GetNext();
+		pStringArray->Add (strFile);
 	}
 }
 
-//////////////////////////////////////////////////////////////////////
-// CDirectoryEntry Class
-//////////////////////////////////////////////////////////////////////
-
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
-
-CDirectoryEntry::CDirectoryEntry(LPCTSTR szDirectory, CDirectoryList *pParent)
+void CDirectoryList::SearchDirectory (const CString &strDirectory)
 {
-	SetNext (NULL);
-	SetPrevious (NULL);
-	m_strDirectory = szDirectory;
-	m_pParent = pParent;
-
-	ASSERT (pParent);
-	ASSERT (szDirectory);
-
 	struct _finddata_t c_file;
-	long hFile;
+	intptr_t hFile;
 
 	CString strSearch ("");
-	CString strDirectory ("");
 	CString strCompare ("");
-	CString strWildcard ("");
-
-	CStringArray *pWildcards = pParent->GetWildcards();
-	int j = 0;
 
 	// Look for subdirectories first
-	if (pParent->RecurseSubdirectories())
+	if (RecurseSubdirectories())
 	{
-		strSearch.Format ("%s\\*.*", m_strDirectory);
+		strSearch.Format ("%s\\*.*", strDirectory);
 		
-		if( (hFile = _findfirst( strSearch.GetBuffer(strSearch.GetLength()), &c_file )) != -1L )
-		{       
-			strCompare = c_file.name;
-			
-			if (c_file.attrib & _A_SUBDIR)
-			{
-				if ((strCompare != ".") && (strCompare != ".."))
-				{
-					strDirectory.Format ("%s\\%s", m_strDirectory, c_file.name);
-					m_pParent->AddDirectory (strDirectory);
-				}			
-			}
-			
-			while( _findnext( hFile, &c_file ) == 0 )
+		if ((hFile = _findfirst (strSearch, &c_file)) != -1)
+		{
+			do
 			{
 				strCompare = c_file.name;
 				
-				if (c_file.attrib & _A_SUBDIR)
-				{					
-					if ((strCompare != ".") && (strCompare != ".."))
-					{
-						strDirectory.Format ("%s\\%s", m_strDirectory, c_file.name);
-						m_pParent->AddDirectory (strDirectory);
-					}					
-				}				
+				if ((c_file.attrib & _A_SUBDIR) && (strCompare != ".") && (strCompare != ".."))
+				{
+					CString strSubDirectory ("");
+					strSubDirectory.Format ("%s\\%s", strDirectory, c_file.name);
+					SearchDirectory (strSubDirectory);
+				}
 			}
-		}		// if( (hFile = _wfindfirst( (LPTSTR)(strSearch.GetBuffer(strSearch.GetLength())), &c_file )) != -1L )
+			while (_findnext (hFile, &c_file) == 0);
+
+			_findclose (hFile);
+		}
 	}
-    	
 
-	for (j = 0; j < pWildcards->GetSize(); j++)
+	// More than one wildcard can match the same file
+	std::set<CString> setSeen;
+
+	for (int j = 0; j < m_saWildcards.GetSize(); j++)
 	{
-		strWildcard = pWildcards->GetAt(j);
-
-		strSearch.Format ("%s\\%s", m_strDirectory, strWildcard);
+		strSearch.Format ("%s\\%s", strDirectory, m_saWildcards.GetAt(j));
     		
-		if( (hFile = _findfirst( strSearch.GetBuffer(strSearch.GetLength()), &c_file )) != -1L )
-		{       
-			strCompare = c_file.name;
-			
-			if ((c_file.attrib & _A_SUBDIR) == 0)
+		if ((hFile = _findfirst (strSearch, &c_file)) != -1)
+		{
+			do
 			{
-				/*if (pParent->RecurseSubdirectories())
-				{
-					if ((strCompare != ".") && (strCompare != ".."))
-					{
-						strDirectory.Format ("%s\\%s", m_strDirectory, c_file.name);
-						m_pParent->AddDirectory (strDirectory);
-					}
-				}
-			}
-			else
-			{*/
-				strCompare.Format ("%s\\%s", m_strDirectory, c_file.name);
-				AddFile(strCompare);
-			}
-            
-			while( _findnext( hFile, &c_file ) == 0 )
-			{
-				strCompare = c_file.name;
-				
 				if ((c_file.attrib & _A_SUBDIR) == 0)
-				{					
-					/*if (pParent->RecurseSubdirectories())
+				{
+					strCompare.Format ("%s\\%s", strDirectory, c_file.name);
+
+					CString strKey (strCompare);
+					strKey.MakeUpper();
+
+					if (setSeen.insert (strKey).second)
 					{
-						if ((strCompare != ".") && (strCompare != ".."))
-						{
-							strDirectory.Format ("%s\\%s", m_strDirectory, c_file.name);
-							m_pParent->AddDirectory (strDirectory);
-						}
+						m_Files.push_back (strCompare);
 					}
 				}
-				else
-				{*/
-					strCompare.Format ("%s\\%s", m_strDirectory, c_file.name);
-					AddFile(strCompare);
-				}
 			}
-		}		// if( (hFile = _wfindfirst( (LPTSTR)(strSearch.GetBuffer(strSearch.GetLength())), &c_file )) != -1L )
-	}			// for (j = 0; j < pWildcards->GetSize(); j++)
-}
+			while (_findnext (hFile, &c_file) == 0);
 
-void CDirectoryEntry::AddFile (LPCTSTR szFileName)
-{
-	m_FileList.AddFile (szFileName);
-}
-
-BOOL CDirectoryEntry::HasFile (LPCTSTR szFileName)
-{
-	return m_FileList.HasFile (szFileName);
+			_findclose (hFile);
+		}
+	}
 }

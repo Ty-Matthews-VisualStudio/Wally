@@ -13,6 +13,7 @@
 
 #include "stdafx.h"
 #include "MiscFunctions.h"
+#include <shobjidl.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -374,66 +375,74 @@ CString GetParentDirectory (CString PathName)
 	
 }
 
-int CALLBACK BrowseCallbackProc(
-	HWND hwnd,	
-	UINT uMsg,	
-	LPARAM lParam,	
-	LPARAM lpData	
-   )
-{
-	switch (uMsg) {
-	case BFFM_INITIALIZED:
-		::SendMessage( hwnd, BFFM_SETSELECTION, TRUE, lpData );
-		break;
-		}
-	return 0;
-}
-
 CString BrowseForFolder (LPCTSTR szTitle, LPCTSTR szStartDirectory /* = NULL */)
 {
-	char szName[_MAX_PATH * 5] = "";	// temp storage for partial pathname
-	
+	CString strPathName("");
+
+	IFileDialog *pFileDialog = NULL;
+	HRESULT hr = CoCreateInstance (CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
+		IID_PPV_ARGS (&pFileDialog));
+	if (FAILED (hr) || !pFileDialog)
+	{
+		return strPathName;
+	}
+
+	DWORD dwOptions = 0;
+	hr = pFileDialog->GetOptions (&dwOptions);
+	if (SUCCEEDED (hr))
+	{
+		pFileDialog->SetOptions (dwOptions | FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM);
+	}
+
+	if (szTitle)
+	{
+		CStringW wTitle (szTitle);
+		pFileDialog->SetTitle (wTitle);
+	}
+
+	CString strStartDirectory ("");
 	if (szStartDirectory)
 	{
-		CString strStartDirectory ("");
 		strStartDirectory = TrimSlashes (szStartDirectory);
-		
-		strcpy_s (szName, sizeof(szName), strStartDirectory.GetBuffer(strStartDirectory.GetLength()));
 	}
 
-	BROWSEINFO BrowseInfo;
-
-	BrowseInfo.hwndOwner      = AfxGetMainWnd()->m_hWnd;
-	BrowseInfo.pidlRoot       = NULL;	
-	BrowseInfo.pszDisplayName = szName;
-	BrowseInfo.lpszTitle      = szTitle;
-	BrowseInfo.ulFlags        = BIF_RETURNONLYFSDIRS;
-	BrowseInfo.lpfn           = BrowseCallbackProc;
-	BrowseInfo.lParam         = (LPARAM)szName;
-	BrowseInfo.iImage         = 0;
-
-	LPITEMIDLIST pItemList = SHBrowseForFolder( &BrowseInfo);
-	CString      strPathName ("");	
-
-	LPMALLOC pMalloc = NULL;
-	if (SHGetMalloc( &pMalloc) == NOERROR)
+	if (!strStartDirectory.IsEmpty())
 	{
-		if (SHGetPathFromIDList( pItemList, szName))
+		CStringW wStart (strStartDirectory);
+		IShellItem *pStartItem = NULL;
+		hr = SHCreateItemFromParsingName (wStart, NULL, IID_PPV_ARGS (&pStartItem));
+		if (SUCCEEDED (hr) && pStartItem)
 		{
-			int iLen = strlen( szName);
-
-			// start at 1 so drive letter is capitalized
-			for (int i = 1; i < iLen; i++)
-				szName[i] = (char )tolower( szName[i]);
-
-			strPathName = szName;
-		}	
-		pMalloc->Free( pItemList);
+			pFileDialog->SetFolder (pStartItem);
+			pStartItem->Release();
+		}
 	}
-	else
-		MessageBeep( 0);		// neal - need a msg box?
 
-  
+	HWND hWndOwner = NULL;
+	if (AfxGetMainWnd())
+	{
+		hWndOwner = AfxGetMainWnd()->m_hWnd;
+	}
+
+	hr = pFileDialog->Show (hWndOwner);
+	if (SUCCEEDED (hr))
+	{
+		IShellItem *pResult = NULL;
+		hr = pFileDialog->GetResult (&pResult);
+		if (SUCCEEDED (hr) && pResult)
+		{
+			PWSTR pszPath = NULL;
+			hr = pResult->GetDisplayName (SIGDN_FILESYSPATH, &pszPath);
+			if (SUCCEEDED (hr) && pszPath)
+			{
+				strPathName = CString (CStringW (pszPath));
+				CoTaskMemFree (pszPath);
+			}
+			pResult->Release();
+		}
+	}
+
+	pFileDialog->Release();
 	return strPathName;
 }
 

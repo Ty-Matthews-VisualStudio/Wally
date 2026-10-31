@@ -58,8 +58,6 @@ private:
 	
 // Operations
 public:	
-	CPakItem *GetFirstPakItem();
-	CPakItem *GetNextPakItem();
 	void SetCurrentDirectory(CPakDirectory *pDirectory)
 	{
 		m_pCurrentDirectory = pDirectory;

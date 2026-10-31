@@ -391,27 +391,13 @@ void CBatchDlg::OnButtonGo()
 			}
 		}
 
-		CDirectoryEntry* pDir = dirList.GetFirst();
-		CFileList* pList = NULL;
-		CFileItem* pFile = NULL;
-
-		while (pDir)
+		for (const CString &strFile : dirList.GetFiles())
 		{
-			pList = pDir->GetFileList();
-			pFile = pList->GetFirst();
-
-			while (pFile)
-			{
-				CBatchJob* pJob = new CBatchJob(pFile->GetFileName(), m_strDestinationDir, m_strSourceDir, m_iDestinationType, iImageType, m_pDestinationPackage);
-				m_vBatchJobs.push_back(pJob);
-				m_pThreadManager->AddJob((LPVOID)pJob);
-				m_iJobCount++;
-				SetDlgItemText(IDC_TEMP_STATUS, pFile->GetFileName());
-
-				pFile = pFile->GetNext();
-			}
-
-			pDir = pDir->GetNext();
+			CBatchJob* pJob = new CBatchJob(strFile, m_strDestinationDir, m_strSourceDir, m_iDestinationType, iImageType, m_pDestinationPackage);
+			m_vBatchJobs.push_back(pJob);
+			m_pThreadManager->AddJob((LPVOID)pJob);
+			m_iJobCount++;
+			SetDlgItemText(IDC_TEMP_STATUS, strFile);
 		}
 
 		if (m_iJobCount)

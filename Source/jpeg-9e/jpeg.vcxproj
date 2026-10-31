@@ -193,12 +193,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(USER_TEMP)\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
+    <OutDir>$(USER_TEMP)\$(SolutionName)\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>$(USER_TEMP)\$(SolutionName)\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(USER_TEMP)\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
+    <OutDir>$(USER_TEMP)\$(SolutionName)\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>$(USER_TEMP)\$(SolutionName)\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>

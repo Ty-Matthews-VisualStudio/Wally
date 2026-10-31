@@ -174,8 +174,17 @@ BOOL CWadMergeJob::MergeWAD( CWADList *pWADList, DWORD dwFlags, CWadMergeDlg::LP
 	}
 
 	DWORD dwNumImages = m_WADList.GetNumImages();
-	CWADItem *pItem = m_WADList.GetFirstImage();
+	CWADItem *pItem = NULL;
 	CWADItem *pDuplicate = NULL;
+
+	for (auto& pOwned : m_WADList.GetItems())
+	{
+		if (pOwned->IsValidMip())
+		{
+			pItem = pOwned.get();
+			break;
+		}
+	}
 
 	CString strName("");
 	CString strNewName("");
@@ -322,8 +331,16 @@ BOOL CWadMergeJob::MergeWAD( CWADList *pWADList, DWORD dwFlags, CWadMergeDlg::LP
 			pDuplicate = NULL;
 		}
 
-		::PostMessage( lpParam->pMergeStatus->m_hWnd, WM_WAD_MERGE_STATUS_CUSTOM, WAD_MERGE_STATUS_STEP, (UINT)lpStatus );		
-		pItem = m_WADList.GetFirstImage();		
+		::PostMessage( lpParam->pMergeStatus->m_hWnd, WM_WAD_MERGE_STATUS_CUSTOM, WAD_MERGE_STATUS_STEP, (UINT)lpStatus );
+		pItem = NULL;
+		for (auto& pOwned : m_WADList.GetItems())
+		{
+			if (pOwned->IsValidMip())
+			{
+				pItem = pOwned.get();
+				break;
+			}
+		}
 	}
 
 	return TRUE;

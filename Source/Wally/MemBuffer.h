@@ -50,6 +50,7 @@
 #include <comdef.h>
 #include <assert.h>
 #include <tchar.h>
+#include <boost/json.hpp>
 
 // Forward declaration
 class CMemBuffer;
@@ -190,7 +191,7 @@ public:
 	LPBYTE InitFromResource( WORD );
 
 #ifdef BOOST_JSON_HPP
-	boost::json::value ParseJson(boost::json::error_code& ec);
+	boost::json::value ParseJson(boost::system::error_code& ec);
 #endif
 	
 	static std::string& TrimLeft( std::string& str, const char c );

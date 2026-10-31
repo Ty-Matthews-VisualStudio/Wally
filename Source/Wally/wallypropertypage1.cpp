@@ -1685,14 +1685,15 @@ BOOL CWallyPropertyPage7::OnInitDialog()
 	CDialog::OnInitDialog();
 	
 	CImageHelper ihHelper;
-	CWildCardItem *pItem = g_WildCardList.GetFirstSupportedImage();
 	CWildCardItem *pCheck = NULL;	
 	int j = 0;
 	int iItemAdded = 0;
 	BOOL bSkip = FALSE;
 
-	while (pItem)
+	for (int i = 0; i < g_WildCardList.GetCount(); i++)
 	{
+		CWildCardItem *pItem = g_WildCardList.GetAt(i);
+
 		if (
 			(ihHelper.IsValidImage ( pItem->GetImageType() ))  || 
 			(ihHelper.IsValidPackage (pItem->GetImageType() )) ||
@@ -1722,8 +1723,6 @@ BOOL CWallyPropertyPage7::OnInitDialog()
 				}
 			}
 		}
-
-		pItem = g_WildCardList.GetNextSupportedImage();
 	}
 
 	SetDlgItemText (IDC_CURRENT_ASSOC, "");

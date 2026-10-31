@@ -2,8 +2,8 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
-    <BOOSTDIR>D:\Ty\Code\Libraries\boost_1_81_0</BOOSTDIR>
-    <USER_TEMP>D:\Temp</USER_TEMP>
+    <BOOSTDIR>C:\Temp\Code Libraries\boost\boost_1_92_0</BOOSTDIR>
+    <USER_TEMP>C:\Temp\Visual Studio</USER_TEMP>
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup />

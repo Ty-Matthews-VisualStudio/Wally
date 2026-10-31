@@ -20,24 +20,24 @@ static char THIS_FILE[]=__FILE__;
 
 CToolSettingsPage::CToolSettingsPage()
 {
-	SetNext (NULL);
-	SetPrevious (NULL);	
+	//SetNext (NULL);
+	//SetPrevious (NULL);	
 
 	Initialize (NULL, NULL, "", 0, -1);	
 }
 
 CToolSettingsPage::CToolSettingsPage(CWnd *pParent, CSTabCtrl *pTabCtrl, LPCTSTR szTitle, int iResourceID, int iTabNumber)
 {
-	SetNext (NULL);
-	SetPrevious (NULL);
+	//SetNext (NULL);
+	//SetPrevious (NULL);
 	
 	Initialize(pParent, pTabCtrl, szTitle, iResourceID, iTabNumber);
 }
 
 CToolSettingsPage::~CToolSettingsPage()
 {
-	SetNext (NULL);
-	SetPrevious (NULL);
+	//SetNext (NULL);
+	//SetPrevious (NULL);
 }
 
 void CToolSettingsPage::Initialize(CWnd *pParent, CSTabCtrl *pTabCtrl, LPCTSTR szTitle, int iResourceID, int iTabNumber)
@@ -49,6 +49,7 @@ void CToolSettingsPage::Initialize(CWnd *pParent, CSTabCtrl *pTabCtrl, LPCTSTR s
 	m_iTabNumber = iTabNumber;
 }
 
+#if 0
 void CToolSettingsPage::SetNext (CToolSettingsPage *pNext)
 {
 	m_pNext = pNext;
@@ -68,6 +69,7 @@ CToolSettingsPage *CToolSettingsPage::GetPrevious()
 {
 	return m_pPrevious;
 }
+#endif
 
 BOOL CToolSettingsPage::AddToTabCtrl()
 {

@@ -10,6 +10,7 @@
 #endif // _MSC_VER >= 1000
 
 #include <string>
+#include <vector>
 
 #define REGISTRY_TYPE_UNKNOWN				0
 #define REGISTRY_TYPE_INTEGER				1
@@ -65,8 +66,6 @@ private:
 	int m_iItemType;
 	DWORD m_dwFlags;
 	
-	CRegistryItem *m_pNext;
-	CRegistryItem *m_pPrevious;
 	BOOL m_bEncrypt;
 
 // Private methods
@@ -103,7 +102,6 @@ public:
 #ifdef __AFX_H__
 	CRegistryItem (CString *pCString, LPCTSTR szDefaultValue, LPCTSTR szValueName, LPCTSTR szSubKey, BOOL bEncrypt = FALSE, DWORD dwFlags = 0);
 #endif		// #ifdef __AFX_H__
-	~CRegistryItem();
 	
 	void GetDefaultValue (int *piDefaultValue);
 	void GetDefaultValue (UINT *puiDefaultValue);
@@ -132,11 +130,6 @@ public:
 	void SetItemValue (UINT iValue);
 	void SetItemValue (double dfValue);
 	void SetItemValue (DWORD dwValue);
-
-	void SetNext (CRegistryItem *pNext);
-	CRegistryItem *GetNext();
-	void SetPrevious (CRegistryItem *pPrevious);
-	CRegistryItem *GetPrevious();	
 };
 
 class CRegistryHelper  
@@ -150,8 +143,7 @@ private:
 	std::string m_strBaseSubKey;
 #endif
 	
-	CRegistryItem *m_pFirst;
-	CRegistryItem *m_pWrite;
+	std::vector<CRegistryItem> m_Items;
 
 public:
 	CRegistryHelper();
@@ -159,11 +151,6 @@ public:
 
 	void SetMainKey (HKEY hMainKey);
 	void SetBaseSubKey (LPCTSTR szBaseSubKey);
-
-	void SetFirst (CRegistryItem *pFirst);
-	CRegistryItem *GetFirst();
-	void SetWrite (CRegistryItem *pWrite);
-	CRegistryItem *GetWrite();
 
 	void PurgeList();
 #ifdef _UNICODE
@@ -184,9 +171,6 @@ public:
 #ifdef __AFX_H__
 	void AddItem (CString *pCString, LPCTSTR szDefaultValue, LPCTSTR szValueName, LPCTSTR szSubKey, BOOL bEncrypt = FALSE, DWORD dwFlags = 0);
 #endif		// #ifdef __AFX_H__
-	void AddItemToList (CRegistryItem *pItem);
-
-	void SetAll (CRegistryItem *pItem);
 
 	BOOL ReadRegistry(DWORD dwSAMDesired = 0);
 	BOOL WriteRegistry();

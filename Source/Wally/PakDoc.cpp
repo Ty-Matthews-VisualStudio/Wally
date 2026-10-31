@@ -139,16 +139,6 @@ BOOL CPakDoc::IsModified()
 /////////////////////////////////////////////////////////////////////////////
 // CPakDoc commands
 
-CPakItem *CPakDoc::GetFirstPakItem()
-{	
-	return m_pCurrentDirectory->GetFirstPakItem();
-}
-
-CPakItem *CPakDoc::GetNextPakItem()
-{	
-	return m_pCurrentDirectory->GetNextPakItem();	
-}
-
 CPakDirectory *CPakDoc::GetRootDirectory()
 {
 	return m_PakList.GetRootDirectory();
@@ -557,6 +547,7 @@ void CPakDoc::ReleaseFile(CFile* pFile, BOOL bAbort)
 
 void CPakDoc::DeleteEntry (CPakItem *pItem)
 {
+	m_PakList.RemoveFromPasteList (pItem);
 	m_pCurrentDirectory->DeleteItem (pItem);
 }
 
@@ -566,6 +557,7 @@ void CPakDoc::DeleteEntry (CPakDirectory *pDirectory)
 
 	if (pParent)
 	{
+		m_PakList.RemoveDirectoryFromPasteList (pDirectory);
 		pParent->DeleteDirectory (pDirectory);
 	}
 }
@@ -650,49 +642,36 @@ void CPakDoc::ImportFiles()
 		CString strOffsetDirectory("");
 		CString strFileName("");
 		CString strFilePath("");
-		CDirectoryEntry *pDir = dirList.GetFirst();
-		CFileList *pList = NULL;
-		CFileItem *pFile = NULL;
 		BOOL bUpdate = FALSE;
 
 		CProgressBar ctlProgress ("Adding...", 70, dirList.GetFileCount(), false, 0);
 
-		while (pDir)
+		for (const CString &strFile : dirList.GetFiles())
 		{
-			pList = pDir->GetFileList();
-			pFile = pList->GetFirst();
-
-			while (pFile)
-			{
-				strFileName = pFile->GetFileName();
-				strFilePath = GetPathToFile (strFileName);
-				strOffsetDirectory = bAddNewDirectories ? strPakDirectory : "" + TrimFromLeft (strFilePath, strBaseOffsetDirectory);
+			strFileName = strFile;
+			strFilePath = GetPathToFile (strFileName);
+			strOffsetDirectory = bAddNewDirectories ? strPakDirectory : "" + TrimFromLeft (strFilePath, strBaseOffsetDirectory);
+			
+			if (!pPakDirectory->AddFile ( strFileName, 
+					(g_bPakImportRetainStructure ? strOffsetDirectory.GetBuffer() : ""),
+					(g_bPakImportReplaceExistingItems ? PAK_ADD_FLAG_REPLACE : 0)							
+				))
+			{						
+				CString strError("");
+				strError.Format ("%s\n\nDo you want to continue with the other files?", m_pCurrentDirectory->GetError());
 				
-				if (!pPakDirectory->AddFile ( strFileName, 
-						(g_bPakImportRetainStructure ? strOffsetDirectory.GetBuffer() : ""),
-						(g_bPakImportReplaceExistingItems ? PAK_ADD_FLAG_REPLACE : 0)							
-					))
-				{						
-					CString strError("");
-					strError.Format ("%s\n\nDo you want to continue with the other files?", m_pCurrentDirectory->GetError());
-					
-					int iReturn = AfxMessageBox (strError, MB_YESNO);
+				int iReturn = AfxMessageBox (strError, MB_YESNO);
 
-					if (iReturn == IDNO)
-					{
-						return;
-					}
-				}
-				else
+				if (iReturn == IDNO)
 				{
-					bUpdate = TRUE;
+					return;
 				}
-				ctlProgress.StepIt();				
-				
-				pFile = pFile->GetNext();
 			}
-
-			pDir = pDir->GetNext();
+			else
+			{
+				bUpdate = TRUE;
+			}
+			ctlProgress.StepIt();
 		}
 
 		ctlProgress.Clear();

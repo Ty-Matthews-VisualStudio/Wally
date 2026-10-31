@@ -37,7 +37,6 @@ BOOL Q2Engine::LoadJSON(LPCTSTR szFolderName)
 {
 	std::stringstream ssTemp;
 	std::stringstream ssMsg;
-	std::string sDir;
 	char szDrive[_MAX_DRIVE];
 	char szDir[_MAX_DIR];
 	char szFileName[_MAX_FNAME];
@@ -46,17 +45,15 @@ BOOL Q2Engine::LoadJSON(LPCTSTR szFolderName)
 	m_sFolderName = szFolderName;
 	_splitpath_s(szFolderName, szDrive, sizeof(szDrive), szDir, sizeof(szDir), szFileName, sizeof(szFileName), szExt, sizeof(szExt));
 	m_sName = szFileName;
-	sDir = szDir;
 	boost::algorithm::trim_if(m_sName, pred::ischar);
-	boost::algorithm::trim_if(sDir, pred::ischar);
 
 	// Parse the JSON and return TRUE if it's valid, otherwise FALSE and set ErrorMessage.
 	// Find flags.json and content.json, parse them separately
-	ssTemp << sDir << m_sName << "\\flags.json";
+	ssTemp << szFolderName << "\\flags.json";
 	if (LoadFile(ssTemp, m_vFlags))
 	{
 		ssTemp.str("");
-		ssTemp << sDir << m_sName << "\\content.json";
+		ssTemp << szFolderName << "\\content.json";
 		return LoadFile(ssTemp, m_vContent);
 	}
 	return FALSE;
@@ -95,7 +92,7 @@ BOOL Q2Engine::LoadFile(std::stringstream& ssFileName, _NameBitmaskPair& vPairs)
 		m_sErrorMessage = ssMsg.str();
 		return FALSE;
 	}
-	boost::json::error_code ec;
+	boost::system::error_code ec;
 
 	// Validate the JSON and build a vector of std::pair<std::string,int>
 	auto const jv = mbJSON.ParseJson(ec);
@@ -198,20 +195,14 @@ BOOL Q2Engine::LoadFile(std::stringstream& ssFileName, _NameBitmaskPair& vPairs)
 															break;
 															}
 
-															// Do some bounds checking on the bitmask															
-															if (ceil(log2(iBitmask)) != floor(log2(iBitmask)))
+															// Integer test: 0 and non-powers of 2 fail.
+															// log2() is not exact in the MSVC CRT, so values like
+															// 2^29 (Ladder) were rejected as "not a power of 2".
+															if ((iBitmask == 0) || (iBitmask & (iBitmask - 1)))
 															{
 																ssMsg << "Error parsing " << ssFileName.str() <<
 																	" : Bitmask with name '" << sName.c_str() <<
 																	"' is not a power of 2";
-																throw JSONException(ssMsg);
-															}
-
-															if ((iBitmask <= 0) || (iBitmask > pow(2,32)))
-															{
-																ssMsg << "Error parsing " << ssFileName.str() <<
-																	" : Bitmask with name '" << sName.c_str() <<
-																	"' must be >0 and <=" << std::fixed << std::setprecision(0) << pow(2,32);
 																throw JSONException(ssMsg);
 															}
 														}
@@ -280,7 +271,7 @@ BOOL Q2Engine::LoadFile(std::stringstream& ssFileName, _NameBitmaskPair& vPairs)
 	std::stringstream ssTemp;
 	std::stringstream ssFile;
 	
-	ssTemp << g_strJSONDirectory.GetBuffer() << "\\.wal";
+	ssTemp << (LPCTSTR)g_strJSONDirectory << "\\.wal";
 	_mkdir(ssTemp.str().c_str());
 	ssTemp << "\\baseq2";
 	_mkdir(ssTemp.str().c_str());
@@ -330,6 +321,10 @@ void CTextureInfo::CleanUp()
 		if( p ) delete p;
 	}
 	m_vEngines.erase(m_vEngines.begin(), m_vEngines.end());
+	if (m_cbEngines.GetSafeHwnd())
+	{
+		m_cbEngines.ResetContent();
+	}
 }
 
 void CTextureInfo::DoDataExchange(CDataExchange* pDX)
@@ -371,7 +366,15 @@ BOOL CTextureInfo::OnInitDialog()
 void CTextureInfo::EnableDisableFlagsContent()
 {
 	int i = m_cbEngines.GetCurSel();
-	Q2Engine* pEngine = reinterpret_cast<Q2Engine *>(m_cbEngines.GetItemData(i));
+	if (i < 0)
+	{
+		return;
+	}
+	Q2Engine* pEngine = reinterpret_cast<Q2Engine *>(m_cbEngines.GetItemDataPtr(i));
+	if (!pEngine)
+	{
+		return;
+	}
 
 	m_mID2Flags.erase(m_mID2Flags.begin(), m_mID2Flags.end());
 		
@@ -384,12 +387,19 @@ void CTextureInfo::EnableDisableFlagsContent()
 	for (iID = iFirstID; iID <= iLastID; iID++)
 	{
 		CWnd* pCheck = GetDlgItem(iID);
-		pCheck->ShowWindow(SW_HIDE);
+		if (pCheck)
+		{
+			pCheck->ShowWindow(SW_HIDE);
+		}
 	}
 	iID = iFirstID;
 	for (std::pair< std::string, UINT > p : pEngine->m_vFlags)
 	{
 		CWnd* pCheck = GetDlgItem(iID);
+		if (!pCheck)
+		{
+			break;
+		}
 		pCheck->ShowWindow(SW_SHOWNORMAL);
 		SetDlgItemTextA(iID, p.first.c_str());
 		CheckDlgButton(iID, m_Q2Header.flags & p.second);
@@ -407,12 +417,19 @@ void CTextureInfo::EnableDisableFlagsContent()
 	for (iID = iFirstID; iID <= iLastID; iID++)
 	{
 		CWnd* pCheck = GetDlgItem(iID);
-		pCheck->ShowWindow(SW_HIDE);
+		if (pCheck)
+		{
+			pCheck->ShowWindow(SW_HIDE);
+		}
 	}
 	iID = iFirstID;
 	for (std::pair< std::string, UINT > p : pEngine->m_vContent)
 	{
 		CWnd* pCheck = GetDlgItem(iID);
+		if (!pCheck)
+		{
+			break;
+		}
 		pCheck->ShowWindow(SW_SHOWNORMAL);
 		SetDlgItemTextA(iID, p.first.c_str());
 		CheckDlgButton(iID, m_Q2Header.contents & p.second);
@@ -442,10 +459,10 @@ void CTextureInfo::Init (LPQ2_MIP_S WalHeader)
 	m_Value = WalHeader->value;	
 }
 
-void CTextureInfo::LoadJSON()
+void CTextureInfo::LoadJSON(BOOL bAllowCreateDefault)
 {
 	CString sSourceFolder;
-	sSourceFolder.Format("%s\\.wal\\", g_strJSONDirectory.GetBuffer());
+	sSourceFolder.Format("%s\\.wal\\", (LPCTSTR)g_strJSONDirectory);
 	bool bOnce = false;
 	bool bSelected = false;
 	bool bValid = false;
@@ -455,7 +472,7 @@ void CTextureInfo::LoadJSON()
 
 	try
 	{
-		if (!boost::filesystem::is_directory(sSourceFolder.GetBuffer(), ec))
+		if (!boost::filesystem::is_directory((LPCTSTR)sSourceFolder, ec))
 		{
 			// Create the default JSON 
 			if (!Q2Engine::CreateDefaultJSON())
@@ -463,21 +480,24 @@ void CTextureInfo::LoadJSON()
 				return;
 			}
 		}
-		for (auto& p : boost::filesystem::directory_iterator(sSourceFolder.GetBuffer()))
+		for (auto& entry : boost::filesystem::directory_iterator((LPCTSTR)sSourceFolder))
 		{
-			std::stringstream ss;
-			ss << p;
+			if (!boost::filesystem::is_directory(entry))
+			{
+				continue;
+			}
+
 			Q2Engine* pNew = new Q2Engine();
 			if (pNew)
 			{
-				if (pNew->LoadJSON(ss.str().c_str()))
+				if (pNew->LoadJSON(entry.path().string().c_str()))
 				{
 					m_vEngines.push_back(pNew);
 					int i = m_cbEngines.AddString(pNew->m_sName.c_str());
 					m_cbEngines.SetItemDataPtr(i, (void*)pNew);
 					bValid = true;
 
-					if (!_stricmp(pNew->m_sName.c_str(), g_strDefaultTexInfoQ2Engine.GetBuffer()))
+					if (!_stricmp(pNew->m_sName.c_str(), (LPCTSTR)g_strDefaultTexInfoQ2Engine))
 					{
 						m_cbEngines.SetCurSel(i);
 						EnableDisableFlagsContent();
@@ -516,10 +536,10 @@ void CTextureInfo::LoadJSON()
 
 	if (!bValid)
 	{
-		// No valid JSON was found, create the default and try again		
-		if( Q2Engine::CreateDefaultJSON() )
+		// No valid JSON was found, create the default and try again once
+		if (bAllowCreateDefault && Q2Engine::CreateDefaultJSON())
 		{
-			return LoadJSON();
+			LoadJSON(FALSE);
 		}
 		else
 		{

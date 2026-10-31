@@ -39,20 +39,17 @@ BOOL CPackageDoc::OnNewDocument()
 
 CPackageDoc::~CPackageDoc()
 {
-	CWADItem *pItem = m_ihHelper.GetFirstImage();
 	CWallyDoc *pWallyDoc = NULL;
 
-	while (pItem)
+	for (auto& pOwned : m_ihHelper.GetItems())
 	{
-		pWallyDoc = pItem->GetWallyDoc();
+		pWallyDoc = pOwned->GetWallyDoc();
 		if (pWallyDoc)
 		{
 			pWallyDoc->DisconnectPackage (false);
 		}
-		pItem = m_ihHelper.GetNextImage();
 	}
 	
-	pItem = NULL;
 	pWallyDoc = NULL;
 	
 	DeleteCriticalSection( &m_CriticalSection );
@@ -506,12 +503,14 @@ void CPackageDoc::UpdateViews( BOOL bRefreshList /* = TRUE */ )
 		if( bRefreshList )
 		{
 			pView->ResetListBox();
-			CWADItem *pItem = GetFirstImage();
 
-			while( pItem )
+			for (auto& pOwned : GetItems())
 			{
-				pView->AddString( pItem, pItem->GetName(), FALSE );
-				pItem = GetNextImage();
+				CWADItem *pItem = pOwned.get();
+				if (pItem->IsValidMip())
+				{
+					pView->AddString( pItem, pItem->GetName(), FALSE );
+				}
 			}
 		}
 	

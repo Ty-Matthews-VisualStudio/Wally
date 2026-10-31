@@ -60,7 +60,7 @@
 
 //#include "random.h"
 
-long l_Seed = 3;
+thread_local long l_Seed = 3;
 
 long const a = 16807;
 long const m = 2147483647;
@@ -894,16 +894,16 @@ void Convert24BitTo256Color( CWallyPalette* pPal, COLOR_IRGB* pSrcData,
 	int iErrorR3 = 0, iErrorG3 = 0, iErrorB3 = 0;
 	int iErrorR4 = 0, iErrorG4 = 0, iErrorB4 = 0;
 
-	int static iErrorTermsR[MAX_MIP_SIZE+2];	// holds error terms for error difusion
-	int static iErrorTermsG[MAX_MIP_SIZE+2];
-	int static iErrorTermsB[MAX_MIP_SIZE+2];
+	int iErrorTermsR[MAX_MIP_SIZE+2];	// holds error terms for error difusion
+	int iErrorTermsG[MAX_MIP_SIZE+2];
+	int iErrorTermsB[MAX_MIP_SIZE+2];
 	int* pErrorR = NULL;
 	int* pErrorG = NULL;
 	int* pErrorB = NULL;
 
-	int static iErrorBelowR[MAX_MIP_SIZE+2];	// holds error terms for error difusion
-	int static iErrorBelowG[MAX_MIP_SIZE+2];
-	int static iErrorBelowB[MAX_MIP_SIZE+2];
+	int iErrorBelowR[MAX_MIP_SIZE+2];	// holds error terms for error difusion
+	int iErrorBelowG[MAX_MIP_SIZE+2];
+	int iErrorBelowB[MAX_MIP_SIZE+2];
 	int* pErrorBelowR = NULL;
 	int* pErrorBelowG = NULL;
 	int* pErrorBelowB = NULL;

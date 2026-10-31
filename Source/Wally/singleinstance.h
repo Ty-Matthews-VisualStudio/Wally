@@ -30,6 +30,9 @@ class CSingleInstance
 		// Creates the instance handler
 		BOOL Create ( LPCTSTR aName ) ;
 
+		// Stops the instance handler; must run before static destruction begins
+		void Destroy () ;
+
 		// Callback when the instance is woken up by another
 		virtual void WakeUp ( LPCTSTR aCommandLine ) const ;
 			

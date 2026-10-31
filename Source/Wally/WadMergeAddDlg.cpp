@@ -229,6 +229,12 @@ void CWadMergeAddDlg::OnOK()
 	OnKillfocusEditMinimumHeight();
 	OnKillfocusEditMinimumWidth();
 
+	if( m_strWadFile.IsEmpty() )
+	{
+		AfxMessageBox( "Please select a WAD file.", MB_ICONSTOP );
+		return;
+	}
+
 	if( m_strWildcard == "" )
 	{
 		m_strWildcard = "*";

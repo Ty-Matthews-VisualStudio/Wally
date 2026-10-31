@@ -48,14 +48,14 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>D:\Wally_temp\</OutDir>
-    <IntDir>$(USER_TEMP)\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
+    <OutDir>$(USER_TEMP)\$(SolutionName)\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>$(USER_TEMP)\$(SolutionName)\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <CustomBuildAfterTargets>
     </CustomBuildAfterTargets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(USER_TEMP)\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
+    <OutDir>$(USER_TEMP)\$(SolutionName)\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>$(USER_TEMP)\$(SolutionName)\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -78,7 +78,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration)\$(Platform)\;$(BOOSTDIR)\lib32-msvc-14.3</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(USER_TEMP)\$(SolutionName)\$(Configuration)\$(Platform)\;$(BOOSTDIR)\lib32-msvc-14.3</AdditionalLibraryDirectories>
       <AdditionalDependencies>legacy_stdio_definitions.lib;zlibstat.lib;jpeg.lib;libpng16.lib</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
@@ -113,7 +113,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);legacy_stdio_definitions.lib;zlibstat.lib;jpeg.lib;libpng16.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration)\$(Platform)\;$(BOOSTDIR)\lib32-msvc-14.3</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(USER_TEMP)\$(SolutionName)\$(Configuration)\$(Platform)\;$(BOOSTDIR)\lib32-msvc-14.3</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -289,10 +289,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="FileList.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="Filter.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
@@ -418,10 +414,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="NewPaletteDlg.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="NewRuleDlg.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
@@ -577,14 +569,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="RuleList.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="RulesDlg.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="SafeFile.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
@@ -654,10 +638,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="ToolSettingsPage.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
-    </ClCompile>
+    <ClCompile Include="ToolSettingsPage.cpp" />
     <ClCompile Include="ToolSettingsToolbar.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
@@ -695,10 +676,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="WallyException.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="WallyList.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
     </ClCompile>
@@ -807,7 +784,6 @@
     <ClInclude Include="EmbossDlg.h" />
     <ClInclude Include="EnlargeCanvasDlg.h" />
     <ClInclude Include="ExplorerTreeView.h" />
-    <ClInclude Include="FileList.h" />
     <ClInclude Include="Filter.h" />
     <ClInclude Include="FilterBCDlg.h" />
     <ClInclude Include="filters.h" />
@@ -835,7 +811,6 @@
     <ClInclude Include="NewImageDlg.h" />
     <ClInclude Include="NewPackageImageDlg.h" />
     <ClInclude Include="NewPaletteDlg.h" />
-    <ClInclude Include="NewRuleDlg.h" />
     <ClInclude Include="NewWalDlg.h" />
     <ClInclude Include="Noise.h" />
     <ClInclude Include="OffsetDlg.h" />
@@ -877,8 +852,6 @@
     <ClInclude Include="ResizeDlg.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="RotateDlg.h" />
-    <ClInclude Include="RuleList.h" />
-    <ClInclude Include="RulesDlg.h" />
     <ClInclude Include="SafeFile.h" />
     <ClInclude Include="Selection.h" />
     <ClInclude Include="SelectPakTreeDlg.h" />
@@ -913,7 +886,6 @@
     <ClInclude Include="WallyDoc.h" />
     <ClInclude Include="WallyDocTemplate.h" />
     <ClInclude Include="WallyException.h" />
-    <ClInclude Include="WallyList.h" />
     <ClInclude Include="WallyOptions.h" />
     <ClInclude Include="WallyPal.h" />
     <ClInclude Include="wallypropertypage1.h" />

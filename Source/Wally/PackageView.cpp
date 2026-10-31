@@ -256,11 +256,9 @@ void CPackageView::OnInitialUpdate()
 	{
 		m_pBrowseView = pDoc->GetBrowseView();
 	
-		CWADItem *pItem = NULL;		
-		
-		pItem = pDoc->GetFirstLump();
-		while (pItem)
+		for (auto& pOwned : pDoc->GetItems())
 		{
+			CWADItem *pItem = pOwned.get();
 			strAddString = pItem->GetName();
 			iItemAdded = m_lbImages.AddString (strAddString);			
 			m_lbImages.SetItemData (iItemAdded, (DWORD)pItem);
@@ -268,7 +266,6 @@ void CPackageView::OnInitialUpdate()
 
 			//m_tcImages.AddToAllImages( pItem );
 			
-			pItem = pDoc->GetNextLump();
 			bAtLeastOne = true;
 		}
 	}
@@ -2658,6 +2655,79 @@ void CPackageView::DoPackageExport (LPCTSTR szDirectory /* = NULL */)
 	}
 }
 
+HGLOBAL CPackageView::CreateHDROPFromSelection()
+{
+	int iSelCount = m_lbImages.GetSelCount();
+	if ((iSelCount == 0) || (iSelCount == LB_ERR))
+	{
+		return NULL;
+	}
+
+	int *piIndexes = new int[iSelCount];
+	m_lbImages.GetSelItems (iSelCount, piIndexes);
+
+	CStringArray saFiles;
+	CString strError("");
+	CString strFileName("");
+	CString strName("");
+
+	for (int j = 0; j < iSelCount; j++)
+	{
+		CWADItem *pItem = (CWADItem *)m_lbImages.GetItemData (piIndexes[j]);
+		if (!pItem || !pItem->IsValidMip())
+		{
+			continue;
+		}
+
+		strName = pItem->GetName();
+		for (int iChar = 0; iChar < strName.GetLength(); iChar++)
+		{
+			TCHAR ch = strName.GetAt (iChar);
+			if ((ch == '\\') || (ch == '/') || (ch == ':') || (ch == '*') || (ch == '?') || (ch == '"') || (ch == '<') || (ch == '>') || (ch == '|'))
+			{
+				strName.SetAt (iChar, '_');
+			}
+		}
+
+		strFileName.Format ("%s\\%s.png", (LPCTSTR)g_strTempDirectory, (LPCTSTR)strName);
+		if (ExportImage (pItem, strFileName, &strError))
+		{
+			saFiles.Add (strFileName);
+		}
+	}
+
+	delete [] piIndexes;
+
+	int iCount = saFiles.GetSize();
+	if (iCount == 0)
+	{
+		return NULL;
+	}
+
+	int iDropDataSize = sizeof(DROPFILES) + ((_MAX_PATH) * iCount) + 1;
+	HGLOBAL hGlobal = GlobalAlloc (GHND | GMEM_SHARE | GMEM_ZEROINIT, (DWORD)iDropDataSize);
+	if (!hGlobal)
+	{
+		return NULL;
+	}
+
+	LPDROPFILES pDropFiles = (LPDROPFILES)GlobalLock (hGlobal);
+	pDropFiles->pFiles = sizeof(DROPFILES);
+	pDropFiles->fWide = FALSE;
+
+	int iCurPosition = sizeof(DROPFILES);
+	for (int iFile = 0; iFile < iCount; iFile++)
+	{
+		strFileName = saFiles.GetAt (iFile);
+		lstrcpy ((LPSTR)((LPSTR)pDropFiles + iCurPosition), strFileName);
+		iCurPosition += strFileName.GetLength() + 1;
+	}
+	((LPSTR)pDropFiles)[iCurPosition] = 0;
+
+	GlobalUnlock (hGlobal);
+	return hGlobal;
+}
+
 bool CPackageView::ExportImage (CWADItem *pItem, LPCTSTR szFileName, CString *pstrErrorMessage)
 {	
 	CImageHelper ihExport;	
@@ -3238,9 +3308,9 @@ void CPackageView::FilterList()
 	saWildCard.Add (m_strFilter);
 
 	CPackageDoc *pDoc = GetDocument();
-	pItem = pDoc->GetFirstLump();
-	while (pItem)
+	for (auto& pOwned : pDoc->GetItems())
 	{
+		pItem = pOwned.get();
 		strAddString = pItem->GetName();
 
 		if (m_bFilter)
@@ -3263,7 +3333,6 @@ void CPackageView::FilterList()
 			m_lbImages.SetItemData (iItemAdded, (DWORD)pItem);
 			bAtLeastOne = true;
 		}
-		pItem = pDoc->GetNextLump();		
 	}
 
 	if (bAtLeastOne)

@@ -195,8 +195,6 @@ void CWADItem::Init()
 	m_wad2MipHeader	= NULL;
 	m_pPaletteSize	= NULL;
 	m_pWallyDoc		= NULL;
-	SetNext (NULL);
-	SetPrevious (NULL);
 	SetType (0);
 	m_iWadType = UNKNOWN_TYPE;
 	SetSelected(FALSE);
@@ -222,8 +220,6 @@ void CWADItem::CreateAsMip (unsigned char *pbyBits[], CWallyPalette *pPalette, L
 	m_wad3MipHeader	= NULL;
 	m_wad2MipHeader	= NULL;
 	m_pPaletteSize	= NULL;
-	SetNext (NULL);
-	SetPrevious (NULL);	
 	int j = 0;
 	int iPaletteOffset = 0;
 
@@ -346,8 +342,6 @@ CWADItem::~CWADItem ()
 		delete [] m_pbyData;	// neal - must use array delete to delete arrays!
 		m_pbyData = NULL;
 	}
-	SetNext (NULL);
-	SetPrevious (NULL);
 }
 
 unsigned char *CWADItem::GetData ()
@@ -702,25 +696,6 @@ void CWADItem::SetName (LPCTSTR szName)
 CString CWADItem::GetName ()
 {	
 	return m_strName;
-}
-
-void CWADItem::SetNext (CWADItem *pNext)
-{
-	m_pNext = pNext;
-}
-
-CWADItem *CWADItem::GetNext()
-{	
-	return m_pNext;
-}
-void CWADItem::SetPrevious (CWADItem *pPrevious)
-{
-	m_pPrevious = pPrevious;
-}
-
-CWADItem *CWADItem::GetPrevious()
-{
-	return m_pPrevious;
 }
 
 unsigned char *CWADItem::GetPalette()
@@ -1162,7 +1137,6 @@ void CWADItem::GetPackageEntries( _PackageTreeEntryVector &PackageTreeEntryVecto
 CWADList::CWADList ()
 {
 	m_iWadType = UNKNOWN_TYPE;
-	SetAll (NULL);
 }
 
 CWADList::~CWADList ()
@@ -1171,103 +1145,28 @@ CWADList::~CWADList ()
 }
 
 
-void CWADList::SetFirst (CWADItem *pFirst)
-{
-	m_pFirst = pFirst;
-}
-
-CWADItem *CWADList::GetFirst ()
-{
-	return m_pFirst;
-}
-
-void CWADList::SetRead (CWADItem *pRead)
-{
-	m_pRead = pRead;
-}
-
-CWADItem *CWADList::GetRead ()
-{
-	return m_pRead;
-}
-
-void CWADList::SetWrite (CWADItem *pWrite)
-{
-	m_pWrite = pWrite;
-}
-
-CWADItem *CWADList::GetWrite ()
-{
-	return m_pWrite;
-}
-
-void CWADList::SetAll (CWADItem *pItem)
-{
-	SetFirst (pItem);
-	SetRead (pItem);
-	SetWrite (pItem);
-}
-
 void CWADList::PurgeList()
 {
-	CWADItem *pItem = GetFirst();
-	CWADItem *pItem2 = NULL;
-
-	while (pItem)
-	{
-		pItem2 = pItem->GetNext();
-		delete pItem;
-		pItem = pItem2;
-	}
-	pItem = pItem2 = NULL;
-	SetAll (NULL);
+	m_Items.clear();
 }
 
 void CWADList::RemoveImage (CWADItem *pItem, BOOL bDelete /* = TRUE */)
 {
-	CWADItem *pTemp = GetFirst();
-	
-	while( pTemp )
-	{		
-		if( pTemp == pItem )
+	if (!pItem)
+	{
+		return;
+	}
+
+	for (auto it = m_Items.begin(); it != m_Items.end(); ++it)
+	{
+		if (it->get() == pItem)
 		{
-			if (pTemp->GetPrevious())
+			if (!bDelete)
 			{
-				pTemp->GetPrevious()->SetNext (pTemp->GetNext());
+				it->release();
 			}
-
-			if (pTemp->GetNext())
-			{
-				pTemp->GetNext()->SetPrevious (pTemp->GetPrevious());
-			}
-
-			if (pTemp == m_pFirst)
-			{
-				SetFirst (pTemp->GetNext());
-			}
-
-			if (pTemp == m_pWrite)
-			{
-				SetWrite (pTemp->GetPrevious());
-			}
-
-			if (pTemp == m_pRead)
-			{
-				SetRead( pTemp->GetNext());
-			}
-
-			pTemp->SetPrevious (NULL);
-			pTemp->SetNext (NULL);
-
-			if( bDelete )
-			{
-				delete pTemp;				
-			}
-			pTemp = NULL;
-		}
-		else
-		{
-			pTemp = pTemp->GetNext();
+			m_Items.erase (it);
+			return;
 		}
 	}
 }
@@ -1275,18 +1174,14 @@ void CWADList::RemoveImage (CWADItem *pItem, BOOL bDelete /* = TRUE */)
 	
 int CWADList::GetNumImages ()
 {
-	// Only return the count of images
 	int iCount = 0;
 
-	CWADItem *pTemp = GetFirst();
-
-	while (pTemp)
+	for (auto& pItem : m_Items)
 	{
-		if (pTemp->IsValidMip())
+		if (pItem->IsValidMip())
 		{
 			iCount++;
 		}
-		pTemp = pTemp->GetNext();
 	}
 
 	return iCount;
@@ -1294,89 +1189,17 @@ int CWADList::GetNumImages ()
 
 int CWADList::GetNumLumps ()
 {
-	// Return the count of all lumps, regardless of type
-	int iCount = 0;
-
-	SetRead (GetFirst());
-
-	while (m_pRead)
-	{
-		iCount++;		
-		m_pRead = m_pRead->GetNext();
-	}
-
-	return iCount;
-}
-
-CWADItem *CWADList::GetFirstImage()
-{	
-	SetRead (GetFirst());
-
-	while (m_pRead)
-	{
-		if (m_pRead->IsValidMip())
-		{
-			return m_pRead;
-		}
-		else
-		{
-			m_pRead = m_pRead->GetNext();
-		}
-	}
-	
-	return (NULL);
-}
-
-CWADItem *CWADList::GetNextImage()
-{
-	if (GetRead())
-	{
-		m_pRead = m_pRead->GetNext();		
-		while (m_pRead)
-		{
-			if (m_pRead->IsValidMip())
-			{
-				return m_pRead;
-			}
-			else
-			{
-				m_pRead = m_pRead->GetNext();
-			}
-		}		
-	}
-
-	return NULL;	
-}
-
-CWADItem *CWADList::GetFirstLump()
-{
-	SetRead (GetFirst());	
-	return (GetRead());
-}
-
-CWADItem *CWADList::GetNextLump()
-{
-	if (m_pRead)
-	{
-		m_pRead = m_pRead->GetNext();
-		return m_pRead;
-	}
-	
-	return NULL;
+	return (int)m_Items.size();
 }
 
 CWADItem *CWADList::GetLumpAtPosition(int iPosition)
 {
-	int iCount = 0;
-	SetRead (GetFirst());
-
-	while (m_pRead && (iCount != iPosition))
+	if ((iPosition < 0) || (iPosition >= (int)m_Items.size()))
 	{
-		m_pRead = m_pRead->GetNext();
-		iCount++;
+		return NULL;
 	}
-	
-	return (GetRead());
+
+	return m_Items[iPosition].get();
 }
 
 void CWADList::DiscoverWidthHeight( LPBYTE pbyData, int iDataSize, char cType, LPDWORD pdwWidth, LPDWORD pdwHeight )
@@ -1416,61 +1239,42 @@ CWADItem *CWADList::AddItem (unsigned char *pbyData, int iDataSize, char cType, 
 {
 	ASSERT (GetWADType() != UNKNOWN_TYPE);		// Have to set the WAD type before adding anything!
 	
-	CWADItem *pNewItem = new CWADItem (pbyData, iDataSize, cType, szName, GetWADType());
-	
-	if (!pNewItem)
-	{
-		ASSERT (false);
-		return NULL;
-	}
-
-	AddToList( pNewItem );
-	return pNewItem;
+	unique_ptr<CWADItem> pNewItem (new CWADItem (pbyData, iDataSize, cType, szName, GetWADType()));
+	CWADItem *pItem = pNewItem.get();
+	m_Items.push_back (std::move (pNewItem));
+	return pItem;
 }
 
 void CWADList::AddToList( CWADItem *pItem )
 {	
-	if (!GetFirst())
+	if (pItem)
 	{
-		SetAll( pItem );
+		m_Items.push_back (unique_ptr<CWADItem>(pItem));
 	}
-	else
-	{
-		m_pWrite->SetNext( pItem );
-		pItem->SetPrevious( m_pWrite );
-		m_pWrite = pItem;
-	}	
 }
 
 CWADItem *CWADList::AddMipItem (unsigned char *pbyBits[], CWallyPalette *pPalette, LPCTSTR szName, int iWidth, int iHeight)
 {	
-	CWADItem *pNewItem = new CWADItem ();	
-	if (!pNewItem)
-	{
-		ASSERT (false);
-		return NULL;
-	}	
-
+	unique_ptr<CWADItem> pNewItem (new CWADItem ());
 	pNewItem->CreateAsMip (pbyBits, pPalette, szName, iWidth, iHeight, GetWADType());
-	AddToList( pNewItem );
+	CWADItem *pItem = pNewItem.get();
+	m_Items.push_back (std::move (pNewItem));
 	
-	return pNewItem;
+	return pItem;
 }
 
 bool CWADList::IsEmpty()
 {
-	return (m_pFirst == NULL);
+	return m_Items.empty();
 }
 
 int CWADList::GetTotalItemsSize()
 {
 	int iSize = 0;
 
-	SetRead (GetFirst());
-	while (m_pRead)
+	for (auto& pItem : m_Items)
 	{
-		iSize += m_pRead->GetSize();
-		m_pRead = m_pRead->GetNext();
+		iSize += pItem->GetSize();
 	}
 	return iSize;
 }
@@ -1481,18 +1285,15 @@ CWADItem *CWADList::IsNameInList (LPCTSTR szName)
 	CString strCompare ("");
 	strName.MakeLower();
 
-	SetRead (GetFirst());
-
-	while (m_pRead)
-	{		
-		strCompare = m_pRead->GetName();
+	for (auto& pItem : m_Items)
+	{
+		strCompare = pItem->GetName();
 		strCompare.MakeLower();
 
 		if (strCompare == strName)
 		{
-			return m_pRead;
+			return pItem.get();
 		}
-		m_pRead = m_pRead->GetNext();
 	}
 
 	return NULL;
@@ -1944,11 +1745,11 @@ int CWADList::Serialize (LPCTSTR szFileName, CFile *pFile, unsigned char *pbyDat
 				// each mip is copied in
 				iFilePosition = iHeaderSize;	
 
-				pItem = GetFirst();
-
 				// Let's go!
-				while (pItem)	
+				for (auto& pOwned : m_Items)
 				{
+					pItem = pOwned.get();
+
 					// This iSize *includes* the mip header, and all 4 mips.  It's NOT width * height
 					// For non-image types, it includes all the raw data
 					iSize = pItem->GetSize();
@@ -1970,7 +1771,6 @@ int CWADList::Serialize (LPCTSTR szFileName, CFile *pFile, unsigned char *pbyDat
 					m_pwad2LumpInfo->compression = 0x0;				// TODO: compression supported at some point?
 					m_pwad2LumpInfo->pad = 0x0;					
 				
-					pItem = pItem->GetNext();
 					m_pwad2LumpInfo++;
 					iFilePosition += iSize;
 					ctlProgress.StepIt();
@@ -2051,11 +1851,11 @@ int CWADList::Serialize (LPCTSTR szFileName, CFile *pFile, unsigned char *pbyDat
 				// each mip is copied in
 				iFilePosition = iHeaderSize;	
 
-				pItem = GetFirst();
-
 				// Let's go!
-				while (pItem)	
+				for (auto& pOwned : m_Items)
 				{
+					pItem = pOwned.get();
+
 					// This iSize *includes* the mip header, and all 4 mips.  It's NOT width * height
 					// For non-image types, it includes all the raw data
 					iSize = pItem->GetSize();
@@ -2078,7 +1878,6 @@ int CWADList::Serialize (LPCTSTR szFileName, CFile *pFile, unsigned char *pbyDat
 					m_pwad3LumpInfo->pad1 = 0x0;
 					m_pwad3LumpInfo->pad2 = 0x0;		
 				
-					pItem = pItem->GetNext();
 					m_pwad3LumpInfo++;
 					iFilePosition += iSize;
 					ctlProgress.StepIt();

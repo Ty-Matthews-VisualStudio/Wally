@@ -30,36 +30,16 @@ static char THIS_FILE[] = __FILE__;
 
 
 /////////////////////////////////////////////////////////////////////////////
-//	Name:		CBuildItem()
-//	Action:		Default constructor for class.  Only to be used with a separate
-//				call to CreateAsMip()
-/////////////////////////////////////////////////////////////////////////////
-CBuildItem::CBuildItem ()
-{
-	m_pbyData		= NULL;	
-	m_pWallyDoc		= NULL;
-	SetNext (NULL);
-	SetPrevious (NULL);	
-}
-
-/////////////////////////////////////////////////////////////////////////////
-//	Name:		CBuildItem (BYTE *pbyData, int iDataSize, char cType, LPCTSTR szName)
-//	Action:		Constructor for class.  Initializes data pointers and builds
-//				the lump item properly.  Caller must pass in valid data.
-//
-//	Parameters:
-//
-//	BYTE *pbyData		: pointer to raw lump data.  No formatting should be done prior to this
-//	int iDatasize				: total lump size, as defined by the corresponding lump info
-//	char cType					: type member from struct wad3_lumpinfo_s
-//	LPCTSTR szName				: pointer to name of lump item
+//	Name:		CBuildItem (BYTE *pbyData, int iWidth, int iHeight, int iFlags, int iTileNumber)
+//	Action:		Constructor for class.  Copies the tile's pixels and rotates them
+//				into Wally's orientation.  Caller must pass in valid data.
 /////////////////////////////////////////////////////////////////////////////
 CBuildItem::CBuildItem (BYTE *pbyData, int iWidth, int iHeight, int iFlags, int iTileNumber)
 {	
-	m_pbyData		= NULL;	
 	m_pWallyDoc		= NULL;
-	SetNext (NULL);
-	SetPrevious (NULL);
+	m_iARTType		= UNKNOWN_TYPE;
+	m_iFlags		= iFlags;
+	m_iTileNumber	= iTileNumber;
 
 	ASSERT (pbyData);
 	
@@ -67,44 +47,23 @@ CBuildItem::CBuildItem (BYTE *pbyData, int iWidth, int iHeight, int iFlags, int 
 	SetHeight (iHeight);
 	m_iTotalSize = iWidth * iHeight;
 
-	m_iFlags = iFlags;
-
 	if ((iWidth > 0) && (iHeight > 0))
 	{
-		m_pbyData = new BYTE[m_iTotalSize];
-		memcpy (m_pbyData, pbyData, m_iTotalSize);
+		m_Data.assign (pbyData, pbyData + m_iTotalSize);
 
 		BYTE byPalette[768];
 		CDibSection ds;
 		ds.Init (iHeight, iWidth, 8, byPalette, FALSE);
-		ds.SetRawBits (m_pbyData);
+		ds.SetRawBits (m_Data.data());
 		ds.RotateBits(ROTATETO90);			
 		ds.MirrorBits();
-		ds.GetRawBits (m_pbyData);
+		ds.GetRawBits (m_Data.data());
 	}
-
-	m_iTileNumber = iTileNumber;
-	
-}
-
-/////////////////////////////////////////////////////////////////////////////
-//	Name:		~CBuildItem ()
-//	Action:		Deconstructor... clean up!
-/////////////////////////////////////////////////////////////////////////////
-CBuildItem::~CBuildItem ()
-{
-	if (m_pbyData)
-	{
-		delete [] m_pbyData;	// neal - must use array delete to delete arrays!
-		m_pbyData = NULL;
-	}
-	SetNext (NULL);
-	SetPrevious (NULL);
 }
 
 BYTE *CBuildItem::GetBits ()
 {
-	return m_pbyData;		
+	return m_Data.empty() ? NULL : m_Data.data();
 }
 
 void CBuildItem::UpdateData (BYTE *pbyBits, int iWidth, int iHeight)
@@ -124,19 +83,16 @@ void CBuildItem::UpdateData (BYTE *pbyBits, int iWidth, int iHeight)
 
 void CBuildItem::ReplaceData (BYTE *pbyBits, int iWidth, int iHeight)
 {
-	// Clear out all the data, but keep the linked list pointers intact.
-	if (m_pbyData)
-	{
-		delete [] m_pbyData;
-		m_pbyData = NULL;
-	}	
-		
 	m_iTotalSize = iWidth * iHeight;
 
 	if ((iWidth > 0) && (iHeight > 0))
 	{
-		m_pbyData = new BYTE[m_iTotalSize];
-		memcpy (m_pbyData, pbyBits, m_iTotalSize);
+		m_Data.assign (pbyBits, pbyBits + m_iTotalSize);
+	}
+	else
+	{
+		m_Data.clear();
+		m_Data.shrink_to_fit();
 	}
 	
 	SetWidth (iWidth);
@@ -161,25 +117,6 @@ void CBuildItem::SetHeight (int iHeight)
 int CBuildItem::GetHeight ()
 {
 	return m_iHeight;
-}
-
-void CBuildItem::SetNext (CBuildItem *pNext)
-{
-	m_pNext = pNext;
-}
-
-CBuildItem *CBuildItem::GetNext()
-{	
-	return m_pNext;
-}
-void CBuildItem::SetPrevious (CBuildItem *pPrevious)
-{
-	m_pPrevious = pPrevious;
-}
-
-CBuildItem *CBuildItem::GetPrevious()
-{
-	return m_pPrevious;
 }
 
 BYTE *CBuildItem::GetPalette()
@@ -218,105 +155,15 @@ int CBuildItem::GetFlags()
 CBuildList::CBuildList ()
 {
 	m_iARTType = UNKNOWN_TYPE;
-	SetAll (NULL);
-}
-
-CBuildList::~CBuildList ()
-{
-	PurgeList();
-}
-
-
-void CBuildList::SetFirst (CBuildItem *pFirst)
-{
-	m_pFirst = pFirst;
-}
-
-CBuildItem *CBuildList::GetFirst ()
-{
-	return m_pFirst;
-}
-
-void CBuildList::SetRead (CBuildItem *pRead)
-{
-	m_pRead = pRead;
-}
-
-CBuildItem *CBuildList::GetRead ()
-{
-	return m_pRead;
-}
-
-void CBuildList::SetWrite (CBuildItem *pWrite)
-{
-	m_pWrite = pWrite;
-}
-
-CBuildItem *CBuildList::GetWrite ()
-{
-	return m_pWrite;
-}
-
-void CBuildList::SetAll (CBuildItem *pItem)
-{
-	SetFirst (pItem);
-	SetRead (pItem);
-	SetWrite (pItem);
+	m_iFirstTile = 0;
+	m_iLastTile = -1;
 }
 
 void CBuildList::PurgeList()
 {
-	CBuildItem *pItem = GetFirst();
-	CBuildItem *pItem2 = NULL;
-
-	while (pItem)
-	{
-		pItem2 = pItem->GetNext();
-		delete pItem;
-		pItem = pItem2;
-	}
-	pItem = pItem2 = NULL;
-	SetAll (NULL);
-}
-
-void CBuildList::RemoveImage (CBuildItem *pItem)
-{
-	SetRead (GetFirst());
-
-	while (m_pRead)
-	{		
-		if (m_pRead == pItem)
-		{
-			if (m_pRead->GetPrevious())
-			{
-				m_pRead->GetPrevious()->SetNext (m_pRead->GetNext());
-			}
-
-			if (m_pRead->GetNext())
-			{
-				m_pRead->GetNext()->SetPrevious (m_pRead->GetPrevious());
-			}
-
-			if (m_pRead == m_pFirst)
-			{
-				SetFirst (m_pRead->GetNext());
-			}
-
-			if (m_pRead == m_pWrite)
-			{
-				SetWrite (m_pRead->GetPrevious());
-			}
-
-			m_pRead->SetPrevious (NULL);
-			m_pRead->SetNext (NULL);
-			delete m_pRead;
-			m_pRead = NULL;			
-		}
-		else
-		{
-			m_pRead = m_pRead->GetNext();
-		}
-	}
+	m_Items.clear();
+	m_iFirstTile = 0;
+	m_iLastTile = -1;
 }
 
 int CBuildList::GetNumTiles ()
@@ -324,68 +171,24 @@ int CBuildList::GetNumTiles ()
 	return (m_iLastTile - m_iFirstTile + 1);
 }
 
-CBuildItem *CBuildList::GetFirstTile()
-{	
-	SetRead (GetFirst());
-	return m_pRead;	
-}
-
-CBuildItem *CBuildList::GetNextTile()
+void CBuildList::AddItem (BYTE *pbyData, int iWidth, int iHeight, int iFlags, int iTileNumber)
 {
-	if (GetRead())
-	{
-		m_pRead = m_pRead->GetNext();		
-		return m_pRead;
-	}
-	else
-	{
-		ASSERT (FALSE);
-	}
-
-	return NULL;	
-}
-
-
-CBuildItem *CBuildList::AddItem (BYTE *pbyData, int iWidth, int iHeight, int iFlags, int iTileNumber)
-{
-	//ASSERT (GetWADType() != UNKNOWN_TYPE);		// Have to set the WAD type before adding anything!
-	
-	CBuildItem *pNewItem = new CBuildItem (pbyData, iWidth, iHeight, iFlags, iTileNumber);
-	
-	if (!pNewItem)
-	{
-		ASSERT (false);
-		return NULL;
-	}
-	
-	if (!GetFirst())
-	{
-		SetAll (pNewItem);
-	}
-	else
-	{
-		m_pWrite->SetNext (pNewItem);
-		pNewItem->SetPrevious (m_pWrite);
-		m_pWrite = pNewItem;
-	}		
-
-	return pNewItem;
+	ASSERT (iTileNumber == m_iFirstTile + (int)m_Items.size());		// GetTile() indexes by position
+	m_Items.emplace_back (pbyData, iWidth, iHeight, iFlags, iTileNumber);
 }
 
 bool CBuildList::IsEmpty()
 {
-	return (m_pFirst == NULL);
+	return m_Items.empty();
 }
 
 int CBuildList::GetTotalItemsSize()
 {
 	int iSize = 0;
 
-	SetRead (GetFirst());
-	while (m_pRead)
+	for (CBuildItem &item : m_Items)
 	{
-		iSize += m_pRead->GetSize();
-		m_pRead = m_pRead->GetNext();
+		iSize += item.GetSize();
 	}
 	return iSize;
 }
@@ -417,6 +220,8 @@ int CBuildList::Serialize (LPCTSTR szFileName, CFile *pFile, BYTE *pbyData, bool
 	
 	if (!bSave)		// We're loading
 	{
+		std::vector<BYTE> vbyFileData;
+
 		if (szFileName)
 		{
 			ASSERT (!pbyData);
@@ -431,9 +236,10 @@ int CBuildList::Serialize (LPCTSTR szFileName, CFile *pFile, BYTE *pbyData, bool
 			}
 			
 			int iLength = fp.GetLength();
-			pbyFileData = new BYTE[iLength];
-			fp.Read (pbyFileData, iLength);
+			vbyFileData.resize (iLength);
+			fp.Read (vbyFileData.data(), iLength);
 			fp.Close();
+			pbyFileData = vbyFileData.data();
 		}
 
 		if (pFile)
@@ -442,8 +248,9 @@ int CBuildList::Serialize (LPCTSTR szFileName, CFile *pFile, BYTE *pbyData, bool
 			ASSERT (!szFileName);
 
 			int iLength = pFile->GetLength();
-			pbyFileData = new BYTE[iLength];
-			pFile->Read (pbyFileData, iLength);			
+			vbyFileData.resize (iLength);
+			pFile->Read (vbyFileData.data(), iLength);			
+			pbyFileData = vbyFileData.data();
 		}
 		
 		if (pbyData)
@@ -456,12 +263,18 @@ int CBuildList::Serialize (LPCTSTR szFileName, CFile *pFile, BYTE *pbyData, bool
 		
 		BuildHeader = (struct Build_Header *)(pbyFileData);
 
+		PurgeList();
 		m_iFirstTile = BuildHeader->TileStart;
 		m_iLastTile = BuildHeader->TileEnd;
 
 		iNumTiles = (m_iLastTile - m_iFirstTile) + 1;
 		int iTileNumber = 0;
 		int j = 0;
+
+		if (iNumTiles > 0)
+		{
+			m_Items.reserve (iNumTiles);
+		}
 
 		piX = (unsigned short *)(pbyFileData + iHeaderSize);
 		piY = (unsigned short *)(pbyFileData + iHeaderSize + (iNumTiles * sizeof(unsigned short)));
@@ -483,6 +296,7 @@ int CBuildList::Serialize (LPCTSTR szFileName, CFile *pFile, BYTE *pbyData, bool
 
 	else		// We're saving
 	{
+		CFile fSaveFile;
 		CFile *pSaveFile = NULL;
 
 		if (pFile)
@@ -494,33 +308,28 @@ int CBuildList::Serialize (LPCTSTR szFileName, CFile *pFile, BYTE *pbyData, bool
 		if (szFileName)
 		{
 			ASSERT (!pFile);
-			pSaveFile = new CFile();
 			CFileException e;
 
-			if (!pSaveFile->Open(szFileName, CFile::modeCreate | CFile::modeWrite, &e ))
+			if (!fSaveFile.Open(szFileName, CFile::modeCreate | CFile::modeWrite, &e ))
 			{
 				return IH_ERROR_WRITING_FILE;
 			}			
+			pSaveFile = &fSaveFile;
 		}		
 
-		BYTE *pbyPackedData	= NULL;		
+		ASSERT (pSaveFile);
+
 		BYTE byPalette[768];
-		CDibSection *ds		= NULL;
-		
 		
 		iNumTiles = GetNumTiles();
+		ASSERT ((int)m_Items.size() == iNumTiles);
 
 		int iTotalSize = iHeaderSize;		
 		iTotalSize += iNumTiles * ((sizeof(unsigned short) * 2) + sizeof (int));
 		iTotalSize += GetTotalItemsSize();
 
-		pbyPackedData = new BYTE[iTotalSize];
-
-		if (!pbyPackedData)
-		{
-			return IH_OUT_OF_MEMORY;
-		}
-		memset (pbyPackedData, 0, iTotalSize);
+		std::vector<BYTE> vbyPackedData (iTotalSize, 0);
+		BYTE *pbyPackedData = vbyPackedData.data();
 
 		BuildHeader = (struct Build_Header *)(pbyPackedData);
 		piX = (unsigned short *)(pbyPackedData + iHeaderSize);
@@ -534,83 +343,45 @@ int CBuildList::Serialize (LPCTSTR szFileName, CFile *pFile, BYTE *pbyData, bool
 		BuildHeader->TileStart = m_iFirstTile;
 		BuildHeader->TileEnd = m_iLastTile;
 		
-		CBuildItem *pItem = GetFirst();
-
-		while (pItem)
+		for (CBuildItem &item : m_Items)
 		{
-			iWidth = (*piX) = pItem->GetWidth();
-			iHeight = (*piY) = pItem->GetHeight();
-			(*piFlags) = pItem->GetFlags();
+			iWidth = (*piX) = item.GetWidth();
+			iHeight = (*piY) = item.GetHeight();
+			(*piFlags) = item.GetFlags();
 
 			iSize = iWidth * iHeight;
 
 			if (iSize)
 			{
-				ds = new CDibSection();
-				if (!ds)
-				{
-					if (pbyPackedData)
-					{
-						delete [] pbyPackedData;
-						pbyPackedData = NULL;
-					}
-					return IH_OUT_OF_MEMORY;
-				}
-				ds->Init (iWidth, iHeight, 8, byPalette, FALSE);				
-				ds->SetRawBits (pItem->GetBits());
-				ds->MirrorBits();
-				ds->RotateBits(ROTATETO270);				
-				ds->GetRawBits (pbyItemData);
+				CDibSection ds;
+				ds.Init (iWidth, iHeight, 8, byPalette, FALSE);				
+				ds.SetRawBits (item.GetBits());
+				ds.MirrorBits();
+				ds.RotateBits(ROTATETO270);				
+				ds.GetRawBits (pbyItemData);
 								
 				pbyItemData += iSize;
-
-				if (ds)
-				{
-					delete ds;
-					ds = NULL;
-				}
 			}			
 			
 			piX++;
 			piY++;
 			piFlags++;
-
-			pItem = pItem->GetNext();
 		}
 
 		pSaveFile->Write (pbyPackedData, iTotalSize);		
-
-		if (pbyPackedData)
-		{
-			delete [] pbyPackedData;
-			pbyPackedData = NULL;
-		}
-
-		if (szFileName)
-		{
-			if (pSaveFile)
-			{
-				delete pSaveFile;
-				pSaveFile = NULL;
-			}
-		}
 	}
 	return IH_SUCCESS;
 }
 
 CBuildItem *CBuildList::GetTile(int iTileNumber)
 {
-	CBuildItem *pTemp = GetFirstTile();
+	int iIndex = iTileNumber - m_iFirstTile;
 
-	while (pTemp)
+	if ((iIndex < 0) || (iIndex >= (int)m_Items.size()))
 	{
-		if (pTemp->GetTileNumber() == iTileNumber)
-		{
-			return pTemp;
-		}
-		pTemp = GetNextTile();
+		return NULL;
 	}
 
-	return NULL;
-
+	ASSERT (m_Items[iIndex].GetTileNumber() == iTileNumber);
+	return &m_Items[iIndex];
 }

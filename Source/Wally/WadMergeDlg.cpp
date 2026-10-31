@@ -33,6 +33,10 @@ CWadMergeDlg::CWadMergeDlg(CWnd* pParent /*=NULL*/)
 	//}}AFX_DATA_INIT
 }
 
+CWadMergeDlg::~CWadMergeDlg()
+{
+}
+
 
 void CWadMergeDlg::DoDataExchange(CDataExchange* pDX)
 {
@@ -59,6 +63,7 @@ BEGIN_MESSAGE_MAP(CWadMergeDlg, CDialog)
 	ON_BN_CLICKED(IDC_BUTTON_PROPERTIES, OnButtonProperties)
 	ON_BN_CLICKED(IDC_RADIO_OPEN_WAD, OnRadioOpenWad)
 	ON_BN_CLICKED(IDC_BUTTON_QUICK_ADD, OnButtonQuickAdd)
+	ON_NOTIFY(NM_DBLCLK, IDC_LIST_WADS, OnDblclkListWads)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -96,61 +101,7 @@ BOOL CWadMergeDlg::OnInitDialog()
 	m_lstWADs.InsertColumn (1, "WildCards", LVCFMT_LEFT, 80, 1);
 	m_lstWADs.InsertColumn (2, "Restrictions", LVCFMT_LEFT, 68, 2);	
 
-
-	// Get all of the currently open packages
-	POSITION pos = theApp.PackageDocTemplate->GetFirstDocPosition();	
-	
-	m_bOpenPackage = pos != NULL ? true : false;
-	
-	CPackageDoc *pDoc = NULL;
-	
-	while( pos )
-	{
-		pDoc = (CPackageDoc *)theApp.PackageDocTemplate->GetNextDoc( pos );
-		int iItemAdded = m_cbOpenWAD.AddString( pDoc->GetTitle() );
-		m_cbOpenWAD.SetItemData( iItemAdded, (DWORD)pDoc );	
-	}
-
-	if( m_bOpenPackage )
-	{
-		// Now find the one that is currently active
-		CPackageView *pPackageView = NULL;
-		CView *pView = theApp.GetActiveView();		
-		if (pView)
-		{
-			pPackageView = DYNAMIC_DOWNCAST (CPackageView, pView);			
-		}
-		
-		int iMatch = 0;
-
-		if( pPackageView )
-		{
-			iMatch = m_cbOpenWAD.FindString( -1, pPackageView->GetName() );
-			if( iMatch != CB_ERR )
-			{
-				m_cbOpenWAD.SetCurSel( iMatch );				
-			}
-			else
-			{
-				ASSERT( FALSE );			// How can an item be added to the list, and then not found?
-				m_cbOpenWAD.SetCurSel (0);				
-			}
-		}
-		else
-		{			
-			m_cbOpenWAD.SetCurSel( 0 );			
-		}
-	}
-	else
-	{
-		if( g_iMergeDestinationChoice == IDC_RADIO_OPEN_WAD )
-		{
-			CheckDlgButton( IDC_RADIO_NEW_WAD, 1 );
-			CheckDlgButton( IDC_RADIO_OPEN_WAD, 0 );
-		}
-	}
-
-	EnableDisable();
+	FillOpenPackages( NULL );
 	
 	return TRUE;  // return TRUE unless you set the focus to a control
 	              // EXCEPTION: OCX Property Pages should return FALSE
@@ -214,7 +165,10 @@ void CWadMergeDlg::OnButtonAdd()
 
 void CWadMergeDlg::AddJob( CWadMergeJob *pNewJob )
 {
-	m_MergeJobs.push_back( pNewJob ); 
+	if( pNewJob )
+	{
+		m_MergeJobs.push_back( unique_ptr<CWadMergeJob>( pNewJob ) );
+	}
 }
 
 void CWadMergeDlg::OnButtonGo() 
@@ -336,6 +290,8 @@ void CWadMergeDlg::OnButtonGo()
 	dlgStatus.SetThreadParameter( (LPVOID)lpParam );
 
 	dlgStatus.DoModal();
+
+	FillOpenPackages( pDoc );
 }
 
 
@@ -343,19 +299,23 @@ UINT WINAPI CWadMergeDlg::GoThread( LPVOID lpParameter )
 {
 	if( !lpParameter )
 	{
-		_endthreadex( 1 );
 		return 1;
 	}
 
 	LPTHREAD_PARAM lpParam = (LPTHREAD_PARAM)lpParameter;
-	
-	itMergeJob itJob = lpParam->lpMergeJobs->begin();
+	vector< CWadMergeJob * > jobs;
+
+	jobs.reserve( lpParam->lpMergeJobs->size() );
+	for( auto& pOwned : *lpParam->lpMergeJobs )
+	{
+		jobs.push_back( pOwned.get() );
+	}
+
 	BOOL bFirstWAD = TRUE;
 	DWORD dwFlags = lpParam->dwFlags;
-	CWADList *pWADList = lpParam->pWADList;	
-	CPackageDoc *pDoc = NULL;
+	CWADList *pWADList = lpParam->pWADList;
 	
-	while( itJob != lpParam->lpMergeJobs->end() )
+	for( CWadMergeJob *pJob : jobs )
 	{		
 		if( bFirstWAD )
 		{
@@ -366,16 +326,15 @@ UINT WINAPI CWadMergeDlg::GoThread( LPVOID lpParameter )
 		}
 		else
 		{
-			dwFlags ^= WAD_MERGE_FIRST_WAD;			
+			dwFlags &= ~WAD_MERGE_FIRST_WAD;
 		}
 		
-		if( (*itJob)->LoadWAD() )
+		if( pJob->LoadWAD() )
 		{
-			(*itJob)->MergeWAD( pWADList, dwFlags, lpParam );
+			pJob->MergeWAD( pWADList, dwFlags, lpParam );
 		}
 
-		bFirstWAD = FALSE;		
-		itJob++;
+		bFirstWAD = FALSE;
 
 		if( 
 			(lpParam->iDestinationChoice == IDC_RADIO_NEW_WAD ) ||
@@ -404,26 +363,7 @@ UINT WINAPI CWadMergeDlg::GoThread( LPVOID lpParameter )
 	}
 	
 	delete lpParameter;
-
-	_endthreadex( 0 );
 	return 0;
-}
-
-int CWadMergeDlg::DoModal() 
-{
-	int iReturn = CDialog::DoModal();
-
-	itMergeJob itJob = m_MergeJobs.begin();
-	
-	while( itJob != m_MergeJobs.end() )
-	{
-		delete (*itJob);
-		(*itJob) = NULL;
-
-		itJob++;
-	}
-
-	return iReturn;
 }
 
 void CWadMergeDlg::OnRadioExistingWad() 
@@ -452,39 +392,117 @@ void CWadMergeDlg::EnableDisable()
 	}
 }
 
+void CWadMergeDlg::FillOpenPackages( CPackageDoc *pSelectDoc )
+{
+	CPackageDoc *pPreferred = pSelectDoc;
+
+	if( !pPreferred )
+	{
+		int iCurSel = m_cbOpenWAD.GetCurSel();
+		if( iCurSel != CB_ERR )
+		{
+			pPreferred = (CPackageDoc *)m_cbOpenWAD.GetItemData( iCurSel );
+		}
+	}
+
+	m_cbOpenWAD.ResetContent();
+
+	POSITION pos = theApp.PackageDocTemplate->GetFirstDocPosition();
+	m_bOpenPackage = ( pos != NULL );
+
+	while( pos )
+	{
+		CPackageDoc *pDoc = (CPackageDoc *)theApp.PackageDocTemplate->GetNextDoc( pos );
+		int iItemAdded = m_cbOpenWAD.AddString( pDoc->GetTitle() );
+		m_cbOpenWAD.SetItemData( iItemAdded, (DWORD)pDoc );
+	}
+
+	if( !m_bOpenPackage )
+	{
+		if( IsDlgButtonChecked( IDC_RADIO_OPEN_WAD ) )
+		{
+			CheckDlgButton( IDC_RADIO_NEW_WAD, 1 );
+			CheckDlgButton( IDC_RADIO_OPEN_WAD, 0 );
+		}
+
+		EnableDisable();
+		return;
+	}
+
+	int iMatch = CB_ERR;
+
+	if( pPreferred )
+	{
+		for( int j = 0; j < m_cbOpenWAD.GetCount(); j++ )
+		{
+			if( (CPackageDoc *)m_cbOpenWAD.GetItemData( j ) == pPreferred )
+			{
+				iMatch = j;
+				break;
+			}
+		}
+	}
+
+	if( iMatch == CB_ERR )
+	{
+		CView *pView = theApp.GetActiveView();
+		CPackageView *pPackageView = NULL;
+
+		if( pView )
+		{
+			pPackageView = DYNAMIC_DOWNCAST( CPackageView, pView );
+		}
+
+		if( pPackageView )
+		{
+			iMatch = m_cbOpenWAD.FindString( -1, pPackageView->GetName() );
+		}
+	}
+
+	if( iMatch != CB_ERR )
+	{
+		m_cbOpenWAD.SetCurSel( iMatch );
+	}
+	else
+	{
+		m_cbOpenWAD.SetCurSel( 0 );
+	}
+
+	EnableDisable();
+}
+
 void CWadMergeDlg::UpdateList()
 {
 	m_lstWADs.DeleteAllItems();
 
-	itMergeJob itJob = m_MergeJobs.begin();
-	LV_ITEM lvText;
+	LV_ITEM lvText = {};
 	LPSTR szText = NULL;
 	CString strText("");
 	int iItem = 0;
 	
-	while( itJob != m_MergeJobs.end() )
+	for( auto& pOwned : m_MergeJobs )
 	{
-		szText = (*itJob)->GetShortWadFile();
+		CWadMergeJob *pJob = pOwned.get();
+		szText = pJob->GetShortWadFile();
 
 		lvText.mask = LVIF_TEXT | LVIF_PARAM;
+		lvText.iItem = m_lstWADs.GetItemCount();
 		lvText.iSubItem = 0;
 		lvText.state = 0;
 		lvText.stateMask = 0;
 		lvText.pszText = szText;
 		lvText.cchTextMax = strlen( szText );
-		lvText.lParam = (ULONG)(*itJob);
+		lvText.lParam = (LPARAM)pJob;
 		
 		iItem = m_lstWADs.InsertItem( &lvText );
 
-		szText = (*itJob)->GetWildcard();		
+		szText = pJob->GetWildcard();		
 		m_lstWADs.SetItemText( iItem, 1, szText );
 
-		strText = (*itJob)->HasMinMaxRestrictions() ? "Yes" : "No";
+		strText = pJob->HasMinMaxRestrictions() ? "Yes" : "No";
 		szText = strText.GetBuffer( strText.GetLength() );
 		
 		m_lstWADs.SetItemText( iItem, 2, szText );
-
-		itJob++;
 	}
 }
 
@@ -492,9 +510,8 @@ void CWadMergeDlg::OnButtonRemove()
 {
 	POSITION pos = m_lstWADs.GetFirstSelectedItemPosition();
 	int iItem = 0;
-	LV_ITEM lvItem;
+	LV_ITEM lvItem = {};
 	CWadMergeJob *pJob = NULL;
-	itMergeJob itJob;
       
 	if( pos )
 	{	
@@ -502,6 +519,7 @@ void CWadMergeDlg::OnButtonRemove()
 		
 		lvItem.mask = LVIF_PARAM;	
 		lvItem.iItem = iItem;
+		lvItem.iSubItem = 0;
 
 		// Make sure we can get the item
 		if( m_lstWADs.GetItem( &lvItem ))
@@ -513,20 +531,12 @@ void CWadMergeDlg::OnButtonRemove()
 
 			pJob = (CWadMergeJob *)lvItem.lParam;			
 
-			// Have to find the item in our internal list
-			itJob = m_MergeJobs.begin();
-	
-			while( itJob != m_MergeJobs.end() )
+			for( auto itJob = m_MergeJobs.begin(); itJob != m_MergeJobs.end(); ++itJob )
 			{
-				if( (*itJob) == pJob )
+				if( itJob->get() == pJob )
 				{
-					delete (*itJob);
 					m_MergeJobs.erase( itJob );
 					break;
-				}
-				else
-				{
-					itJob++;
 				}
 			}
 
@@ -538,11 +548,17 @@ void CWadMergeDlg::OnButtonRemove()
 		
 }
 
+void CWadMergeDlg::OnDblclkListWads(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	OnButtonProperties();
+	*pResult = 0;
+}
+
 void CWadMergeDlg::OnButtonProperties() 
 {
 	POSITION pos = m_lstWADs.GetFirstSelectedItemPosition();
 	int iItem = 0;
-	LV_ITEM lvItem;
+	LV_ITEM lvItem = {};
 	CWadMergeJob *pJob = NULL;
 	CWadMergeAddDlg AddDlg;
       
@@ -552,6 +568,7 @@ void CWadMergeDlg::OnButtonProperties()
 		
 		lvItem.mask = LVIF_PARAM;	
 		lvItem.iItem = iItem;
+		lvItem.iSubItem = 0;
 
 		// Make sure we can get the item
 		if( m_lstWADs.GetItem( &lvItem ))
@@ -581,12 +598,10 @@ void CWadMergeDlg::OnRadioOpenWad()
 DWORD CWadMergeDlg::GetNumImages()
 {
 	DWORD dwNumImages = 0;
-	itMergeJob itJob = m_MergeJobs.begin();
 	
-	while( itJob != m_MergeJobs.end() )
+	for( auto& pOwned : m_MergeJobs )
 	{
-		dwNumImages += (*itJob)->GetNumImages();
-		itJob++;
+		dwNumImages += pOwned->GetNumImages();
 	}
 
 	return dwNumImages;

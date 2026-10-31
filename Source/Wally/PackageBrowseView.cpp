@@ -1340,15 +1340,21 @@ void CPackageBrowseView::OnMouseMove(UINT nFlags, CPoint point)
 							sf.Write(&pView, sizeof(CPackageView *));
 							HGLOBAL hMem = sf.Detach();	
 							
-							if (!hMem) return;
-							pSource->CacheGlobalData(g_iPackageFormat, hMem);	
-							pSource->DoDragDrop();
-
-							if (pSource)
+							if (!hMem)
 							{
 								delete pSource;
-								pSource = NULL;
+								return;
 							}
+							pSource->CacheGlobalData(g_iPackageFormat, hMem);
+
+							HGLOBAL hDrop = pView->CreateHDROPFromSelection();
+							if (hDrop)
+							{
+								pSource->CacheGlobalData(CF_HDROP, hDrop);
+							}
+
+							pSource->DoDragDrop();
+							pSource->ExternalRelease();
 							m_bDragging = TRUE;
 						}
 					}

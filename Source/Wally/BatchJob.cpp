@@ -226,6 +226,12 @@ void CBatchJob::Process()
 					// Supports 8BIT, but not 24BIT.
 					iExportColorDepth = IH_8BIT;
 				}
+
+				if ((iFlags & IH_TYPE_FLAG_SUPPORTS24BIT) && ((iFlags & IH_TYPE_FLAG_SUPPORTS8BIT) == 0))
+				{
+					// Supports 24BIT, but not 8BIT.
+					iExportColorDepth = IH_24BIT;
+				}
 				
 				if( g_bRetainDirectoryStructure )
 				{

@@ -15,8 +15,8 @@ class CSTabCtrl;
 class CToolSettingsPage  
 {
 private:
-	CToolSettingsPage *m_pNext;
-	CToolSettingsPage *m_pPrevious;
+	//CToolSettingsPage *m_pNext;
+	//CToolSettingsPage *m_pPrevious;
 
 	CWnd *m_pParent;
 	CSTabCtrl *m_pTabCtrl;

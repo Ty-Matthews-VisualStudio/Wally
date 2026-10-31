@@ -172,28 +172,28 @@ void CPakListView::UpdateList()
 	GetListCtrl().DeleteAllItems();
 
 	CPakDoc *pDoc = GetDocument();
-	CPakItem *pItem = NULL;
+	CPakDirectory *pCurrent = pDoc->GetCurrentDirectory();
 
 	CString strText("");
 	CString strExtension("");
-	LV_ITEM lvText;
+	LV_ITEM lvText = {};
 
-	pItem = pDoc->GetFirstPakItem();
 	int iIcon = 0;
 	int iItem = 0;
 
 	SHFILEINFO shInfo;
 
 	// First add the folders (children of the current directory)
-	CPakDirectory *pDirectory = pDoc->GetCurrentDirectory()->GetFirstDirectory();
 	lpPAK_PARAM lpPakParam = NULL;
 	
-	while (pDirectory)
+	for (auto& pChild : pCurrent->GetDirectories())
 	{
+		CPakDirectory *pDirectory = pChild.get();
 		strText = pDirectory->GetDisplayName();
 		lpPakParam = (lpPAK_PARAM)(*pDirectory);
 		
 		lvText.mask = LVIF_TEXT | LVIF_PARAM | LVIF_IMAGE;
+		lvText.iItem = GetListCtrl().GetItemCount();
 		lvText.iSubItem = 0;
 		lvText.state = 0;
 		lvText.stateMask = 0;
@@ -203,12 +203,11 @@ void CPakListView::UpdateList()
 		lvText.iImage = m_iClosedFolderIcon;
 
 		GetListCtrl().InsertItem (&lvText);
-
-		pDirectory = pDirectory->GetNext();		
 	}
 
-	while (pItem)
+	for (auto& pChildItem : pCurrent->GetItems())
 	{
+		CPakItem *pItem = pChildItem.get();
 		strText = pItem->GetDisplayName();		
 		lpPakParam = (lpPAK_PARAM)(*pItem);
 
@@ -231,6 +230,7 @@ void CPakListView::UpdateList()
 		}		
 		
 		lvText.mask = LVIF_TEXT | LVIF_PARAM | LVIF_IMAGE;
+		lvText.iItem = GetListCtrl().GetItemCount();
 		lvText.iSubItem = 0;
 		lvText.state = 0;
 		lvText.stateMask = 0;
@@ -246,8 +246,6 @@ void CPakListView::UpdateList()
 
 		strText = pItem->GetDisplayType ();
 		GetListCtrl().SetItemText (iItem, 2, strText.GetBuffer(strText.GetLength()));
-
-		pItem = pDoc->GetNextPakItem();		
 	}
 
 	GetListCtrl().SortItems(PakListViewCompareItems, (LPARAM) pDoc);
@@ -791,12 +789,8 @@ HGLOBAL CPakListView::RenderData()
 
 		int iCurPosition = sizeof(DROPFILES);
 
-		CPakPasteItem *pItem = pPakList->GetFirstPasteItem();
-		CPakBase *pPakBase = NULL;
-
-		while (pItem)
-		{			
-			pPakBase = pItem->GetPakBase();
+		for (CPakBase *pPakBase : pPakList->GetPasteItems())
+		{
 			lpPAK_PARAM lpPakParam = (lpPAK_PARAM)(*pPakBase);
 
 			switch (lpPakParam->iPakType)
@@ -808,6 +802,8 @@ HGLOBAL CPakListView::RenderData()
 					// Go create the file
 					if (!pPakList->CreateItem (pPakItem))
 					{
+						GlobalUnlock(hGlobal);
+						GlobalFree(hGlobal);
 						SetErrorString (pPakList->GetError());
 						return NULL;
 					}
@@ -824,6 +820,8 @@ HGLOBAL CPakListView::RenderData()
 					// Go create the directory (and all it's children)
 					if (!pPakList->CreateDirectory (pPakDirectory))
 					{
+						GlobalUnlock(hGlobal);
+						GlobalFree(hGlobal);
 						SetErrorString (pPakList->GetError());
 						return NULL;
 					}
@@ -842,9 +840,7 @@ HGLOBAL CPakListView::RenderData()
 			// move the current position beyond the file name copied
 			// don't forget the Null terminator (+1)
 			iCurPosition += strFileName.GetLength() + 1;
-
-			pItem = pItem->GetNext();
-		}				
+		}
 		
 		// final null terminator as per CF_HDROP Format specs.
 		((LPSTR) pDropFiles) [iCurPosition] = 0;
@@ -916,8 +912,13 @@ void CPakListView::OnBegindrag(NMHDR* pNMHDR, LRESULT* pResult)
 	NM_LISTVIEW* pNMListView = (NM_LISTVIEW*)pNMHDR;
 
 	AddPasteItems();
-	CDelayRender DelayData(this);
-	DelayData.DoDragDrop();
+
+	// Same lifetime as OnPakPopupCopy.  Explorer commonly still holds IDataObject
+	// after DoDragDrop returns; destroying a stack COleDataSource then hits
+	// COleDataSource::Empty() / CCmdTarget::~CCmdTarget (m_dwRef > 1).
+	CDelayRender *pDelayData = new CDelayRender(this);
+	pDelayData->DoDragDrop();
+	pDelayData->ExternalRelease();
 	
 	*pResult = 0;
 }
@@ -1005,7 +1006,7 @@ void CPakListView::OnPakPopupNewFolder()
 		CPakDirectory *pDirectory = pDoc->GetCurrentDirectory();
 		CPakDirectory *pNewDirectory = pDirectory->AddChildDirectory ("New folder");
 
-		LV_ITEM lvText;
+		LV_ITEM lvText = {};
 		lpPAK_PARAM lpPakParam = NULL;
 	
 		CString strText("");
@@ -1013,6 +1014,7 @@ void CPakListView::OnPakPopupNewFolder()
 		lpPakParam = (lpPAK_PARAM)(*pNewDirectory);
 		
 		lvText.mask = LVIF_TEXT | LVIF_PARAM | LVIF_IMAGE;
+		lvText.iItem = GetListCtrl().GetItemCount();
 		lvText.iSubItem = 0;
 		lvText.state = 0;
 		lvText.stateMask = 0;
@@ -1091,7 +1093,7 @@ void CPakListView::OnPakPopupNewTxtfile()
 
 		ASSERT (pItem);
 		
-		LV_ITEM lvText;
+		LV_ITEM lvText = {};
 		lpPAK_PARAM lpPakParam = NULL;
 	
 		CString strText("");

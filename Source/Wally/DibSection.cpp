@@ -1341,13 +1341,18 @@ void CDibSection::SetRawBits (BYTE *pbyData, int iFlags /* = DIB_FLAG_FLIP_REDBL
 
 	int iByteWidth = GetByteWidth();
 	int iByteCount = GetByteCount();
+	int iSrcBytesPerPixel = (GetBitCount() <= 8) ? 1 : iByteCount;
+	int iSrcStride = (iFlags & DIB_FLAG_WITH_PADDING) ? iByteWidth : (iWidth * iSrcBytesPerPixel);
 
-	if (IsBadReadPtr( pbyData, iByteWidth * iHeight))
+	// Source pixels are often tightly packed; the DIB they are copied into is
+	// DWORD-aligned.  Do not probe iByteWidth bytes per source row unless the
+	// caller said the source already has that padding.
+	if (IsBadReadPtr( pbyData, iSrcStride * iHeight))
 	{
 		ASSERT( FALSE);
 		return;
 	}
-	if (IsBadWritePtr( pbyBits, iWidth * iHeight))
+	if (IsBadWritePtr( pbyBits, iByteWidth * iHeight))
 	{
 		ASSERT( FALSE);
 		return;

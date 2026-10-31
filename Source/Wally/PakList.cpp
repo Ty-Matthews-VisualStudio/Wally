@@ -10,6 +10,7 @@
 //#include "ProgressBar.h"
 #include <mmsystem.h>	// requires linking with "winmm.lib"
 #include "SafeFile.h"
+#include <algorithm>
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -22,26 +23,6 @@ static char THIS_FILE[]=__FILE__;
 //////////////////////////////////////////////////////////////////////
 
 extern CWallyApp theApp;
-
-void CPakPasteItem::SetNext(CPakPasteItem *pNext)
-{
-	m_pNext = pNext;
-}
-
-CPakPasteItem *CPakPasteItem::GetNext()
-{
-	return m_pNext;
-}
-
-void CPakPasteItem::SetPrevious(CPakPasteItem *pPrevious)
-{
-	m_pPrevious = pPrevious;
-}
-
-CPakPasteItem *CPakPasteItem::GetPrevious()
-{
-	return m_pPrevious;
-}
 
 CPakItem::CPakItem()
 {	
@@ -70,9 +51,6 @@ CPakItem::CPakItem(lp_packfile_t lpPackFile)
 
 void CPakItem::Initialize()
 {
-	SetNext (NULL);
-	SetPrevious (NULL);
-
 	memset (&m_PackFileHeader, 0, sizeof (m_PackFileHeader));
 
 	SetIconIndex (-1);
@@ -94,9 +72,6 @@ void CPakItem::Initialize()
 
 CPakItem::~CPakItem()
 {
-	SetNext (NULL);
-	SetPrevious (NULL);
-
 	if (m_strDataFile != "")
 	{
 		// We're still out there... maybe we're being deleted prior to serialize()?  
@@ -231,20 +206,6 @@ BOOL CPakItem::CreateTempFile (LPCTSTR szPakFile, LPCTSTR szDirectory, int iFlag
 {
 	CFile f;
 	CFileException fe;
-	
-	if ((szPakFile) && (!m_pbyTempBuffer))
-	{	
-		CString strError("");
-		
-		if (!f.Open ( szPakFile, CFile::modeRead | CFile::typeBinary, &fe))
-		{
-			SetErrorCode (PAK_ERROR_FILEOPEN);
-			m_strError.Format ("File %s could not be opened.\nError code : %lu", szPakFile, fe.m_cause);
-			return FALSE;
-		}
-		
-		f.Seek (GetFilePos(), CFile::begin);
-	}
 
 	CString strTemp (m_PackFileHeader.name);
 	CString strDirectory ("");
@@ -332,6 +293,31 @@ BOOL CPakItem::CreateTempFile (LPCTSTR szPakFile, LPCTSTR szDirectory, int iFlag
 			return TRUE;
 		}		
 	}
+
+	if ((m_strDataFile != "") && ((iFlags & PAK_EXPORT_FLAG_ADD_TEMP) == 0))
+	{
+		// We're exporting, and the data already lives in the temp directory (newly added,
+		// or opened for editing).  The source PAK may not even exist on disk yet.
+		if (!CopyFile (m_strDataFile, strFileName, FALSE))
+		{
+			SetErrorCode (PAK_ERROR_COPY_FILE);
+			m_strError.Format ("Failed to copy %s to %s.\nError code: %lu", m_strDataFile, strFileName, GetLastError());
+			return FALSE;
+		}
+		return TRUE;
+	}
+
+	if ((szPakFile) && (!m_pbyTempBuffer))
+	{
+		if (!f.Open ( szPakFile, CFile::modeRead | CFile::typeBinary, &fe))
+		{
+			SetErrorCode (PAK_ERROR_FILEOPEN);
+			m_strError.Format ("File %s could not be opened.\nError code : %lu", szPakFile, fe.m_cause);
+			return FALSE;
+		}
+		
+		f.Seek (GetFilePos(), CFile::begin);
+	}
 	
 	CFile fw;
 
@@ -347,43 +333,35 @@ BOOL CPakItem::CreateTempFile (LPCTSTR szPakFile, LPCTSTR szDirectory, int iFlag
 
 	if (szPakFile)
 	{
-		if ((m_strDataFile != "") && ((iFlags & PAK_EXPORT_FLAG_ADD_TEMP) == 0))
+		if (!m_pbyTempBuffer)
 		{
-			// If iFlags & PAK_EXPORT_FLAG_ADD_TEMP == 0, we're not going to the temp directory,
-			// we're exporting the file.			
-			return CopyFile (m_strDataFile, strFileName, FALSE);			
+			iSize = GetFileLen();
+			pbyTempBuffer = new BYTE[iSize];
+
+			if (!pbyTempBuffer)
+			{
+				SetErrorCode (PAK_ERROR_OUTOFMEMORY);		
+				return FALSE;
+			}
+
+			if (f.Read (pbyTempBuffer, iSize) != iSize)
+			{
+				if (pbyTempBuffer)
+				{
+					delete []pbyTempBuffer;
+					pbyTempBuffer = NULL;
+				}
+				m_strError = szPakFile;
+				SetErrorCode (PAK_ERROR_READ_FAILURE);
+				return FALSE;
+			}
+			
+			f.Close();
 		}
 		else
 		{
-			if (!m_pbyTempBuffer)
-			{
-				iSize = GetFileLen();
-				pbyTempBuffer = new BYTE[iSize];
-
-				if (!pbyTempBuffer)
-				{
-					SetErrorCode (PAK_ERROR_OUTOFMEMORY);		
-					return FALSE;
-				}
-
-				if (f.Read (pbyTempBuffer, iSize) != iSize)
-				{
-					if (pbyTempBuffer)
-					{
-						delete []pbyTempBuffer;
-						pbyTempBuffer = NULL;
-					}
-					m_strError = szPakFile;
-					SetErrorCode (PAK_ERROR_READ_FAILURE);
-					return FALSE;
-				}
-				
-				f.Close();
-			}
-			else
-			{
-				pbyTempBuffer = m_pbyTempBuffer;
-			}
+			iSize = GetFileLen();
+			pbyTempBuffer = m_pbyTempBuffer;
 		}
 	}
 	else
@@ -441,7 +419,7 @@ BOOL CPakItem::ExportFile (LPCTSTR szPakFile, LPCTSTR szDirectory, CStringArray 
 
 	if (psaWildCards)
 	{
-		if (MatchesWildCard (strShortName.GetBuffer (strShortName.GetLength()), psaWildCards))
+  		if (MatchesWildCard (strShortName.GetBuffer (strShortName.GetLength()), psaWildCards))
 		{
 			pProgressBar->StepIt();
 			return CreateTempFile (szPakFile, szDirectory, iFlags);
@@ -576,26 +554,6 @@ BOOL CPakItem::QuickPlay (LPCTSTR szPakFile)
 		SND_ASYNC | SND_MEMORY | SND_NODEFAULT);
 	
 	return TRUE;
-}
-
-void CPakItem::SetNext (CPakItem *pNext)
-{
-	m_pNext = pNext;
-}
-
-CPakItem *CPakItem::GetNext()
-{
-	return m_pNext;
-}
-
-void CPakItem::SetPrevious (CPakItem *pPrevious)
-{
-	m_pPrevious = pPrevious;
-}
-
-CPakItem *CPakItem::GetPrevious()
-{
-	return m_pPrevious;
 }
 
 BOOL CPakItem::Serialize (int iStage, CPakDirectory *pParent, CFile *pNewPakFile, CFile *pOldPakFile, UINT *piPosition, UINT *piCount, CProgressBar *pProgressBar)
@@ -808,15 +766,10 @@ BOOL CPakItem::Serialize (int iStage, CPakDirectory *pParent, CFile *pNewPakFile
 
 CPakDirectory::CPakDirectory()
 {
-	SetFirstItem (NULL);
-	SetWriteItem (NULL);
+	m_pParent = NULL;
+	m_pstrRootTempDirectory = NULL;
+	m_pstrPakFile = NULL;
 
-	SetNext (NULL);
-	SetPrevious (NULL);
-
-	SetFirstDirectory (NULL);
-	SetWriteDirectory (NULL);
-	
 	SetPakType (PAK_TYPE_DIRECTORY);
 	m_PakParam.pPakDirectory = this;
 	m_PakParam.pPakBase = (CPakBase *)this;
@@ -831,15 +784,6 @@ CPakDirectory::CPakDirectory(LPCTSTR szDirectory, CPakDirectory *pParent, CStrin
 	SetPakType (PAK_TYPE_DIRECTORY);
 	m_PakParam.pPakDirectory = this;
 	m_PakParam.pPakBase = (CPakBase *)this;
-
-	SetFirstItem (NULL);
-	SetWriteItem (NULL);
-
-	SetNext (NULL);
-	SetPrevious (NULL);
-
-	SetFirstDirectory (NULL);
-	SetWriteDirectory (NULL);
 
 	m_pParent = pParent;
 	m_pstrRootTempDirectory = pstrTempDirectory;
@@ -863,49 +807,8 @@ CPakDirectory::~CPakDirectory()
 
 void CPakDirectory::PurgeAll()
 {
-	CPakItem *pItem = GetFirstItem();
-
-	while (pItem)
-	{
-		SetFirstItem(GetFirstItem()->GetNext());		
-		delete pItem;
-		pItem = GetFirstItem();
-	}
-
-	SetFirstItem (NULL);
-	SetWriteItem (NULL);
-
-	CPakDirectory *pDirectory = GetFirstDirectory();
-
-	while (pDirectory)
-	{
-		SetFirstDirectory (GetFirstDirectory()->GetNext());
-		delete pDirectory;
-		pDirectory = GetFirstDirectory();
-	}
-
-	SetFirstDirectory (NULL);
-	SetWriteDirectory (NULL);
-}
-
-void CPakDirectory::SetNext(CPakDirectory *pNext)
-{
-	m_pNext = pNext;
-}
-
-CPakDirectory *CPakDirectory::GetNext()
-{
-	return m_pNext;
-}
-
-void CPakDirectory::SetPrevious(CPakDirectory *pPrevious)
-{
-	m_pPrevious = pPrevious;
-}
-
-CPakDirectory *CPakDirectory::GetPrevious()
-{
-	return m_pPrevious;
+	m_Items.clear();
+	m_Directories.clear();
 }
 
 int CPakDirectory::AddToList (LPCTSTR szFileName, lp_packfile_t lpPackFile)
@@ -923,25 +826,15 @@ int CPakDirectory::AddToList (LPCTSTR szFileName, lp_packfile_t lpPackFile)
 
 	if (iSlashPosition == -1)
 	{
-		// Must be at our intended spot.  Add the entry to our internal linked list of PakItems
-		CPakItem *pNewItem = new CPakItem (lpPackFile);
+		// Must be at our intended spot
+		unique_ptr<CPakItem> pNewItem (new CPakItem (lpPackFile));
 
 		if (!pNewItem)
 		{
 			return PAK_ERROR_OUTOFMEMORY;			
 		}
 
-		if (!GetFirstItem())
-		{
-			SetFirstItem (pNewItem);
-			SetWriteItem (pNewItem);
-		}
-		else
-		{
-			GetWriteItem()->SetNext(pNewItem);
-			pNewItem->SetPrevious(GetWriteItem());
-			SetWriteItem (pNewItem);
-		}
+		m_Items.push_back (std::move (pNewItem));
 	}
 	else
 	{
@@ -999,21 +892,16 @@ void CPakDirectory::BuildTree (CTreeCtrl& List, HTREEITEM htParent, int iClosedI
 	htItem = List.InsertItem (&tvInsert);
 
 	// Add our children
-	CPakDirectory *pDirectory = GetFirstDirectory();
-
-	while (pDirectory)
+	for (auto& pChild : m_Directories)
 	{
-		pDirectory->BuildTree (List, htItem, iClosedIcon, iOpenIcon);
-		pDirectory = pDirectory->GetNext();
+		pChild->BuildTree (List, htItem, iClosedIcon, iOpenIcon);
 	}
 }
 
 BOOL CPakDirectory::Serialize (int iStage, CFile *pNewPakFile, CFile *pOldPakFile, UINT *piPosition, UINT *piCount, CProgressBar *pProgressBar)
 {
 	// First Serialize our items
-	CPakItem *pPakItem = GetFirstItem();
-
-	while (pPakItem)
+	for (auto& pPakItem : m_Items)
 	{
 		if (!pPakItem->Serialize (iStage, this, pNewPakFile, pOldPakFile, piPosition, piCount, pProgressBar))
 		{
@@ -1021,14 +909,10 @@ BOOL CPakDirectory::Serialize (int iStage, CFile *pNewPakFile, CFile *pOldPakFil
 			SetErrorString (pPakItem->GetErrorString());
 			return FALSE;
 		}
-
-		pPakItem = pPakItem->GetNext();
 	}
 
 	// Now serialize our children
-	CPakDirectory *pPakDirectory = GetFirstDirectory();
-
-	while (pPakDirectory)
+	for (auto& pPakDirectory : m_Directories)
 	{
 		if (!pPakDirectory->Serialize (iStage, pNewPakFile, pOldPakFile, piPosition, piCount, pProgressBar))
 		{
@@ -1036,8 +920,6 @@ BOOL CPakDirectory::Serialize (int iStage, CFile *pNewPakFile, CFile *pOldPakFil
 			SetErrorString (pPakDirectory->GetErrorString());
 			return FALSE;
 		}
-
-		pPakDirectory = pPakDirectory->GetNext();
 	}
 
 	m_bModified = FALSE;
@@ -1069,25 +951,17 @@ void CPakDirectory::SetDirectoryName (LPCTSTR szDirectory /*  = NULL */)
 	m_strTempDirectoryName = strNewDirectoryName;
 
 	// We have to change the data files for our items
-	CPakItem *pItem = GetFirstItem();
-
-	while (pItem)
-	{		
+	for (auto& pItem : m_Items)
+	{
 		pItem->RenameDataFile(m_strTempDirectoryName);
-
-		pItem = pItem->GetNext();
 	}
 
 	// Time to update our child directories... they need to adjust themselves, too.
-	CPakDirectory *pDirectory = GetFirstDirectory();
-
-	while (pDirectory)
+	for (auto& pDirectory : m_Directories)
 	{
 		// Passing NULL tells the kids to just re-use their current name, but rebuild
 		// their temp name because we've changed.
 		pDirectory->SetDirectoryName(NULL);
-
-		pDirectory = pDirectory->GetNext();
 	}
 }
 
@@ -1096,48 +970,11 @@ CString CPakDirectory::GetTempDirectoryName()
 	return m_strTempDirectoryName;
 }
 
-void CPakDirectory::SetFirstItem(CPakItem *pFirst)
-{
-	m_pFirstItem = pFirst;
-}
-
-CPakItem *CPakDirectory::GetFirstItem()
-{
-	return m_pFirstItem;
-}
-
-void CPakDirectory::SetWriteItem(CPakItem *pWrite)
-{
-	m_pWriteItem = pWrite;
-}
-
-CPakItem *CPakDirectory::GetWriteItem()
-{
-	return m_pWriteItem;
-}
-
-CPakItem *CPakDirectory::GetFirstPakItem()
-{
-	m_pReadItem = GetFirstItem();
-	return m_pReadItem;
-}
-
-CPakItem *CPakDirectory::GetNextPakItem()
-{
-	if (m_pReadItem)
-	{
-		m_pReadItem = m_pReadItem->GetNext();
-	}
-
-	return m_pReadItem;
-}
-
 void CPakDirectory::GetItemCount(UINT *piCount, UINT *piSize /* = NULL */, CStringArray *psaWildCards /* = NULL */, int iFlags /* = 0 */)
 {
-	CPakItem *pPakItem = GetFirstItem();
 	CString strShortName("");
 	
-	while (pPakItem)
+	for (auto& pPakItem : m_Items)
 	{
 		if (psaWildCards)
 		{
@@ -1146,7 +983,6 @@ void CPakDirectory::GetItemCount(UINT *piCount, UINT *piSize /* = NULL */, CStri
 			// Skip the item if we don't match any of the wildcards
 			if (!MatchesWildCard (strShortName.GetBuffer (strShortName.GetLength()), psaWildCards))
 			{
-				pPakItem = pPakItem->GetNext();
 				continue;
 			}
 		}
@@ -1157,40 +993,15 @@ void CPakDirectory::GetItemCount(UINT *piCount, UINT *piSize /* = NULL */, CStri
 		{
 			(*piSize) += pPakItem->GetFileLen();
 		}
-
-		pPakItem = pPakItem->GetNext();
 	}
 
 	if ((iFlags & PAK_COUNT_SELF_ONLY) == 0)
 	{
-		CPakDirectory *pPakDirectory = GetFirstDirectory();
-
-		while (pPakDirectory)
+		for (auto& pPakDirectory : m_Directories)
 		{
 			pPakDirectory->GetItemCount (piCount, piSize, psaWildCards, iFlags);
-			pPakDirectory = pPakDirectory->GetNext();
 		}
 	}
-}
-
-void CPakDirectory::SetFirstDirectory(CPakDirectory *pFirst)
-{
-	m_pFirstDirectory = pFirst;
-}
-
-CPakDirectory *CPakDirectory::GetFirstDirectory()
-{
-	return m_pFirstDirectory;
-}
-
-void CPakDirectory::SetWriteDirectory(CPakDirectory *pWrite)
-{
-	m_pWriteDirectory = pWrite;
-}
-
-CPakDirectory *CPakDirectory::GetWriteDirectory()
-{
-	return m_pWriteDirectory;
 }
 
 CPakItem *CPakDirectory::FindNameInList (LPCTSTR szFileName)
@@ -1198,18 +1009,14 @@ CPakItem *CPakDirectory::FindNameInList (LPCTSTR szFileName)
 	CString strRawFileName = GetRawFileNameWExt (szFileName);
 	CString strCompare("");
 
-	CPakItem *pItem = GetFirstItem();
-	
-	while (pItem)
+	for (auto& pItem : m_Items)
 	{
 		strCompare = pItem->GetShortName();
 
 		if (!strCompare.CompareNoCase (strRawFileName))
 		{
-			return pItem;
+			return pItem.get();
 		}
-
-		pItem = pItem->GetNext();
 	}
 
 	return NULL;
@@ -1270,9 +1077,7 @@ BOOL CPakDirectory::AddFileDirectory (LPCTSTR szDirectory, CStringArray *psaWild
 
 BOOL CPakDirectory::ExportFiles (LPCTSTR szDirectory, CStringArray *psaWildCards, CProgressBar *pProgressBar)
 {
-	CPakItem *pPakItem = GetFirstItem();
-	
-	while (pPakItem)
+	for (auto& pPakItem : m_Items)
 	{
 		if (!pPakItem->ExportFile (*m_pstrPakFile, szDirectory, psaWildCards, pProgressBar))
 		{
@@ -1281,14 +1086,11 @@ BOOL CPakDirectory::ExportFiles (LPCTSTR szDirectory, CStringArray *psaWildCards
 
 			return FALSE;
 		}
-		pPakItem = pPakItem->GetNext();
 	}
 	
 	if (g_bPakExportRecurseSubDirectories)
 	{
-		CPakDirectory *pPakDirectory = GetFirstDirectory();
-		
-		while (pPakDirectory)
+		for (auto& pPakDirectory : m_Directories)
 		{
 			if (!pPakDirectory->ExportFiles (szDirectory, psaWildCards, pProgressBar))
 			{
@@ -1297,7 +1099,6 @@ BOOL CPakDirectory::ExportFiles (LPCTSTR szDirectory, CStringArray *psaWildCards
 
 				return FALSE;
 			}
-			pPakDirectory = pPakDirectory->GetNext();
 		}
 	}
 
@@ -1320,15 +1121,13 @@ CPakDirectory *CPakDirectory::FindDirectory (LPCTSTR szDirectory)
 		return this;
 	}
 
-	CPakDirectory *pDirectory = GetFirstDirectory();
-
-	while (pDirectory)	
+	for (auto& pDirectory : m_Directories)
 	{
-		if (pDirectory->FindDirectory(szDirectory))
+		CPakDirectory *pFound = pDirectory->FindDirectory(szDirectory);
+		if (pFound)
 		{
-			return pDirectory->FindDirectory(szDirectory);
-		}		
-		pDirectory = pDirectory->GetNext();		
+			return pFound;
+		}
 	}
 
 	return NULL;
@@ -1336,19 +1135,15 @@ CPakDirectory *CPakDirectory::FindDirectory (LPCTSTR szDirectory)
 
 CPakDirectory *CPakDirectory::FindDirectoryInList (LPCTSTR szDirectory)
 {
-	CPakDirectory *pDirectory = GetFirstDirectory();
-
-	while (pDirectory)	
+	for (auto& pDirectory : m_Directories)
 	{
 		CString strCompare("");
 		strCompare = pDirectory->GetDirectoryName();
 
 		if (!strCompare.CompareNoCase (szDirectory))
 		{
-			return pDirectory;
+			return pDirectory.get();
 		}
-		
-		pDirectory = pDirectory->GetNext();		
 	}
 
 	return NULL;
@@ -1356,7 +1151,6 @@ CPakDirectory *CPakDirectory::FindDirectoryInList (LPCTSTR szDirectory)
 
 CPakDirectory *CPakDirectory::AddChildDirectory (LPCTSTR szDirectory)
 {
-	// Check to see if it's in the list
 	CPakDirectory *pDirectory = FindDirectoryInList(szDirectory);
 	
 	if (pDirectory)
@@ -1364,168 +1158,52 @@ CPakDirectory *CPakDirectory::AddChildDirectory (LPCTSTR szDirectory)
 		return pDirectory;
 	}
 
-	// If we've gotten this far, then the directory doesn't exist.  Go add it!
-	
-	pDirectory = new CPakDirectory (szDirectory, this, m_pstrRootTempDirectory, m_pstrPakFile);
+	unique_ptr<CPakDirectory> pNewDirectory (new CPakDirectory (szDirectory, this, m_pstrRootTempDirectory, m_pstrPakFile));
 
-	if (!pDirectory)
+	if (!pNewDirectory)
 	{
 		return NULL;					
 	}
 
-	if (!GetFirstDirectory())
-	{
-		SetFirstDirectory(pDirectory);
-		SetWriteDirectory(pDirectory);
-	}
-	else
-	{
+	pDirectory = pNewDirectory.get();
 
-#define SORT_PAK_ITEM_LIST   1
-
-		switch (SORT_PAK_ITEM_LIST)
+	auto itInsert = m_Directories.begin();
+	while (itInsert != m_Directories.end())
+	{
+		if ((*itInsert)->GetDirectoryName().CompareNoCase (szDirectory) > 0)
 		{
-		case 1:
-			{
-				// Add it to the sorted list
-				CPakDirectory *pRead = GetFirstDirectory();
-				CString strLeft("");
-				CString strRight(szDirectory);
-
-				CPakDirectory *pLeft = NULL;
-				CPakDirectory *pRight = NULL;
-
-				while (pRead)
-				{
-					strLeft = pRead->GetDirectoryName();
-					
-					if (strLeft.CompareNoCase(strRight) == 1)
-					{                           
-						pLeft = pRead->GetPrevious();
-						pRight = pRead;
-						pRead = NULL;
-					}
-					else
-					{
-						pRead = pRead->GetNext();
-					}
-				}
-				
-				//  Item belongs at the end 
-				if ((pRight == NULL) && (pLeft == NULL))
-				{                   
-					GetWriteDirectory()->SetNext (pDirectory);
-					pDirectory->SetPrevious (GetWriteDirectory());
-					SetWriteDirectory (pDirectory);
-				}
-
-				//  Item is the first in the list 
-				if ((pLeft == NULL) && (pRight != NULL))
-				{		    
-					pDirectory->SetNext (GetFirstDirectory());
-					GetFirstDirectory()->SetPrevious (pDirectory);
-					SetFirstDirectory (pDirectory);
-				}
-
-				//  Item is somewhere in the middle of the list 
-				if ((pLeft != NULL) && (pRight != NULL))
-				{			
-					pLeft->SetNext (pDirectory);
-					pDirectory->SetPrevious (pLeft);
-					pDirectory->SetNext (pRight);
-					pRight->SetPrevious (pDirectory);
-				}
-			}
-			break;
-
-		case 0:
-			{
-				GetWriteDirectory()->SetNext(pDirectory);
-				pDirectory->SetPrevious(GetWriteDirectory());
-				SetWriteDirectory(pDirectory);
-			}
-			break;
-
-		default:
-			ASSERT (FALSE);
 			break;
 		}
+		++itInsert;
 	}
 
+	m_Directories.insert (itInsert, std::move (pNewDirectory));
 	return pDirectory;
 }
 
 void CPakDirectory::DeleteItem (CPakItem *pItem)
 {
-	CPakItem *pTemp = GetFirstItem();
-
-	while (pTemp)
+	for (auto it = m_Items.begin(); it != m_Items.end(); ++it)
 	{
-		if (pTemp == pItem)
+		if (it->get() == pItem)
 		{
-			if (pTemp->GetPrevious())
-			{
-				pTemp->GetPrevious()->SetNext(pTemp->GetNext());
-			}
-
-			if (pTemp->GetNext())
-			{
-				pTemp->GetNext()->SetPrevious(pTemp->GetPrevious());
-			}
-
-			if (pTemp == GetFirstItem())
-			{
-				SetFirstItem (pTemp->GetNext());
-			}
-
-			if (pTemp== GetWriteItem())
-			{
-				SetWriteItem (pTemp->GetPrevious());
-			}
-
 			m_bModified = TRUE;
-
-			delete pTemp;
+			m_Items.erase (it);
 			return;
 		}
-		pTemp = pTemp->GetNext();
-	}	
+	}
 }
 
 void CPakDirectory::DeleteDirectory (CPakDirectory *pDirectory)
 {
-	CPakDirectory *pTemp = GetFirstDirectory();
-
-	while (pTemp)
+	for (auto it = m_Directories.begin(); it != m_Directories.end(); ++it)
 	{
-		if (pTemp == pDirectory)
+		if (it->get() == pDirectory)
 		{
-			if (pTemp->GetPrevious())
-			{
-				pTemp->GetPrevious()->SetNext(pTemp->GetNext());
-			}
-
-			if (pTemp->GetNext())
-			{
-				pTemp->GetNext()->SetPrevious(pTemp->GetPrevious());
-			}
-
-			if (pTemp == GetFirstDirectory())
-			{
-				SetFirstDirectory (pTemp->GetNext());
-			}
-
-			if (pTemp== GetWriteDirectory())
-			{
-				SetWriteDirectory (pTemp->GetPrevious());
-			}
-
 			m_bModified = TRUE;
-
-			delete pTemp;
+			m_Directories.erase (it);
 			return;
 		}
-		pTemp = pTemp->GetNext();
 	}
 }
 
@@ -1537,9 +1215,7 @@ CPakDirectory *CPakDirectory::GetParent()
 BOOL CPakDirectory::CreateTempDirectory (LPCTSTR szPakFile, LPCTSTR szTempDirectory)
 {
 	// First create our own items
-	CPakItem *pPakItem = GetFirstItem();
-
-	while (pPakItem)
+	for (auto& pPakItem : m_Items)
 	{
 		if (pPakItem->GetDataFile() == "")
 		{
@@ -1550,14 +1226,10 @@ BOOL CPakDirectory::CreateTempDirectory (LPCTSTR szPakFile, LPCTSTR szTempDirect
 				return FALSE;
 			}
 		}
-
-		pPakItem = pPakItem->GetNext();
 	}
 
 	// Now create our children
-	CPakDirectory *pPakDirectory = GetFirstDirectory();
-
-	while (pPakDirectory)
+	for (auto& pPakDirectory : m_Directories)
 	{
 		if (!pPakDirectory->CreateTempDirectory (szPakFile, szTempDirectory))
 		{
@@ -1565,8 +1237,6 @@ BOOL CPakDirectory::CreateTempDirectory (LPCTSTR szPakFile, LPCTSTR szTempDirect
 			SetErrorString (pPakDirectory->GetErrorString());
 			return FALSE;
 		}
-
-		pPakDirectory = pPakDirectory->GetNext();
 	}
 	
 	return TRUE;
@@ -1653,35 +1323,22 @@ BOOL CPakDirectory::AddFile (LPCTSTR szFile, LPCTSTR szOffsetDirectory /* = NULL
 		}
 	}
 	
-	pItem = new CPakItem;
+	unique_ptr<CPakItem> pNewItem (new CPakItem);
 
-	if (!pItem)
+	if (!pNewItem)
 	{
 		SetErrorCode (PAK_ERROR_OUTOFMEMORY);
 		return FALSE;
 	}
 
-	if (!pItem->Create (szFile, GetPathFromHere('/'), (*m_pstrRootTempDirectory)))
+	if (!pNewItem->Create (szFile, GetPathFromHere('/'), (*m_pstrRootTempDirectory)))
 	{
-		SetErrorCode (pItem->GetErrorCode());
-		SetErrorString (pItem->GetErrorString());		
-		
-		delete pItem;
+		SetErrorCode (pNewItem->GetErrorCode());
+		SetErrorString (pNewItem->GetErrorString());
 		return FALSE;
 	}
 
-	if (!GetFirstItem())
-	{
-		SetFirstItem (pItem);
-		SetWriteItem (pItem);
-	}
-	else
-	{
-		GetWriteItem()->SetNext(pItem);
-		pItem->SetPrevious (GetWriteItem());
-		SetWriteItem (pItem);
-	}
-
+	m_Items.push_back (std::move (pNewItem));
 	return TRUE;
 }
 
@@ -1709,29 +1366,21 @@ BOOL CPakDirectory::IsModified(int *piFlags)
 	}
 
 	// Check our items first.  If any one of them is modified, no need to keep going
-	CPakItem *pItem = GetFirstItem();
-
-	while (pItem)
+	for (auto& pItem : m_Items)
 	{
 		if (pItem->IsModified(piFlags))
 		{
 			return TRUE;
 		}
-
-		pItem = pItem->GetNext();
 	}
 
 	// Go through our kids
-	CPakDirectory *pDirectory = GetFirstDirectory();
-
-	while (pDirectory)
+	for (auto& pDirectory : m_Directories)
 	{
 		if (pDirectory->IsModified(piFlags))
 		{
 			return TRUE;
 		}
-
-		pDirectory = pDirectory->GetNext();
 	}
 
 	return FALSE;
@@ -1749,20 +1398,11 @@ BOOL CPakDirectory::IsModified(int *piFlags)
 CPakList::CPakList()
 {
 	CreateTempDirectory();
-	m_pRoot = new CPakDirectory("Root", NULL, &m_strTempDirectory, &m_strFileName);
-
-	SetFirstPasteItem (NULL);
-	SetWritePasteItem (NULL);
-
+	m_pRoot.reset (new CPakDirectory("Root", NULL, &m_strTempDirectory, &m_strFileName));
 }
 
 CPakList::~CPakList()
 {	
-	if (m_pRoot)
-	{
-		delete m_pRoot;
-		m_pRoot = NULL;
-	}
 	PurgePasteList();
 }
 
@@ -1774,14 +1414,14 @@ void CPakList::CreateTempName(char *szTempName, int iLength)
 	int iNum = 0;
 	int j = 0;
 
-	memset (szTempName, 0, iLength);
+	memset (szTempName, 0, iLength + 1);
 
 	for (j = 0; j < iLength; j++)
 	{
 		dt = div (rand(), 16);
 		iNum = dt.rem;
 		
-		sprintf_s (szTempName + j, iLength - j, "%x", iNum); 
+		sprintf_s (szTempName + j, iLength + 1 - j, "%x", iNum); 
 	}
 }
 
@@ -2196,7 +1836,7 @@ UINT CPakList::GetItemCount()
 
 CPakDirectory *CPakList::GetRootDirectory()
 {
-	return m_pRoot;
+	return m_pRoot.get();
 }
 
 CString CPakList::GetTempDirectory()
@@ -2297,72 +1937,51 @@ BOOL CPakList::IsModified(int *piFlags)
 
 void CPakList::AddToPasteList(CPakBase *pItem)
 {
-	CPakPasteItem *pNewItem = new CPakPasteItem (pItem);
-
-	if (pNewItem)
+	if (pItem)
 	{
-		if (!GetFirstPasteItem())
-		{
-			SetFirstPasteItem (pNewItem);
-			SetWritePasteItem (pNewItem);
-		}
-		else
-		{
-			GetWritePasteItem()->SetNext (pNewItem);
-			pNewItem->SetPrevious (GetWritePasteItem());
-			SetWritePasteItem(pNewItem);
-		}
-	}	
+		m_PasteItems.push_back (pItem);
+	}
 }
 
 int CPakList::GetPasteCount()
 {
-	int iCount = 0;
-
-	CPakPasteItem *pItem = GetFirstPasteItem();
-
-	while (pItem)
-	{
-		iCount++;
-		pItem = pItem->GetNext();
-	}
-
-	return iCount;
+	return (int)m_PasteItems.size();
 }
 
 void CPakList::PurgePasteList()
 {
-	CPakPasteItem *pItem = GetFirstPasteItem();
+	m_PasteItems.clear();
+}
 
-	while (pItem)
+void CPakList::RemoveFromPasteList(CPakBase *pItem)
+{
+	if (!pItem)
 	{
-		SetFirstPasteItem (GetFirstPasteItem()->GetNext());
-		delete pItem;
-		pItem = GetFirstPasteItem();
+		return;
 	}
 
-	SetFirstPasteItem (NULL);
-	SetWritePasteItem (NULL);
+	auto it = std::remove (m_PasteItems.begin(), m_PasteItems.end(), pItem);
+	m_PasteItems.erase (it, m_PasteItems.end());
 }
 
-void CPakList::SetFirstPasteItem (CPakPasteItem *pFirst)
+void CPakList::RemoveDirectoryFromPasteList(CPakDirectory *pDirectory)
 {
-	m_pFirstPasteItem = pFirst;
-}
+	if (!pDirectory)
+	{
+		return;
+	}
 
-CPakPasteItem *CPakList::GetFirstPasteItem()
-{
-	return m_pFirstPasteItem;
-}
+	RemoveFromPasteList (pDirectory);
 
-void CPakList::SetWritePasteItem (CPakPasteItem *pWrite)
-{
-	m_pWritePasteItem = pWrite;
-}
+	for (auto& pItem : pDirectory->GetItems())
+	{
+		RemoveFromPasteList (pItem.get());
+	}
 
-CPakPasteItem *CPakList::GetWritePasteItem()
-{
-	return m_pWritePasteItem;
+	for (auto& pChild : pDirectory->GetDirectories())
+	{
+		RemoveDirectoryFromPasteList (pChild.get());
+	}
 }
 
 CPakBase::CPakBase()

@@ -3,6 +3,7 @@
 #define _STABCTRL_H_
 
 #include <afxtempl.h>
+#include <vector>
 
 
 
@@ -91,9 +92,6 @@
 class CTabDlgItem
 {
 private:
-	CTabDlgItem *m_pNext;
-	CTabDlgItem *m_pPrevious;
-
 	CWnd *m_pWnd;
 	CWnd *m_pParent;
 	int m_iResourceID;
@@ -103,12 +101,6 @@ private:
 public:	
 	CTabDlgItem (CWnd *pParent, int iResourceID, int iTabNumber);
 	CTabDlgItem (CWnd *pWnd, int iTabNumber);
-	~CTabDlgItem();
-
-	void SetNext (CTabDlgItem *pNext);
-	CTabDlgItem *GetNext();
-	void SetPrevious (CTabDlgItem *pPrevious);
-	CTabDlgItem *GetPrevious();
 
 	CWnd *GetWnd()
 	{
@@ -139,23 +131,13 @@ public:
 class CTabDlgList
 {
 private:
-	CTabDlgItem *m_pFirst;
-	CTabDlgItem *m_pWrite;
+	std::vector<CTabDlgItem> m_Items;
 
 public:
-	CTabDlgList();
-	~CTabDlgList();
-
-	void PurgeList();
 	BOOL AddItem(CWnd *pParent, int iResourceID, int iTabNumber);
 	BOOL AddItem(CWnd *pWnd, int iTabNumber);
 	void NeverShowControl (int iID);
 	void HideShowItems (int iTabNumber);
-
-	void SetFirst (CTabDlgItem *pFirst);
-	CTabDlgItem *GetFirst();
-	void SetWrite (CTabDlgItem *pWrite);
-	CTabDlgItem *GetWrite();
 };
 
 class CSTabCtrl : public CTabCtrl

@@ -145,6 +145,7 @@ public:
 	void DoPaste (bool bReplaceCurrent = false);
 	void AddString (CWADItem *pItem, LPCTSTR szName, bool bSetSelection = false);
 	bool ExportImage (CWADItem *pItem, LPCTSTR szFileName, CString *pstrErrorMessage);
+	HGLOBAL CreateHDROPFromSelection();
 	void ImportImage (LPCTSTR szPath, BOOL bForDecal = FALSE);
 	bool AddImage (unsigned char *pbyBits[], CWallyPalette *pPalette, LPCTSTR szName, int iWidth, int iHeight, UINT iFlags, CProgressBar *pProgress = NULL);
 	void RemoveImage (int iIndex);

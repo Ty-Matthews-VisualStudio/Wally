@@ -266,7 +266,7 @@ Completed:
 #include "DirectoryList.h"
 
 #include "WndList.h"
-#include "RulesDlg.h"
+//#include RulesDlg.h"
 #include "Genesis3D.h"
 #include "RegistryHelper.h"
 
@@ -385,7 +385,7 @@ BEGIN_MESSAGE_MAP(CWallyApp, CWinApp)
 	ON_COMMAND(ID_FILE_LOAD_Q1PALETTE, OnFileLoadQ1palette)
 	ON_COMMAND(ID_EDIT_PASTE_SPECIALEFFECTS, OnEditPasteSpecialEffects)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTE_SPECIALEFFECTS, OnUpdateEditPasteSpecialEffects)
-	ON_COMMAND(ID_VIEW_RULES, OnViewRules)
+	//ON_COMMAND(ID_VIEW_RULES, OnViewRules)
 	ON_COMMAND(ID_FILE_TEST_TXL, OnFileTestTxl)
 	ON_UPDATE_COMMAND_UI(ID_FILE_TEST_TXL, OnUpdateFileTestTxl)
 	ON_COMMAND(ID_FILE_DEBUG, OnFileDebug)
@@ -433,15 +433,6 @@ void CWallyApp::WakeUp(LPCTSTR aCommandLine) const
 
 void CWallyApp::ProcessCommandLine(LPCTSTR szCmdLine)
 {
-	class pred
-	{
-	public:
-		static bool ischar(char c)
-		{
-			return c == '"';
-		};
-	};
-
 	// Split using any match to " "
 	std::string str(szCmdLine);	
 	typedef boost::split_iterator<string::iterator> string_split_iterator;
@@ -454,7 +445,13 @@ void CWallyApp::ProcessCommandLine(LPCTSTR szCmdLine)
 		std::string sFileName;
 		ss << copy_range<std::string>(*It);
 		sFileName = ss.str();
-		boost::trim_if(sFileName, pred::ischar);
+		
+		// The command line may carry trailing whitespace after the closing quote
+		boost::trim_if(sFileName, boost::is_any_of("\" \t"));
+		if (sFileName.empty())
+		{
+			continue;
+		}
 
 		ss.str("");
 		ss << "\"" << sFileName << "\"";
@@ -497,6 +494,10 @@ void CWallyApp::_OpenFile(LPCTSTR sFileName)
 			{
 				PackageDocTemplate->OpenDocumentFile(sFileName);
 			}
+			else if (strFileExtension == ".art")
+			{
+				BuildDocTemplate->OpenDocumentFile(sFileName);
+			}
 			else
 			{
 				OpenNonWalFile(sFileName);
@@ -509,7 +510,7 @@ void CWallyApp::_OpenFile(LPCTSTR sFileName)
 // CWallyApp initialization
 
 BOOL CWallyApp::InitInstance()
-{
+{	
 	if (!CSingleInstance::Create(_T("{D7B4E7DF-A661-4468-BA25-5CFEBF27ADA0-WallyApplication}")))
 	{
 		return FALSE;
@@ -713,6 +714,7 @@ BOOL CWallyApp::InitInstance()
 
 int CWallyApp::ExitInstance() 
 {
+	CSingleInstance::Destroy ();
 	WriteGlobalVariables();
 	return CWinApp::ExitInstance();
 }
@@ -1532,12 +1534,14 @@ void CWallyApp::OnViewOptions()
 	UpdateAllDocs();
 }
 
+#if 0 // This was originally going to be a set of Batch Conversion rules, but it was never implemented
 void CWallyApp::OnViewRules() 
 {
 	CRulesDlg rulesDlg;
 
 	rulesDlg.DoModal();
 }
+#endif
 
 
 void CWallyApp::OpenImage (LPCTSTR szFileName)
@@ -2030,7 +2034,8 @@ void CWallyApp::AddToRecentFileList(LPCTSTR lpszPathName)
 			(strFileExtension == ".pcx") || 
 			(strFileExtension == ".bmp") ||
 			(strFileExtension == ".png") ||
-			(strFileExtension == ".jpg")
+			(strFileExtension == ".jpg") ||
+			(strFileExtension == ".art")
 			)
 		{		
 			CWinApp::AddToRecentFileList(lpszPathName);
@@ -3348,7 +3353,6 @@ int CWallyApp::Run()
 		::MessageBox(NULL, strError, "Wally", MB_ICONSTOP);
 	}
 
-	_CrtDumpMemoryLeaks();
 	/*
 	catch(...)
 	{
@@ -3900,7 +3904,7 @@ CDocument* CWallyApp::OpenDocumentFile(LPCTSTR lpszFileName)
 {
 	CString strFileExtension = GetExtension(lpszFileName);
 	strFileExtension.MakeLower();
-	if ((strFileExtension == ".wad") || (strFileExtension == ".pak"))
+	if ((strFileExtension == ".wad") || (strFileExtension == ".pak") || (strFileExtension == ".art"))
 	{
 		return CWinApp::OpenDocumentFile(lpszFileName);
 	}

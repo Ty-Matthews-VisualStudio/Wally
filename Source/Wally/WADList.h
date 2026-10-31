@@ -76,6 +76,7 @@ typedef struct
 } wad2_miptex_s, WAD2_MIP, *LPWAD2_MIP;
 
 #include "PackageTreeControl.h"
+#include <memory>
 
 
 class CWADItem
@@ -86,8 +87,6 @@ private:
 	unsigned char *m_pbyPalette;
 	LPWAD3_MIP m_wad3MipHeader;
 	LPWAD2_MIP m_wad2MipHeader;
-	CWADItem *m_pNext;
-	CWADItem *m_pPrevious;
 	unsigned short *m_pPaletteSize;
 	int m_iTotalSize;
 	int m_iSizes[4];
@@ -120,10 +119,6 @@ public:
 	int GetHeight ();
 	void SetName (LPCTSTR szName);
 	CString GetName ();
-	void SetNext (CWADItem *pNext);
-	CWADItem *GetNext();
-	void SetPrevious (CWADItem *pPrevious);
-	CWADItem *GetPrevious();
 	unsigned char *GetPalette();	
 	
 	BOOL ConvertToType( int iWADType );
@@ -209,9 +204,7 @@ class CWADList
 {
 // Members
 private:
-	CWADItem *m_pFirst;
-	CWADItem *m_pRead;
-	CWADItem *m_pWrite;
+	vector< unique_ptr<CWADItem> > m_Items;
 	int m_iWadType;
 
 	wad3_headerinfo_s	*m_pwad3Header;
@@ -230,14 +223,11 @@ public:
 	CWADList ();
 	~CWADList ();
 
-	void SetFirst (CWADItem *pFirst);
-	CWADItem *GetFirst ();
-	void SetRead (CWADItem *pRead);
-	CWADItem *GetRead ();
-	void SetWrite (CWADItem *pWrite);
-	CWADItem *GetWrite ();
-	void SetAll (CWADItem *pItem);
 	void PurgeList();
+	vector< unique_ptr<CWADItem> >& GetItems()
+	{
+		return m_Items;
+	}
 
 	/*int Serialize (CFile *pFile);	
 	int Serialize (LPCTSTR szFileName, unsigned char *pbyData, bool bSave = false);*/
@@ -247,10 +237,6 @@ public:
 	int GetNumImages ();
 	DWORD GetNumImages( CWadMergeJob *pMergeJob );
 	int GetNumLumps ();
-	CWADItem *GetFirstImage();
-	CWADItem *GetNextImage();
-	CWADItem *GetFirstLump();
-	CWADItem *GetNextLump();
 	CWADItem *GetLumpAtPosition(int iPosition);
 	CWADItem *AddItem( unsigned char *pbyData, int iDataSize, char cType, LPCTSTR szName );
 	CWADItem *AddMipItem( unsigned char *pbyBits[], CWallyPalette *pPalette, LPCTSTR szName, int iWidth, int iHeight);

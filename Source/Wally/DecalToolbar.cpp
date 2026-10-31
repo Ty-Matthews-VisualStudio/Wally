@@ -362,14 +362,17 @@ void CDecalToolbar::OnSelchangeDt1ComboWad()
 			return;
 		}
 
-		pItem = m_ihHelper.GetFirstImage();
-		bAtLeastOne = (pItem != NULL);
-
-		while (pItem)
+		for (auto& pOwned : m_ihHelper.GetItems())
 		{
+			pItem = pOwned.get();
+			if (!pItem->IsValidMip())
+			{
+				continue;
+			}
+
 			iItemAdded = m_lbImages.AddString (pItem->GetName());
 			m_lbImages.SetItemData (iItemAdded, (DWORD)pItem);
-			pItem = m_ihHelper.GetNextImage();
+			bAtLeastOne = true;
 		}
 
 		if (bAtLeastOne)

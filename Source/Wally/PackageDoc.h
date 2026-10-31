@@ -51,25 +51,13 @@ public:
 	{
 		return m_strPathName;
 	}
-	CWADItem *GetFirstImage()
-	{		
-		return m_ihHelper.GetFirstImage();
-	}
-	CWADItem *GetNextImage()
-	{
-		return m_ihHelper.GetNextImage();
-	}
-	CWADItem *GetFirstLump()
-	{		
-		return m_ihHelper.GetFirstLump();
-	}
-	CWADItem *GetNextLump()
-	{		
-		return m_ihHelper.GetNextLump();
-	}
 	CWADItem *GetLumpAtPosition(int iPosition)
 	{
 		return m_ihHelper.GetLumpAtPosition(iPosition);
+	}
+	vector< unique_ptr<CWADItem> >& GetItems()
+	{
+		return m_ihHelper.GetItems();
 	}
 	int GetNumImages()
 	{

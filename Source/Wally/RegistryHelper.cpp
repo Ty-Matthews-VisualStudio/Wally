@@ -95,12 +95,6 @@ CRegistryItem::CRegistryItem (CString *pCString, LPCTSTR szDefaultValue, LPCTSTR
 }
 #endif		// #ifdef __AFX_H__
 
-CRegistryItem::~CRegistryItem()
-{
-	SetNext (NULL);
-	SetPrevious (NULL);
-}
-
 void CRegistryItem::InitMembers()
 {
 	m_pInteger = NULL;
@@ -111,8 +105,6 @@ void CRegistryItem::InitMembers()
 
 	SetItemType (REGISTRY_TYPE_UNKNOWN);
 	SetSubKey (_T(""));
-	SetNext (NULL);
-	SetPrevious (NULL);
 	m_bEncrypt = FALSE;
 }
 
@@ -396,26 +388,6 @@ void CRegistryItem::SetItemValue (DWORD dwValue)
 	AdjustMinMax();
 }
 
-void CRegistryItem::SetNext (CRegistryItem *pNext)
-{
-	m_pNext = pNext;
-}
-
-CRegistryItem *CRegistryItem::GetNext()
-{
-	return m_pNext;
-}
-
-void CRegistryItem::SetPrevious (CRegistryItem *pPrevious)
-{
-	m_pPrevious = pPrevious;
-}
-
-CRegistryItem *CRegistryItem::GetPrevious()
-{
-	return m_pPrevious;
-}
-
 
 
 //////////////////////////////////////////////////////////////////////
@@ -426,13 +398,10 @@ CRegistryHelper::CRegistryHelper()
 {
 	SetMainKey (NULL);
 	SetBaseSubKey (_T(""));
-	SetAll (NULL);
 }
 
 CRegistryHelper::~CRegistryHelper()
 {
-	PurgeList();
-	SetAll (NULL);
 }
 
 void CRegistryHelper::SetMainKey(HKEY hMainKey)
@@ -478,66 +447,29 @@ std::string CRegistryHelper::TrimSlashes( std::string &strTrim )
 }
 #endif
 
-void CRegistryHelper::SetFirst (CRegistryItem *pFirst)
-{
-	m_pFirst = pFirst;
-}
-
-CRegistryItem *CRegistryHelper::GetFirst()
-{
-	return m_pFirst;
-}
-
-void CRegistryHelper::SetWrite (CRegistryItem *pWrite)
-{
-	m_pWrite = pWrite;
-}
-
-CRegistryItem *CRegistryHelper::GetWrite()
-{
-	return m_pWrite;
-}
-
 void CRegistryHelper::PurgeList()
 {
-	CRegistryItem *pTemp = GetFirst();
-
-	while (pTemp)
-	{
-		SetFirst (GetFirst()->GetNext());
-		delete pTemp;
-		pTemp = GetFirst();
-	}
-
-	SetAll (NULL);
+	m_Items.clear();
 }
 
 void CRegistryHelper::AddItem (int *pInteger, int iDefaultValue, int iMinValue, int iMaxValue, LPCTSTR szValueName, LPCTSTR szSubKey, DWORD dwFlags /* = 0 */)
 {
-	CRegistryItem *pNewItem = new CRegistryItem(pInteger, iDefaultValue, iMinValue, iMaxValue, szValueName, szSubKey, dwFlags);
-	AddItemToList(pNewItem);
-	pNewItem = NULL;
+	m_Items.emplace_back (pInteger, iDefaultValue, iMinValue, iMaxValue, szValueName, szSubKey, dwFlags);
 }
 
 void CRegistryHelper::AddItem (UINT *pInteger, UINT iDefaultValue, UINT iMinValue, UINT iMaxValue, LPCTSTR szValueName, LPCTSTR szSubKey, DWORD dwFlags /* = 0 */)
 {
-	CRegistryItem *pNewItem = new CRegistryItem(pInteger, iDefaultValue, iMinValue, iMaxValue, szValueName, szSubKey, dwFlags);
-	AddItemToList(pNewItem);
-	pNewItem = NULL;
+	m_Items.emplace_back (pInteger, iDefaultValue, iMinValue, iMaxValue, szValueName, szSubKey, dwFlags);
 }
 
 void CRegistryHelper::AddItem (double *pDouble, double dfDefaultValue, double dfMinValue, double dfMaxValue, LPCTSTR szValueName, LPCTSTR szSubKey, DWORD dwFlags /* = 0 */)
 {
-	CRegistryItem *pNewItem = new CRegistryItem(pDouble, dfDefaultValue, dfMinValue, dfMaxValue, szValueName, szSubKey, dwFlags);
-	AddItemToList(pNewItem);
-	pNewItem = NULL;
+	m_Items.emplace_back (pDouble, dfDefaultValue, dfMinValue, dfMaxValue, szValueName, szSubKey, dwFlags);
 }
 
 void CRegistryHelper::AddItem (LPDWORD lpDWord, DWORD dwDefaultValue, DWORD dwMinValue, DWORD dwMaxValue, LPCTSTR szValueName, LPCTSTR szSubKey, DWORD dwFlags /* = 0 */)
 {
-	CRegistryItem *pNewItem = new CRegistryItem(lpDWord, dwDefaultValue, dwMinValue, dwMaxValue, szValueName, szSubKey, dwFlags);
-	AddItemToList(pNewItem);
-	pNewItem = NULL;
+	m_Items.emplace_back (lpDWord, dwDefaultValue, dwMinValue, dwMaxValue, szValueName, szSubKey, dwFlags);
 }
 	
 #ifdef _UNICODE
@@ -546,39 +478,15 @@ void CRegistryHelper::AddItem(std::wstring *pString, LPCTSTR szDefaultValue, LPC
 void CRegistryHelper::AddItem (std::string *pString, LPCTSTR szDefaultValue, LPCTSTR szValueName, LPCTSTR szSubKey, BOOL bEncrypt /* = FALSE */, DWORD dwFlags /* = 0 */)
 #endif
 {
-	CRegistryItem *pNewItem = new CRegistryItem(pString, szDefaultValue, szValueName, szSubKey, bEncrypt, dwFlags);
-	AddItemToList(pNewItem);
-	pNewItem = NULL;
+	m_Items.emplace_back (pString, szDefaultValue, szValueName, szSubKey, bEncrypt, dwFlags);
 }
 
 #ifdef __AFX_H__
 void CRegistryHelper::AddItem (CString *pCString, LPCTSTR szDefaultValue, LPCTSTR szValueName, LPCTSTR szSubKey, BOOL bEncrypt /* = FALSE */, DWORD dwFlags /* = 0 */)
 {
-	CRegistryItem *pNewItem = new CRegistryItem( pCString, szDefaultValue, szValueName, szSubKey, bEncrypt, dwFlags );
-	AddItemToList( pNewItem );
-	pNewItem = NULL;
+	m_Items.emplace_back (pCString, szDefaultValue, szValueName, szSubKey, bEncrypt, dwFlags);
 }
 #endif		// #ifdef __AFX_H__
-
-void CRegistryHelper::AddItemToList (CRegistryItem *pItem)
-{	
-	if (!GetFirst())
-	{
-		SetAll (pItem);
-	}
-	else
-	{
-		GetWrite()->SetNext (pItem);
-		pItem->SetPrevious(GetWrite());
-		SetWrite (pItem);
-	}
-}
-
-void CRegistryHelper::SetAll (CRegistryItem *pItem)
-{
-	SetFirst (pItem);
-	SetWrite (pItem);
-}
 
 BOOL CRegistryHelper::ReadRegistry(DWORD dwSAMDesired /* = 0 */)
 {
@@ -588,7 +496,6 @@ BOOL CRegistryHelper::ReadRegistry(DWORD dwSAMDesired /* = 0 */)
 	DWORD dwDisp;
 	DWORD dwSize;
 	DWORD dwActualSize;	
-	CRegistryItem *pItem = GetFirst();
 
 #ifdef _UNICODE
 	std::wstring strItemSubKey;
@@ -611,13 +518,13 @@ BOOL CRegistryHelper::ReadRegistry(DWORD dwSAMDesired /* = 0 */)
 		RegCloseKey( hKey );
 	}
 
-	while( pItem )
+	for (CRegistryItem &item : m_Items)
 	{
-		strItemSubKey = pItem->GetSubKey();
+		strItemSubKey = item.GetSubKey();
 		strFullKey = m_strBaseSubKey;
 		strFullKey += (m_strBaseSubKey.length() != 0 ? _T("\\") : _T(""));
 		strFullKey += strItemSubKey;
-		strValueName = pItem->GetValueName();
+		strValueName = item.GetValueName();
 
 		szValueName = strValueName.c_str();
 
@@ -630,13 +537,13 @@ BOOL CRegistryHelper::ReadRegistry(DWORD dwSAMDesired /* = 0 */)
 		}
 		else
 		{
-			switch (pItem->GetItemType())
+			switch (item.GetItemType())
 			{
 			case REGISTRY_TYPE_INTEGER:
 				{					
 					int iValue = 0;
 					
-					pItem->GetDefaultValue (&iValue);
+					item.GetDefaultValue (&iValue);
 
 					// Query the key to figure out how big it is
 					lResult = RegQueryValueEx(hKey, szValueName, NULL, NULL, NULL, &dwActualSize);
@@ -652,14 +559,14 @@ BOOL CRegistryHelper::ReadRegistry(DWORD dwSAMDesired /* = 0 */)
 						lResult = RegQueryValueEx(hKey, szValueName, NULL, NULL, (LPBYTE) (&iValue), &dwActualSize);
 					}
 					
-					pItem->SetItemValue (iValue);
+					item.SetItemValue (iValue);
 				}
 				break;
 
 			case REGISTRY_TYPE_UNSIGNED_INTEGER:
 				{					
 					UINT iValue = 0;
-					pItem->GetDefaultValue (&iValue);
+					item.GetDefaultValue (&iValue);
 
 					DWORD dwType = REG_DWORD;
 
@@ -677,7 +584,7 @@ BOOL CRegistryHelper::ReadRegistry(DWORD dwSAMDesired /* = 0 */)
 						lResult = ::RegQueryValueEx(hKey, szValueName, NULL, &dwType, (LPBYTE) (&iValue), &dwActualSize);
 					}
 
-					pItem->SetItemValue (iValue);
+					item.SetItemValue (iValue);
 				}
 				break;
 
@@ -687,7 +594,7 @@ BOOL CRegistryHelper::ReadRegistry(DWORD dwSAMDesired /* = 0 */)
 					double dfValue = 0.0;
 					LPCTSTR szTempBuffer = NULL;
 
-					pItem->GetDefaultValue( &dfValue );
+					item.GetDefaultValue( &dfValue );
 
 					// Query the key to figure out how big it is
 					lResult = RegQueryValueEx(hKey, szValueName, NULL, NULL, NULL, &dwActualSize);
@@ -722,7 +629,7 @@ BOOL CRegistryHelper::ReadRegistry(DWORD dwSAMDesired /* = 0 */)
 						szTempBuffer = NULL;
 					}
 
-					pItem->SetItemValue (dfValue);					
+					item.SetItemValue (dfValue);					
 				}
 				break;
 
@@ -730,7 +637,7 @@ BOOL CRegistryHelper::ReadRegistry(DWORD dwSAMDesired /* = 0 */)
 				{
 					DWORD dwValue = 0;
 
-					pItem->GetDefaultValue (&dwValue);
+					item.GetDefaultValue (&dwValue);
 					DWORD dwType = REG_DWORD;
 
 					// Query the key to figure out how big it is
@@ -747,7 +654,7 @@ BOOL CRegistryHelper::ReadRegistry(DWORD dwSAMDesired /* = 0 */)
 						lResult = ::RegQueryValueEx(hKey, szValueName, NULL, &dwType, (LPBYTE) (&dwValue), &dwActualSize);
 					}
 
-					pItem->SetItemValue (dwValue);
+					item.SetItemValue (dwValue);
 				}
 				break;
 
@@ -760,7 +667,7 @@ BOOL CRegistryHelper::ReadRegistry(DWORD dwSAMDesired /* = 0 */)
 #endif
 					LPCTSTR szTempBuffer = NULL;
 					
-					pItem->GetDefaultValue( &strValue );
+					item.GetDefaultValue( &strValue );
 
 					// Query the key to figure out how big it is
 					lResult = RegQueryValueEx(hKey, szValueName, NULL, NULL, NULL, &dwActualSize);
@@ -781,11 +688,11 @@ BOOL CRegistryHelper::ReadRegistry(DWORD dwSAMDesired /* = 0 */)
 						
 						// Go read it in						
 						lResult = RegQueryValueEx(hKey, szValueName, NULL, NULL, (LPBYTE) (szTempBuffer), &dwSize);
-						pItem->SetItemValue (szTempBuffer, TRUE);
+						item.SetItemValue (szTempBuffer, TRUE);
 					}
 					else
 					{
-						pItem->SetItemValue( strValue.c_str() );
+						item.SetItemValue( strValue.c_str() );
 					}					
 
 					if (szTempBuffer)
@@ -802,7 +709,7 @@ BOOL CRegistryHelper::ReadRegistry(DWORD dwSAMDesired /* = 0 */)
 					CString strValue("");
 					LPCTSTR szTempBuffer = NULL;
 					
-					pItem->GetDefaultValue( &strValue );
+					item.GetDefaultValue( &strValue );
 
 					// Query the key to figure out how big it is
 					lResult = RegQueryValueEx( hKey, szValueName, NULL, NULL, NULL, &dwActualSize );
@@ -823,11 +730,11 @@ BOOL CRegistryHelper::ReadRegistry(DWORD dwSAMDesired /* = 0 */)
 						
 						lResult = RegQueryValueEx( hKey, szValueName, NULL, NULL, (LPBYTE) (szTempBuffer), &dwSize);
 
-						pItem->SetItemValue( szTempBuffer, TRUE );
+						item.SetItemValue( szTempBuffer, TRUE );
 					}
 					else
 					{
-						pItem->SetItemValue( strValue );
+						item.SetItemValue( strValue );
 					}					
 
 					if (szTempBuffer)
@@ -845,8 +752,6 @@ BOOL CRegistryHelper::ReadRegistry(DWORD dwSAMDesired /* = 0 */)
 			
 			RegCloseKey (hKey);
 		}
-
-		pItem = pItem->GetNext();
 	}	
 	return true;
 }
@@ -869,7 +774,6 @@ BOOL CRegistryHelper::WriteRegistry()
 		RegCloseKey( hKey );
 	}
 
-	CRegistryItem *pItem = GetFirst();
 #ifdef _UNICODE
 	std::wstring strItemSubKey;
 	std::wstring strFullKey;
@@ -882,13 +786,13 @@ BOOL CRegistryHelper::WriteRegistry()
 
 	LPCTSTR szValueName = NULL;
 	
-	while (pItem)
+	for (CRegistryItem &item : m_Items)
 	{
-		strItemSubKey = pItem->GetSubKey();
+		strItemSubKey = item.GetSubKey();
 		strFullKey = m_strBaseSubKey;
 		strFullKey += (m_strBaseSubKey.length() != 0 ? _T("\\") : _T(""));
 		strFullKey += strItemSubKey;
-		strValueName = pItem->GetValueName();
+		strValueName = item.GetValueName();
 
 		szValueName = strValueName.c_str();
 
@@ -901,12 +805,12 @@ BOOL CRegistryHelper::WriteRegistry()
 		}
 		else
 		{
-			switch (pItem->GetItemType())
+			switch (item.GetItemType())
 			{
 			case REGISTRY_TYPE_INTEGER:
 				{						
 					int iItemValue = 0;					
-					pItem->GetItemValue (&iItemValue);
+					item.GetItemValue (&iItemValue);
 					
 					// Set the key
 					lResult = RegSetValueEx (hKey, szValueName, 0, REG_DWORD, (LPBYTE)(&iItemValue), sizeof (iItemValue));
@@ -916,7 +820,7 @@ BOOL CRegistryHelper::WriteRegistry()
 			case REGISTRY_TYPE_UNSIGNED_INTEGER:
 				{
 					UINT iItemValue = 0;
-					pItem->GetItemValue (&iItemValue);
+					item.GetItemValue (&iItemValue);
 					
 					// Set the key
 					lResult = RegSetValueEx (hKey, szValueName, 0, REG_DWORD, (LPBYTE)(&iItemValue), sizeof (iItemValue));
@@ -928,7 +832,7 @@ BOOL CRegistryHelper::WriteRegistry()
 					// MFC stores doubles in the registry as strings, so we'll be nice
 					// and play along
 					double dfItemValue = 0.0;
-					pItem->GetItemValue(&dfItemValue);
+					item.GetItemValue(&dfItemValue);
 
 #ifdef _UNICODE
 					std::wstringstream szFormat;
@@ -952,7 +856,7 @@ BOOL CRegistryHelper::WriteRegistry()
 			case REGISTRY_TYPE_DWORD:
 				{
 					DWORD dwItemValue = 0;
-					pItem->GetItemValue (&dwItemValue);
+					item.GetItemValue (&dwItemValue);
 
 					// Set the key
 					lResult = RegSetValueEx (hKey, szValueName, 0, REG_DWORD, (LPBYTE)(&dwItemValue), sizeof (dwItemValue));
@@ -964,12 +868,12 @@ BOOL CRegistryHelper::WriteRegistry()
 					int iStringLength = 0;
 #ifdef _UNICODE
 					std::wstring strItemValue;
-					pItem->GetItemValue(&strItemValue);
+					item.GetItemValue(&strItemValue);
 					iStringLength = strItemValue.size();
 					dwSize = iStringLength * sizeof(wchar_t);
 #else
 					std::string strItemValue;
-					pItem->GetItemValue(&strItemValue);
+					item.GetItemValue(&strItemValue);
 					iStringLength = strItemValue.size();
 					dwSize = iStringLength * sizeof(char);
 #endif			
@@ -985,7 +889,7 @@ BOOL CRegistryHelper::WriteRegistry()
 					LPCTSTR szTempBuffer = NULL;
 					int iStringLength = 0;
 
-					pItem->GetItemValue (&strItemValue);
+					item.GetItemValue (&strItemValue);
 									
 					iStringLength = strItemValue.GetLength();
 					szTempBuffer = strItemValue.GetBuffer(iStringLength);
@@ -1008,8 +912,6 @@ BOOL CRegistryHelper::WriteRegistry()
 			
 			RegCloseKey (hKey);
 		}
-
-		pItem = pItem->GetNext();
 	}	
 	return true;
 }

@@ -2898,7 +2898,7 @@ LPBYTE CMemBuffer::InitFromResource( WORD ID )
 }
 
 #ifdef BOOST_JSON_HPP
-boost::json::value CMemBuffer::ParseJson(boost::json::error_code &ec)
+boost::json::value CMemBuffer::ParseJson(boost::system::error_code &ec)
 {
 	boost::json::stream_parser p;	
 	p.write((char *)GetBuffer(), GetDataSize(), ec);	

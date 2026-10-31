@@ -16,9 +16,6 @@ static char THIS_FILE[] = __FILE__;
 
 CTabDlgItem::CTabDlgItem (CWnd *pParent, int iResourceID, int iTabNumber)
 {
-	SetNext (NULL);
-	SetPrevious (NULL);
-
 	m_pWnd = NULL;
 	m_pParent = pParent;
 	m_iResourceID = iResourceID;
@@ -28,9 +25,6 @@ CTabDlgItem::CTabDlgItem (CWnd *pParent, int iResourceID, int iTabNumber)
 
 CTabDlgItem::CTabDlgItem (CWnd *pWnd, int iTabNumber)
 {
-	SetNext (NULL);
-	SetPrevious (NULL);
-
 	m_pWnd = pWnd;
 	m_pParent = NULL;
 	m_iResourceID = 0;
@@ -38,183 +32,45 @@ CTabDlgItem::CTabDlgItem (CWnd *pWnd, int iTabNumber)
 	m_bAlwaysHide = FALSE;
 }
 
-CTabDlgItem::~CTabDlgItem()
-{
-	SetNext (NULL);
-	SetPrevious (NULL);
-}
-
-void CTabDlgItem::SetNext (CTabDlgItem *pNext)
-{
-	m_pNext = pNext;
-}
-
-CTabDlgItem *CTabDlgItem::GetNext()
-{
-	return m_pNext;
-}
-
-void CTabDlgItem::SetPrevious (CTabDlgItem *pPrevious)
-{
-	m_pPrevious = pPrevious;
-}
-
-CTabDlgItem *CTabDlgItem::GetPrevious()
-{
-	return m_pPrevious;
-}
-
 /////////////////////////////////////////////////////////////////////////////
 // CTabDlgList
 
-CTabDlgList::CTabDlgList()
-{
-	SetFirst (NULL);
-	SetWrite (NULL);
-}
-
-CTabDlgList::~CTabDlgList()
-{
-	PurgeList();
-}
-
-void CTabDlgList::PurgeList()
-{
-	CTabDlgItem *pTemp = GetFirst();
-
-	while (pTemp)
-	{
-		SetFirst (pTemp->GetNext());
-		delete pTemp;
-		pTemp = GetFirst();
-	}
-
-	SetFirst (NULL);
-	SetWrite (NULL);
-}
-
 BOOL CTabDlgList::AddItem(CWnd *pParent, int iResourceID, int iTabNumber)
 {
-	CTabDlgItem *pNewItem = new CTabDlgItem(pParent, iResourceID, iTabNumber);
-
-	if (!pNewItem)
-	{
-		return FALSE;
-	}
-
-	if (!GetFirst())
-	{
-		SetFirst (pNewItem);
-		SetWrite (pNewItem);
-	}
-	else
-	{
-		GetWrite()->SetNext(pNewItem);
-		pNewItem->SetPrevious (GetWrite());
-		SetWrite (pNewItem);
-	}
-
+	m_Items.emplace_back (pParent, iResourceID, iTabNumber);
 	return TRUE;
 }
 
 BOOL CTabDlgList::AddItem(CWnd *pWnd, int iTabNumber)
 {
-	CTabDlgItem *pNewItem = new CTabDlgItem(pWnd, iTabNumber);
-
-	if (!pNewItem)
-	{
-		return FALSE;
-	}
-
-	if (!GetFirst())
-	{
-		SetFirst (pNewItem);
-		SetWrite (pNewItem);
-	}
-	else
-	{
-		GetWrite()->SetNext(pNewItem);
-		pNewItem->SetPrevious (GetWrite());
-		SetWrite (pNewItem);
-	}
-
+	m_Items.emplace_back (pWnd, iTabNumber);
 	return TRUE;
 }
 
 void CTabDlgList::NeverShowControl (int iID)
 {
-	CTabDlgItem *pTemp = GetFirst();
-	
-	while (pTemp)
+	for (CTabDlgItem &item : m_Items)
 	{
-		if (pTemp->GetResourceID() == iID)
+		if (item.GetResourceID() == iID)
 		{
-			pTemp->SetAlwaysHide (TRUE);
+			item.SetAlwaysHide (TRUE);
 		}
-
-		pTemp = pTemp->GetNext();
 	}
 }
 
 void CTabDlgList::HideShowItems (int iTabNumber)
 {
-	CTabDlgItem *pTemp = GetFirst();
-	CWnd *pParent = NULL;
-	CWnd *pItem = NULL;
+	for (CTabDlgItem &item : m_Items)
+	{
+		CWnd *pParent = item.GetParent();
+		CWnd *pItem = pParent ? pParent->GetDlgItem (item.GetResourceID()) : item.GetWnd();
 
-	while (pTemp)
-	{		
-		pParent = pTemp->GetParent();
-
-		if (pParent)
-		{	
-			pItem = pParent->GetDlgItem( pTemp->GetResourceID());
-
-			if (pItem)
-			{
-				if (::IsWindow(pItem->m_hWnd))
-				{
-					pItem->ShowWindow( ((pTemp->GetTabNumber() == iTabNumber) && (!pTemp->AlwaysHide())) ? SW_SHOW : SW_HIDE);				
-					pItem->InvalidateRect( NULL, FALSE);
-				}
-			}
-		}
-		else
+		if (pItem && ::IsWindow(pItem->m_hWnd))
 		{
-			pItem = pTemp->GetWnd();
-
-			if (pItem)
-			{
-				if (::IsWindow(pItem->m_hWnd))
-				{
-					pItem->ShowWindow( ((pTemp->GetTabNumber() == iTabNumber) && (!pTemp->AlwaysHide())) ? SW_SHOW : SW_HIDE);				
-					pItem->InvalidateRect( NULL, FALSE);				
-				}
-			}
+			pItem->ShowWindow( ((item.GetTabNumber() == iTabNumber) && (!item.AlwaysHide())) ? SW_SHOW : SW_HIDE);
+			pItem->InvalidateRect( NULL, FALSE);
 		}
-
-		pTemp = pTemp->GetNext();
 	}
-}
-
-void CTabDlgList::SetFirst (CTabDlgItem *pFirst)
-{
-	m_pFirst = pFirst;
-}
-
-CTabDlgItem *CTabDlgList::GetFirst()
-{
-	return m_pFirst;
-}
-
-void CTabDlgList::SetWrite (CTabDlgItem *pWrite)
-{
-	m_pWrite = pWrite;
-}
-
-CTabDlgItem *CTabDlgList::GetWrite()
-{
-	return m_pWrite;
 }
 
 /////////////////////////////////////////////////////////////////////////////

@@ -578,6 +578,8 @@ extern	CWildCardList	g_WildCardList;
 
 class CWallyPalette;
 
+#include <vector>
+
 class CWildCardItem
 {
 // Members
@@ -586,8 +588,6 @@ private:
 	CString m_strWildCard;	
 	CString m_strWildCardExtension;
 	int m_iImageType;
-	CWildCardItem *m_pNext;
-	CWildCardItem *m_pPrevious;
 	CString m_strSourcePaletteFile;
 	CString m_strDestPaletteFile;
 	CString m_strSourceRegKey;
@@ -612,7 +612,6 @@ public:
 // Methods
 public:
 	CWildCardItem (LPCTSTR szDescription, LPCTSTR szWildCard, LPCTSTR szWildCardExtension, LPCTSTR szSourceRegKey, LPCTSTR szDestRegKey, LPCTSTR szUseCurrentSourceRegKey, LPCTSTR szUseCurrentDestRegKey, int iImageType);
-	~CWildCardItem ();
 
 	void SolidifyChanges();	
 	void PrepareForChanges();
@@ -621,11 +620,6 @@ public:
 	CString GetAssociatedProgram();
 	void AssociateWithWally();
 	void RemoveIfAssociatedWithWally();
-	
-	CWildCardItem *GetNext();
-	void SetNext (CWildCardItem *pNext);
-	CWildCardItem *GetPrevious();
-	void SetPrevious (CWildCardItem *pPrevious);
 
 	CString GetDescription();
 	CString GetWildCard();
@@ -654,29 +648,17 @@ class CWildCardList
 {
 // Members
 private:
-	CWildCardItem *m_pFirst;
-	CWildCardItem *m_pWrite;
-	CWildCardItem *m_pRead;
+	// Filled once at startup and never resized, so item addresses stay fixed
+	std::vector<CWildCardItem> m_Items;
+
+	void AddItem (LPCTSTR szDescription, LPCTSTR szWildCard, LPCTSTR szWildCardExtension, LPCTSTR szSourceRegKey, LPCTSTR szDestRegKey, LPCTSTR szUseCurrentSourceRegKey, LPCTSTR szUseCurrentDestRegKey, int iImageType);
 
 // Methods
 public:
 	CWildCardList();
-	~CWildCardList();
-	void SetAll(CWildCardItem *pItem);
-	void PurgeList();
-	void AddItem (LPCTSTR szDescription, LPCTSTR szWildCard, LPCTSTR szWildCardExtension, LPCTSTR szSourceRegKey, LPCTSTR szDestRegKey, LPCTSTR szUseCurrentSourceRegKey, LPCTSTR szUseCurrentDestRegKey, int iImageType);
+
 	int GetCount();
-	CWildCardItem *GetFirstSupportedImage();
-	CWildCardItem *GetNextSupportedImage();
-	
 	CWildCardItem *GetAt(int iPosition);
-	
-	CWildCardItem *GetFirst();
-	void SetFirst(CWildCardItem *pFirst);
-	CWildCardItem *GetWrite();
-	void SetWrite(CWildCardItem *pWrite);
-	CWildCardItem *GetRead();
-	void SetRead(CWildCardItem *pRead);
 
 	void PrepareForChanges();
 	void SolidifyAllChanges();
@@ -705,6 +687,9 @@ private:
 	int m_iFileLength;
 	int m_iSpecialFlag;
 	int m_iColorDepth;
+	int m_iWildCardCursor;
+
+	CWildCardItem *FindNextSupported(int iStart, int iMatch);
 
 	CString m_strFileName;
 	CString m_strErrorText;
@@ -778,11 +763,11 @@ public:
 	BOOL DetermineWADType();
 	int GetNumImages ();
 	int GetNumLumps ();
-	CWADItem *GetFirstImage();
-	CWADItem *GetNextImage();
-	CWADItem *GetFirstLump();
-	CWADItem *GetNextLump();
 	CWADItem *GetLumpAtPosition(int iPosition);
+	vector< unique_ptr<CWADItem> >& GetItems()
+	{
+		return m_WADList.GetItems();
+	}
 	CWADItem *AddImageToWAD (unsigned char *pbyBits[4], CWallyPalette* pPalette, LPCTSTR szName, int iWidth, int iHeight);
 	void AddImageToWAD( CWADItem *pItem );
 	void RemoveImageFromWAD (CWADItem *pItem);			

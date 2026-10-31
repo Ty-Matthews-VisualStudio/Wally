@@ -192,6 +192,7 @@ void CBrowseView::OnDraw(CDC* pDC)
 	iEndRow = min (iEndRow, m_iVertButtons + 1);
 
 	//  Only draw the set of textures that can possibly be seen
+	pCacheList->Lock();
 	for (j = iStartRow; j <= iEndRow; j++)
 	{
 		for (k = 0; k < m_iHorzButtons; k++)
@@ -207,6 +208,7 @@ void CBrowseView::OnDraw(CDC* pDC)
 			}			
 		}			
 	}
+	pCacheList->Unlock();
 	
 	if (pDibItem)
 	{
@@ -648,12 +650,20 @@ void CBrowseView::OnLButtonDblClk(UINT nFlags, CPoint point)
 	{
 		CBrowseDoc *pDoc = GetDocument();
 		CBrowserCacheList *pCacheList = pDoc->GetCacheList();
-		CBrowserCacheItem *pCacheItem = pCacheList->GetAtPosition (iItemNumber);
 		CString strFullPath ("");
 
-		strFullPath.Format ("%s\\%s", TrimSlashes(pCacheList->GetDirectory()), pCacheItem->GetFileName());
+		pCacheList->Lock();
+		CBrowserCacheItem *pCacheItem = pCacheList->GetAtPosition (iItemNumber);
+		if (pCacheItem)
+		{
+			strFullPath.Format ("%s\\%s", TrimSlashes(pCacheList->GetDirectory()), pCacheItem->GetFileName());
+		}
+		pCacheList->Unlock();
 
-		theApp.OpenImage (strFullPath);	
+		if (!strFullPath.IsEmpty())
+		{
+			theApp.OpenImage (strFullPath);
+		}
 	}
 }
 
@@ -1124,19 +1134,17 @@ void CBrowseView::DeleteSelectedItems()
 		return;
 	}
 
-	CBrowserCacheItem *pCacheItem = pCacheList->GetFirstSelectedItem();
-	CBrowserCacheItem *pTemp = NULL;
-
-	while (pCacheItem)
-	{		
+	vector<CBrowserCacheItem*> selectedItems;
+	pCacheList->Lock();
+	pCacheList->GetSelectedItems (selectedItems);
+	for (CBrowserCacheItem *pCacheItem : selectedItems)
+	{
 		strFileName = GetCurrentDirectory();
 		strFileName += pCacheItem->GetFileName();
 		remove (strFileName);
-		
-		pTemp = pCacheItem;
-		pCacheItem = pCacheList->GetNextSelectedItem();					
-		pCacheList->RemoveItem (pTemp);
+		pCacheList->RemoveItem (pCacheItem);
 	}
+	pCacheList->Unlock();
 
 	ResetScrollbars (TRUE);
 	InvalidateRect (NULL, TRUE);
@@ -1537,9 +1545,19 @@ BOOL CBrowseView::OnDrop(COleDataObject* pDataObject, DROPEFFECT dropEffect, CPo
 
 BOOL CBrowseView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt) 
 {
-	// TODO: Add your message handler code here and/or call default
-	
-	//return CView::OnMouseWheel(nFlags, zDelta, pt);
+	int iNotches = zDelta / WHEEL_DELTA;
+	if (iNotches == 0)
+	{
+		return TRUE;
+	}
+
+	UINT nSBCode = (iNotches > 0) ? SB_LINEUP : SB_LINEDOWN;
+	int iSteps = abs (iNotches);
+	for (int j = 0; j < iSteps; j++)
+	{
+		OnVScroll (nSBCode, 0, NULL);
+	}
+
 	return TRUE;
 }
 
@@ -1561,20 +1579,21 @@ int CBrowseView::GetSelectedList()
 		return 0;
 	}
 
-	CBrowserCacheItem *pItem = pCacheList->GetFirstSelectedItem();
+	vector<CBrowserCacheItem*> selectedItems;
 	CString strFileName("");
 	int iCount = 0;
 
-	while (pItem)
+	pCacheList->Lock();
+	pCacheList->GetSelectedItems (selectedItems);
+	for (CBrowserCacheItem *pItem : selectedItems)
 	{
 		strFileName = GetCurrentDirectory();
 		strFileName += pItem->GetFileName();
 		
 		m_saSelectedItems.Add (strFileName);
 		iCount++;
-
-		pItem = pCacheList->GetNextSelectedItem();
 	}
+	pCacheList->Unlock();
 
 	return iCount;
 }

@@ -28,6 +28,7 @@ struct Build_Header
 
 #endif	// __ART_DEFINITION_
 
+#include <vector>
 
 class CWallyPalette;
 class CWallyDoc;
@@ -36,9 +37,7 @@ class CBuildItem
 {
 // Members
 private:
-	BYTE *m_pbyData;	
-	CBuildItem *m_pNext;
-	CBuildItem *m_pPrevious;	
+	std::vector<BYTE> m_Data;
 	int m_iTileNumber;
 	int m_iWidth;
 	int m_iHeight;
@@ -50,10 +49,6 @@ private:
 
 public:
 	CBuildItem (BYTE *pbyData, int iWidth, int iHeight, int iFlags, int iTileNumber);
-	CBuildItem ();
-	~CBuildItem ();
-
-	//void CreateAsMip (BYTE *pbyBits[], CWallyPalette *pPalette, LPCTSTR szName, int iWidth, int iHeight, int iWADType);
 
 	BYTE *GetBits ();	
 	void UpdateData (BYTE *pbyBits, int iWidth, int iHeight);
@@ -63,10 +58,6 @@ public:
 	void SetHeight (int iHeight);
 	int GetHeight ();	
 	int GetTileNumber();
-	void SetNext (CBuildItem *pNext);
-	CBuildItem *GetNext();
-	void SetPrevious (CBuildItem *pPrevious);
-	CBuildItem *GetPrevious();
 	BYTE *GetPalette();
 	int GetSize();
 	int GetFlags();
@@ -99,7 +90,7 @@ public:
 	
 	bool HasValidData()
 	{
-		return (m_pbyData != NULL);
+		return !m_Data.empty();
 	}
 };
 
@@ -107,9 +98,8 @@ class CBuildList
 {
 // Members
 private:
-	CBuildItem *m_pFirst;
-	CBuildItem *m_pRead;
-	CBuildItem *m_pWrite;
+	// Indexed by (tile number - m_iFirstTile)
+	std::vector<CBuildItem> m_Items;
 	int m_iARTType;
 	int m_iFirstTile;
 	int m_iLastTile;
@@ -117,15 +107,7 @@ private:
 // Methods
 public:
 	CBuildList ();
-	~CBuildList ();
 
-	void SetFirst (CBuildItem *pFirst);
-	CBuildItem *GetFirst ();
-	void SetRead (CBuildItem *pRead);
-	CBuildItem *GetRead ();
-	void SetWrite (CBuildItem *pWrite);
-	CBuildItem *GetWrite ();
-	void SetAll (CBuildItem *pItem);
 	void PurgeList();
 
 	int GetFirstTileNumber()
@@ -142,13 +124,9 @@ public:
 	int Serialize (LPCTSTR szFileName, CFile *pFile, BYTE *pbyData, bool bSave = false);
 	
 	int GetNumTiles ();	
-	CBuildItem *GetFirstTile();
-	CBuildItem *GetNextTile();
 	CBuildItem *GetTile(int iTileNumber);
 	
-	CBuildItem *AddItem (BYTE *pbyData, int iWidth, int iHeight, int iFlags, int iTileNumber);
-	//CBuildItem *AddMipItem (BYTE *pbyBits, CWallyPalette *pPalette, LPCTSTR szName, int iWidth, int iHeight);	
-	void RemoveImage (CBuildItem *pItem);
+	void AddItem (BYTE *pbyData, int iWidth, int iHeight, int iFlags, int iTileNumber);
 	
 	int GetTotalItemsSize();
 	bool IsEmpty();

@@ -75,8 +75,8 @@
     <CustomBuildBeforeTargets>
     </CustomBuildBeforeTargets>
     <TargetName>$(ProjectName)16</TargetName>
-    <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(USER_TEMP)\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
+    <OutDir>$(USER_TEMP)\$(SolutionName)\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>$(USER_TEMP)\$(SolutionName)\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <LinkIncremental>false</LinkIncremental>
@@ -88,8 +88,8 @@
     <CustomBuildBeforeTargets>
     </CustomBuildBeforeTargets>
     <TargetName>$(ProjectName)16</TargetName>
-    <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(USER_TEMP)\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
+    <OutDir>$(USER_TEMP)\$(SolutionName)\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>$(USER_TEMP)\$(SolutionName)\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <LinkIncremental>false</LinkIncremental>
@@ -271,4 +271,12 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <PropertyGroup>
+    <PngLibConfPrebuilt>$(MSBuildProjectDirectory)\..\..\..\scripts\pnglibconf.h.prebuilt</PngLibConfPrebuilt>
+    <PngLibConfHeader>$(MSBuildProjectDirectory)\..\..\..\pnglibconf.h</PngLibConfHeader>
+  </PropertyGroup>
+  <Target Name="GeneratePngLibConf" BeforeTargets="ClCompile" Inputs="$(PngLibConfPrebuilt)" Outputs="$(PngLibConfHeader)">
+    <Message Importance="high" Text="Generating pnglibconf.h" />
+    <Copy SourceFiles="$(PngLibConfPrebuilt)" DestinationFiles="$(PngLibConfHeader)" />
+  </Target>
 </Project>

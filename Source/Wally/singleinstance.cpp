@@ -319,8 +319,9 @@ UINT CSingleInstanceImpl::Sleeper ( LPVOID aObject )
 		lSingleInstanceImpl->mEvent->SetEvent();
 	}
 	catch (boost::interprocess::interprocess_exception& ex)
-	{		
-	}
+	{	
+		TRACE("CSingleInstanceImpl::Sleeper: %s\n", ex.what());
+	}	
 	return 0 ;
 }
 
@@ -438,10 +439,21 @@ CSingleInstance::~CSingleInstance ()
 // Type:        Destructor
 // Description: Delete implementor
 {
+	Destroy () ;
+}
+
+//------------------------------------------------------------------------------
+
+void CSingleInstance::Destroy () 
+// Name:        Destroy
+// Type:        Function
+// Description: Delete implementor, stopping the sleeper thread
+{
 	// If implementor exists delete it
 	if ( mImplementor )
 	{
 		delete mImplementor ;
+		mImplementor = NULL ;
 	}
 }
 

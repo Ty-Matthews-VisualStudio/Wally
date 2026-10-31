@@ -12,6 +12,7 @@
 #include "BrowseDoc.h"
 #include "BrowserCacheThread.h"
 #include "ColorOpt.h"
+#include <algorithm>
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -42,8 +43,6 @@ CBrowserCacheItem::CBrowserCacheItem()
 	
 	SetErrorCode (CI_SUCCESS);
 	SetSelected (FALSE);
-	SetNext (NULL);
-	SetPrevious (NULL);
 }
 
 CBrowserCacheItem::~CBrowserCacheItem()
@@ -53,29 +52,6 @@ CBrowserCacheItem::~CBrowserCacheItem()
 		delete [] m_pbyData;
 		m_pbyData = NULL;
 	}
-
-	SetNext (NULL);
-	SetPrevious (NULL);
-}
-
-void CBrowserCacheItem::SetNext (CBrowserCacheItem *pNext)
-{
-	m_pNext = pNext;
-}
-
-CBrowserCacheItem *CBrowserCacheItem::GetNext()
-{
-	return m_pNext;
-}
-
-void CBrowserCacheItem::SetPrevious (CBrowserCacheItem *pPrevious)
-{
-	m_pPrevious = pPrevious;
-}
-
-CBrowserCacheItem *CBrowserCacheItem::GetPrevious()
-{
-	return m_pPrevious;
 }
 
 BOOL CBrowserCacheItem::Create (LPCTSTR szFileName)
@@ -645,8 +621,9 @@ BOOL CBrowserCacheItem::Create (BYTE *pbyBuffer, LPCTSTR szParentDirectory)
 					{
 						m_pbyPalette = m_pbyData + m_lpItemHeader->iPaletteOffset;
 						memcpy (m_pbyPalette, (pbyBuffer + m_lpItemHeader->iPaletteOffset), m_lpItemHeader->iNumPaletteColors * 3);
-					}					
+					}
 				}
+				break;
 
 			case 1:
 				{
@@ -891,7 +868,9 @@ int CBrowserCacheItem::GetErrorCode()
 
 CBrowserCacheList::CBrowserCacheList()
 {
-	SetAll (NULL);
+	InitializeCriticalSection (&m_cs);
+	m_dwLockThread = 0;
+	m_iLockCount = 0;
 	SetErrorCode (CL_SUCCESS);
 	m_lpCacheHeader = NULL;
 
@@ -918,47 +897,62 @@ CBrowserCacheList::~CBrowserCacheList()
 		free (m_lpCacheHeader);
 		m_lpCacheHeader = NULL;
 	}
+
+	DeleteCriticalSection (&m_cs);
+}
+
+void CBrowserCacheList::Lock()
+{
+	DWORD dwId = GetCurrentThreadId();
+	if (m_dwLockThread == dwId)
+	{
+		m_iLockCount++;
+		return;
+	}
+
+	EnterCriticalSection (&m_cs);
+	m_dwLockThread = dwId;
+	m_iLockCount = 1;
+}
+
+void CBrowserCacheList::Unlock()
+{
+	if (m_dwLockThread != GetCurrentThreadId())
+	{
+		ASSERT (FALSE);
+		return;
+	}
+
+	m_iLockCount--;
+	if (m_iLockCount <= 0)
+	{
+		m_iLockCount = 0;
+		m_dwLockThread = 0;
+		LeaveCriticalSection (&m_cs);
+	}
 }
 
 void CBrowserCacheList::PurgeList()
 {
-	CBrowserCacheItem *pTemp = GetFirst();
-
-	while (pTemp)
-	{
-		SetFirst(pTemp->GetNext());
-		delete pTemp;
-		pTemp = GetFirst();
-	}
-
-	pTemp = NULL;
-	SetAll (NULL);
+	Lock();
+	m_Items.clear();
+	Unlock();
 }
 
-void CBrowserCacheList::SetFirst (CBrowserCacheItem *pFirst)
+CString CBrowserCacheList::GetDirectory()
 {
-	m_pFirst = pFirst;
+	Lock();
+	CString strDirectory (m_strDirectory);
+	Unlock();
+	return strDirectory;
 }
 
-CBrowserCacheItem *CBrowserCacheList::GetFirst()
+CString CBrowserCacheList::GetCacheFileName()
 {
-	return m_pFirst;
-}
-
-void CBrowserCacheList::SetWrite (CBrowserCacheItem *pWrite)
-{
-	m_pWrite = pWrite;
-}
-
-CBrowserCacheItem *CBrowserCacheList::GetWrite()
-{
-	return m_pWrite;
-}
-
-void CBrowserCacheList::SetAll (CBrowserCacheItem *pItem)
-{
-	SetFirst (pItem);
-	SetWrite (pItem);
+	Lock();
+	CString strFileName (m_strCacheFileName);
+	Unlock();
+	return strFileName;
 }
 
 void CBrowserCacheList::SetErrorCode (int iCode)
@@ -976,12 +970,17 @@ void CBrowserCacheList::SetThreadMessage (int iMessage)
 	ASSERT (iMessage > CACHE_THREAD_MESSAGE_BEGIN);
 	ASSERT (iMessage < CACHE_THREAD_MESSAGE_END);
 
+	Lock();
 	m_iCacheThreadMessage = iMessage;
+	Unlock();
 }
 
 int CBrowserCacheList::GetThreadMessage()
 {
-	return m_iCacheThreadMessage;
+	Lock();
+	int iMessage = m_iCacheThreadMessage;
+	Unlock();
+	return iMessage;
 }
 
 void CBrowserCacheList::SetThreadStatus (int iStatus)
@@ -989,210 +988,117 @@ void CBrowserCacheList::SetThreadStatus (int iStatus)
 	ASSERT (iStatus > CACHE_THREAD_STATUS_BEGIN);
 	ASSERT (iStatus < CACHE_THREAD_STATUS_END);
 
+	Lock();
 	m_iCacheThreadStatus = iStatus;
+	Unlock();
 }
 
 int CBrowserCacheList::GetThreadStatus()
 {
-	return m_iCacheThreadStatus;
+	Lock();
+	int iStatus = m_iCacheThreadStatus;
+	Unlock();
+	return iStatus;
 }
 
 void CBrowserCacheList::ResetAllSelections()
 {
-	CBrowserCacheItem *pItem = GetFirstSelectedItem();
-
-	while (pItem)
+	Lock();
+	for (auto& pItem : m_Items)
 	{
-		pItem->SetSelected(FALSE);
-
-		pItem = GetNextSelectedItem();
+		pItem->SetSelected (FALSE);
 	}
+	Unlock();
 }
 
-CBrowserCacheItem *CBrowserCacheList::GetFirstSelectedItem()
+void CBrowserCacheList::GetSelectedItems(vector<CBrowserCacheItem*>& items)
 {
-	m_pSelected = GetFirst();
+	items.clear();
 
-	while (m_pSelected)
+	Lock();
+	for (auto& pItem : m_Items)
 	{
-		if (m_pSelected->IsSelected())
+		if (pItem->IsSelected())
 		{
-			return m_pSelected;
+			items.push_back (pItem.get());
 		}
-		m_pSelected = m_pSelected->GetNext();
 	}
-
-	return m_pSelected;
+	Unlock();
 }
-
-CBrowserCacheItem *CBrowserCacheList::GetNextSelectedItem()
-{
-	while (m_pSelected)
-	{
-		m_pSelected = m_pSelected->GetNext();
-		
-		if ((m_pSelected) && ( (m_pSelected != NULL) ? m_pSelected->IsSelected() : FALSE) )
-		{
-			return m_pSelected;
-		}		
-	}
-	
-	return m_pSelected;
-}
-
-
 
 CBrowserCacheItem *CBrowserCacheList::GetAtPosition (int iPosition)
 {
-	CBrowserCacheItem *pTemp = GetFirst();
-	int iCounter = 0;
+	CBrowserCacheItem *pItem = NULL;
 
-	while (pTemp)
+	Lock();
+	if ((iPosition >= 0) && (iPosition < (int)m_Items.size()))
 	{
-		if (iCounter == iPosition)
-		{
-			return pTemp;
-		}
-		
-		iCounter++;
-		pTemp = pTemp->GetNext();
+		pItem = m_Items[iPosition].get();
 	}
+	Unlock();
 
-	return NULL;
+	return pItem;
 }
 
 int CBrowserCacheList::GetCount()
 {
-	CBrowserCacheItem *pTemp = GetFirst();
-	int iCounter = 0;
-
-	while (pTemp)
-	{		
-		iCounter++;
-		pTemp = pTemp->GetNext();
-	}
-
-	return iCounter;
+	Lock();
+	int iCount = (int)m_Items.size();
+	Unlock();
+	return iCount;
 }
 
 void CBrowserCacheList::RemoveItem(CBrowserCacheItem *pItem)
 {
-	ASSERT (pItem);
-
-	CBrowserCacheItem *pTemp = GetFirst();
-
-	while (pTemp)
+	if (!pItem)
 	{
-		if (pTemp == pItem)
+		return;
+	}
+
+	Lock();
+	for (auto it = m_Items.begin(); it != m_Items.end(); ++it)
+	{
+		if (it->get() == pItem)
 		{
-			if (pTemp->GetPrevious())
-			{
-				pTemp->GetPrevious()->SetNext(pTemp->GetNext());
-			}
-
-			if (pTemp->GetNext())
-			{
-				pTemp->GetNext()->SetPrevious(pTemp->GetPrevious());
-			}
-
-			if (pTemp == GetFirst())
-			{
-				SetFirst (pTemp->GetNext());
-			}
-
-			if (pTemp == GetWrite())
-			{
-				SetWrite (pTemp->GetPrevious());
-			}
-
-			if (m_pSelected == pTemp)
-			{
-				// Let's move the selected item to the next item so we don't 
-				// accidentally access a deleted item
-				m_pSelected = pTemp->GetNext();
-			}
-
-			delete pTemp;
-			pTemp = NULL;
-		}
-		else
-		{
-			pTemp = pTemp->GetNext();
+			m_Items.erase (it);
+			break;
 		}
 	}
+	Unlock();
 }
 
 void CBrowserCacheList::AddItem(CBrowserCacheItem *pItem)
 {
-	ASSERT (pItem);
-	CString strCompare1("");
-	CString strCompare2(pItem->GetFileName());
-	strCompare2.MakeLower();
-
-	if (pItem)
+	if (!pItem)
 	{
-		pItem->SetParent (this);
-
-		if (!GetFirst())
-		{
-			SetAll (pItem);
-		}
-		else
-		{
-			CBrowserCacheItem *pRead = GetFirst();
-			CBrowserCacheItem *pTempLeft = NULL;
-			CBrowserCacheItem *pTempRight = NULL;
-		
-			// Insert the item into the sorted list 
-			while (pRead)
-		    {
-				strCompare1 = pRead->GetFileName();
-				strCompare1.MakeLower();
-	
-		        if (strCompare1 > strCompare2)
-				{                           
-					pTempLeft = pRead->GetPrevious();
-					pTempRight = pRead;
-					pRead = NULL;
-				}
-				else
-				{
-					pRead = pRead->GetNext();
-				}
-			}
-	        
-			//  Item belongs at the end 
-			if ((pTempRight == NULL) && (pTempLeft == NULL))
-			{                   
-	            GetWrite()->SetNext (pItem);
-				pItem->SetPrevious (GetWrite());
-	            SetWrite (pItem);
-			}
-	
-			//  Item is the first in the list 
-			if ((pTempLeft == NULL) && (pTempRight != NULL))
-			{		    
-				pItem->SetNext (GetFirst());
-				GetFirst()->SetPrevious (pItem);
-				SetFirst (pItem);
-			}
-
-			//  Item is somewhere in the middle of the list 
-			if ((pTempLeft != NULL) && (pTempRight != NULL))
-			{			
-				pTempLeft->SetNext (pItem);
-				pItem->SetPrevious (pTempLeft);
-				pItem->SetNext (pTempRight);
-				pTempRight->SetPrevious (pItem);
-			}			
-		}
+		ASSERT (FALSE);
+		return;
 	}
+
+	pItem->SetParent (this);
+
+	CString strNew (pItem->GetFileName());
+	strNew.MakeLower();
+
+	Lock();
+	auto it = std::lower_bound (m_Items.begin(), m_Items.end(), strNew,
+		[](const unique_ptr<CBrowserCacheItem>& pOwned, const CString& strKey)
+		{
+			CString strExist = pOwned->GetFileName();
+			strExist.MakeLower();
+			return strExist < strKey;
+		});
+	m_Items.insert (it, unique_ptr<CBrowserCacheItem>(pItem));
+	Unlock();
 }
 
 void CBrowserCacheList::Initialize(LPCTSTR szDirectory, LPVOID lpDoc, BOOL bRefresh /* = FALSE */)
 {
 	// Only continue if we're looking at a new directory.
-	if (!m_strDirectory.CompareNoCase(szDirectory) && !bRefresh)
+	Lock();
+	BOOL bSameDirectory = !m_strDirectory.CompareNoCase(szDirectory) && !bRefresh;
+	Unlock();
+	if (bSameDirectory)
 	{
 		return;
 	}
@@ -1212,8 +1118,11 @@ void CBrowserCacheList::Initialize(LPCTSTR szDirectory, LPVOID lpDoc, BOOL bRefr
 		}
 	}	
 
+	Lock();
 	m_strDirectory = szDirectory;
 	m_strDirectory.MakeLower();
+	CString strThisDirectory (m_strDirectory);
+	Unlock();
 
 	CString strCacheFileName ("");
 	CString strDiskFileName ("");
@@ -1224,7 +1133,7 @@ void CBrowserCacheList::Initialize(LPCTSTR szDirectory, LPVOID lpDoc, BOOL bRefr
 	CFileFind fFinder;
 
 	// Build a list of all the files in this directory
-	strSearch = TrimSlashes (m_strDirectory) + "\\*.*";
+	strSearch = TrimSlashes (strThisDirectory) + "\\*.*";
 	
 	BOOL bScanning = fFinder.FindFile(strSearch);
 	BOOL bCleanup = FALSE;
@@ -1261,13 +1170,15 @@ void CBrowserCacheList::Initialize(LPCTSTR szDirectory, LPVOID lpDoc, BOOL bRefr
 				return;
 			}
 
-			if (strDirectory == m_strDirectory)
+			if (strDirectory == strThisDirectory)
 			{
 				// This is the cache file we're looking for
 				TRACE ("Cache file is found\n");
 				bWorking = FALSE;
 				bCacheFileFound = TRUE;
+				Lock();
 				m_strCacheFileName = strCacheFileName;
+				Unlock();
 			}
 		}
 	}
@@ -1276,11 +1187,13 @@ void CBrowserCacheList::Initialize(LPCTSTR szDirectory, LPVOID lpDoc, BOOL bRefr
 	{
 		TRACE ("Cache file not found, going to build a new file, with header\n");
 		// Time to create a new header
-		if (!CreateCacheFile (m_strDirectory))
+		if (!CreateCacheFile (strThisDirectory))
 		{
 			return;
 		}
 	}
+
+	strCacheFileName = GetCacheFileName();
 
 	ASSERT (m_lpCacheHeader);
 
@@ -1288,7 +1201,7 @@ void CBrowserCacheList::Initialize(LPCTSTR szDirectory, LPVOID lpDoc, BOOL bRefr
 	// those files found in the directory with what's in the cache file
 
 	FILE* rp = NULL;
-	errno_t err = fopen_s( &rp, m_strCacheFileName, "r+b");
+	errno_t err = fopen_s( &rp, strCacheFileName, "r+b");
 	if (err != 0)
 	{
 		SetErrorCode(CL_ERROR_FAIL_TO_OPEN);
@@ -1339,7 +1252,7 @@ void CBrowserCacheList::Initialize(LPCTSTR szDirectory, LPVOID lpDoc, BOOL bRefr
 		{
 			// Cache file is corrupt... yank it out
 			fclose (rp);
-			remove (m_strCacheFileName);
+			remove (strCacheFileName);
 			bValidFile = FALSE;
 			continue;
 		}
@@ -1367,7 +1280,7 @@ void CBrowserCacheList::Initialize(LPCTSTR szDirectory, LPVOID lpDoc, BOOL bRefr
 			// Cache file is corrupt... yank it out
 			fclose (rp);
 
-			remove (m_strCacheFileName);
+			remove (strCacheFileName);
 			bValidFile = FALSE;
 
 			if (pbyTempHeader)
@@ -1546,12 +1459,14 @@ void CBrowserCacheList::Initialize(LPCTSTR szDirectory, LPVOID lpDoc, BOOL bRefr
 	{
 		TRACE ("Cache file was corrupt, going to build a new file, with header\n");
 		// Time to create a new header
-		if (!CreateCacheFile (m_strDirectory))
+		if (!CreateCacheFile (strThisDirectory))
 		{
 			return;
 		}
+
+		strCacheFileName = GetCacheFileName();
 	
-		err = fopen_s( &rp, m_strCacheFileName, "r+b");		
+		err = fopen_s( &rp, strCacheFileName, "r+b");		
 		if (err != 0)
 		{
 			SetErrorCode(CL_ERROR_FAIL_TO_WRITE);
@@ -1571,7 +1486,7 @@ void CBrowserCacheList::Initialize(LPCTSTR szDirectory, LPVOID lpDoc, BOOL bRefr
 	
 	for (iStrPosition = 0; iStrPosition < saDiskFiles.GetSize(); iStrPosition++)
 	{
-		strDiskFileName = TrimSlashes (m_strDirectory) + "\\" + saDiskFiles.GetAt(iStrPosition);
+		strDiskFileName = TrimSlashes (strThisDirectory) + "\\" + saDiskFiles.GetAt(iStrPosition);
 
 		// Go create a new item
 		pNewItem = new CBrowserCacheItem;
@@ -1745,7 +1660,9 @@ BOOL CBrowserCacheList::CreateCacheFile (LPCTSTR szDirectory)
 	fwrite ((BYTE *)m_lpCacheHeader, 1, iHeaderSize, wp);
 	fclose (wp);
 
+	Lock();
 	m_strCacheFileName = strCacheFileName;
+	Unlock();
 
 	return TRUE;
 }

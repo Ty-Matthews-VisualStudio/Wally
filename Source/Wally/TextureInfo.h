@@ -67,7 +67,7 @@ public:
 // Methods
 public:
 	void Init (LPQ2_MIP_S WalHeader);
-	void LoadJSON();
+	void LoadJSON(BOOL bAllowCreateDefault = TRUE);
 	void CleanUp();
 	void EnableDisableFlagsContent();
 	

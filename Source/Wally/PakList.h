@@ -9,6 +9,8 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
+#include <memory>
+
 #define	SERIALIZE_READ				0x1
 #define SERIALIZE_WRITE				0x2
 #define SERIALIZE_MODIFIED_UNKNOWN	0x4
@@ -90,37 +92,6 @@ typedef struct
 
 
 
-class CPakPasteItem
-{
-private:
-	CPakBase *m_pPakBase;
-	
-	CPakPasteItem *m_pNext;
-	CPakPasteItem *m_pPrevious;
-
-public:
-	CPakPasteItem (CPakBase *pPakBase)
-	{
-		SetNext (NULL);
-		SetPrevious (NULL);
-		m_pPakBase = pPakBase;
-	}
-	~CPakPasteItem()
-	{
-		SetNext (NULL);
-		SetPrevious (NULL);
-	}
-	CPakBase *GetPakBase()
-	{
-		return m_pPakBase;
-	}
-	
-	void SetNext(CPakPasteItem *pNext);
-	CPakPasteItem *GetNext();
-	void SetPrevious(CPakPasteItem *pPrevious);
-	CPakPasteItem *GetPrevious();
-};
-
 class CPakBase 
 {	
 protected:
@@ -191,9 +162,6 @@ public:
 class CPakItem : public CPakBase
 {
 private:
-	CPakItem *m_pNext;
-	CPakItem *m_pPrevious;
-
 	packfile_t m_PackFileHeader;
 	CString m_strDataFile;
 	CString m_strShortName;
@@ -242,11 +210,6 @@ public:
 		return m_strDataFile;
 	}
 
-	void SetNext (CPakItem *pNext);
-	CPakItem *GetNext();
-	void SetPrevious (CPakItem *pPrevious);
-	CPakItem *GetPrevious();
-
 	BOOL Serialize (int iStage, CPakDirectory *pParent, CFile *pNewPakFile, CFile *pOldPakFile, UINT *piPosition, UINT *piCount, CProgressBar *pProgressBar);
 	
 	void SetType(LPCTSTR szType)
@@ -284,15 +247,8 @@ public:
 class CPakDirectory : public CPakBase
 {
 private:
-	CPakItem *m_pFirstItem;
-	CPakItem *m_pWriteItem;
-	CPakItem *m_pReadItem;
-
-	CPakDirectory *m_pFirstDirectory;
-	CPakDirectory *m_pWriteDirectory;
-	
-	CPakDirectory *m_pNext;
-	CPakDirectory *m_pPrevious;
+	vector< unique_ptr<CPakItem> > m_Items;
+	vector< unique_ptr<CPakDirectory> > m_Directories;
 
 	CPakDirectory *m_pParent;
 
@@ -314,23 +270,15 @@ public:
 	void SetDirectoryName (LPCTSTR szDirectory = NULL);
 	CString GetTempDirectoryName();
 
-	void SetFirstItem(CPakItem *pFirst);
-	CPakItem *GetFirstItem();
-	void SetWriteItem(CPakItem *pWrite);
-	CPakItem *GetWriteItem();
+	vector< unique_ptr<CPakItem> >& GetItems()
+	{
+		return m_Items;
+	}
+	vector< unique_ptr<CPakDirectory> >& GetDirectories()
+	{
+		return m_Directories;
+	}
 
-	void SetNext(CPakDirectory *pNext);
-	CPakDirectory *GetNext();
-	void SetPrevious(CPakDirectory *pPrevious);
-	CPakDirectory *GetPrevious();
-
-	void SetFirstDirectory(CPakDirectory *pFirst);
-	CPakDirectory *GetFirstDirectory();
-	void SetWriteDirectory(CPakDirectory *pWrite);
-	CPakDirectory *GetWriteDirectory();	
-
-	CPakItem *GetFirstPakItem();
-	CPakItem *GetNextPakItem();	
 	void GetItemCount(UINT *piCount, UINT *piSize = NULL, CStringArray *psaWildCards = NULL, int iFlags = 0);
 
 	void BuildTree (CTreeCtrl& List, HTREEITEM htParent, int iClosedIcon, int iOpenIcon);
@@ -357,12 +305,11 @@ public:
 class CPakList : public CPakBase
 {
 private:
-	CPakDirectory *m_pRoot;
+	unique_ptr<CPakDirectory> m_pRoot;
 	CString m_strFileName;
 	CString m_strTempDirectory;
 
-	CPakPasteItem *m_pFirstPasteItem;
-	CPakPasteItem *m_pWritePasteItem;
+	vector<CPakBase *> m_PasteItems;
 
 
 public:
@@ -387,13 +334,15 @@ public:
 
 	void AddToPasteList(CPakBase *pItem);
 	void PurgePasteList();
+	void RemoveFromPasteList(CPakBase *pItem);
+	void RemoveDirectoryFromPasteList(CPakDirectory *pDirectory);
 	int GetPasteCount();
+	vector<CPakBase *>& GetPasteItems()
+	{
+		return m_PasteItems;
+	}
 	
 	CPakDirectory *FindDirectory (LPCTSTR szDirectory);
-	void SetFirstPasteItem (CPakPasteItem *pFirst);
-	CPakPasteItem *GetFirstPasteItem();
-	void SetWritePasteItem (CPakPasteItem *pWrite);
-	CPakPasteItem *GetWritePasteItem();
 };
 
 

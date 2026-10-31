@@ -9,6 +9,8 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
+#include <memory>
+
 class CSortStringArray;
 class CBrowserCacheThread;
 class CBrowserCacheList;
@@ -129,9 +131,6 @@ private:
 	BYTE *m_pbyImageData;
 	BYTE *m_pbyPalette;
 
-	CBrowserCacheItem *m_pNext;
-	CBrowserCacheItem *m_pPrevious;
-
 	LPCACHE_ITEM m_lpItemHeader;
 
 	CBrowserCacheList *m_pParentList;
@@ -209,19 +208,16 @@ public:
 	int GetErrorCode();
 
 	BOOL RecreateThumbnail (int iWidth = 0, int iHeight = 0);
-	void SetNext (CBrowserCacheItem *pNext);
-	CBrowserCacheItem *GetNext();
-	void SetPrevious (CBrowserCacheItem *pPrevious);
-	CBrowserCacheItem *GetPrevious();
 };
 
 class CBrowserCacheList  
 {
 // Private Members
 private:
-	CBrowserCacheItem *m_pFirst;
-	CBrowserCacheItem *m_pWrite;
-	CBrowserCacheItem *m_pSelected;
+	vector< unique_ptr<CBrowserCacheItem> > m_Items;
+	CRITICAL_SECTION m_cs;
+	DWORD m_dwLockThread;
+	int m_iLockCount;
 
 	CString m_strDirectory;
 	CString m_strCacheFileName;
@@ -247,14 +243,8 @@ public:
 	void RemoveItem(CBrowserCacheItem *pItem);
 	CString GenerateRandomFileName(int iLength);
 
-	CString GetDirectory()
-	{
-		return m_strDirectory;
-	}
-	CString GetCacheFileName()
-	{
-		return m_strCacheFileName;
-	}
+	CString GetDirectory();
+	CString GetCacheFileName();
 	void Initialize(LPCTSTR szDirectory, LPVOID lpDoc, BOOL bRefresh = FALSE);
 	BOOL GetHeaderFromFile (LPCTSTR szFileName);
 	CString FindDirNameFromFile(LPCTSTR szFileName);
@@ -263,19 +253,15 @@ public:
 	BOOL CreateTempCacheFile ();
 
 	void PurgeList();
-	void SetFirst (CBrowserCacheItem *pFirst);
-	CBrowserCacheItem *GetFirst();
-	void SetWrite (CBrowserCacheItem *pWrite);
-	CBrowserCacheItem *GetWrite();
-	void SetAll (CBrowserCacheItem *pItem);
+	void Lock();
+	void Unlock();
 
 	void SetThreadMessage (int iMessage);
 	int GetThreadMessage ();
 	void SetThreadStatus (int iStatus);
 	int GetThreadStatus ();
 
-	CBrowserCacheItem *GetFirstSelectedItem();
-	CBrowserCacheItem *GetNextSelectedItem();
+	void GetSelectedItems(vector<CBrowserCacheItem*>& items);
 	
 	void ResetAllSelections();
 

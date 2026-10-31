@@ -538,7 +538,7 @@ private:
 	afx_msg void OnFileLoadQ1palette();
 	afx_msg void OnEditPasteSpecialEffects();
 	afx_msg void OnUpdateEditPasteSpecialEffects(CCmdUI* pCmdUI);
-	afx_msg void OnViewRules();
+	//afx_msg void OnViewRules();
 	afx_msg void OnFileTestTxl();
 	afx_msg void OnUpdateFileTestTxl(CCmdUI* pCmdUI);
 	afx_msg void OnFileDebug();

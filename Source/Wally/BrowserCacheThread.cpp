@@ -353,6 +353,7 @@ void CBrowserCacheThread::MainLoop (LPVOID pParam)
 				}
 				pCacheList->SetThreadStatus (CACHE_THREAD_STATUS_IDLE);
 			}
+			break;
 
 		case CACHE_THREAD_MESSAGE_STOP:
 			{

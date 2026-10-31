@@ -7,6 +7,8 @@
 // WadMergeDlg.h : header file
 //
 
+#include <memory>
+
 /////////////////////////////////////////////////////////////////////////////
 // CWadMergeDlg dialog
 
@@ -20,6 +22,7 @@ class CWadMergeDlg : public CDialog
 // Construction
 public:
 	CWadMergeDlg(CWnd* pParent = NULL);   // standard constructor
+	virtual ~CWadMergeDlg();
 
 // Dialog Data
 	//{{AFX_DATA(CWadMergeDlg)
@@ -36,16 +39,13 @@ public:
 // Overrides
 	// ClassWizard generated virtual function overrides
 	//{{AFX_VIRTUAL(CWadMergeDlg)
-	public:
-	virtual int DoModal();
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 	//}}AFX_VIRTUAL
 
 private:
-	typedef list< CWadMergeJob * > MergeJobs;
+	typedef vector< unique_ptr<CWadMergeJob> > MergeJobs;
 	typedef MergeJobs *LPMergeJobs;
-	typedef MergeJobs::iterator itMergeJob;
 
 	MergeJobs m_MergeJobs;
 	BOOL m_bOpenPackage;
@@ -67,6 +67,7 @@ public:
 protected:
 	virtual void AddJob( CWadMergeJob *pNewJob );
 	virtual void EnableDisable();
+	virtual void FillOpenPackages( CPackageDoc *pSelectDoc );
 	virtual void UpdateList();
 	virtual DWORD GetNumImages();
 
@@ -88,6 +89,7 @@ protected:
 	afx_msg void OnButtonProperties();
 	afx_msg void OnRadioOpenWad();
 	afx_msg void OnButtonQuickAdd();
+	afx_msg void OnDblclkListWads(NMHDR* pNMHDR, LRESULT* pResult);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

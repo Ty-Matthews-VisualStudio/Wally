@@ -13,115 +13,14 @@ static char THIS_FILE[]=__FILE__;
 #endif
 
 //////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
-
-CImageIconItem::CImageIconItem(int iSystemIcon, int iListIcon)
-{
-	m_iSystemIcon = iSystemIcon;
-	m_iListIcon = iListIcon;
-
-	SetNext (NULL);
-	SetPrevious (NULL);
-}
-
-CImageIconItem::~CImageIconItem()
-{
-	SetNext (NULL);
-	SetPrevious (NULL);
-}
-
-void CImageIconItem::SetNext (CImageIconItem *pNext)
-{
-	m_pNext = pNext;
-}
-
-CImageIconItem *CImageIconItem::GetNext()
-{
-	return m_pNext;
-}
-
-void CImageIconItem::SetPrevious (CImageIconItem *pPrevious)
-{
-	m_pPrevious = pPrevious;
-}
-
-CImageIconItem *CImageIconItem::GetPrevious()
-{
-	return m_pPrevious;
-}
-
-//////////////////////////////////////////////////////////////////////
 // CImageIconList Class
 //////////////////////////////////////////////////////////////////////
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
-
-CImageIconList::CImageIconList()
-{
-	CImageList::CImageList();
-
-	SetFirst (NULL);
-	SetWrite (NULL);
-}
-
-CImageIconList::~CImageIconList()
-{
-	CImageList::~CImageList();
-	PurgeAll();
-}
-
-void CImageIconList::PurgeAll()
-{
-	CImageIconItem *pTemp = GetFirst();
-
-	while (pTemp)
-	{
-		SetFirst (GetFirst()->GetNext());
-		delete pTemp;
-		pTemp = GetFirst();
-	}
-
-	SetFirst (NULL);
-	SetWrite (NULL);
-}
-
-CImageIconItem *CImageIconList::GetFirst()
-{
-	return m_pFirst;
-}
-
-void CImageIconList::SetFirst (CImageIconItem *pFirst)
-{
-	m_pFirst = pFirst;
-}
-
-CImageIconItem *CImageIconList::GetWrite()
-{
-	return m_pWrite;
-}
-
-void CImageIconList::SetWrite (CImageIconItem *pWrite)
-{
-	m_pWrite = pWrite;
-}
-
 int CImageIconList::FindMatch (int iSystemIcon)
 {
-	CImageIconItem *pItem = GetFirst();
+	auto it = m_mapSystemToListIcon.find (iSystemIcon);
 
-	while (pItem)
-	{
-		if (pItem->GetSystemIcon() == iSystemIcon)
-		{
-			return pItem->GetListIcon();
-		}
-		pItem = pItem->GetNext();
-	}
-
-	return -1;
+	return (it != m_mapSystemToListIcon.end()) ? it->second : -1;
 }
 
 int CImageIconList::Add( CBitmap* pbmImage, CBitmap* pbmMask, int iSystemIcon /* = -1 */)
@@ -196,20 +95,5 @@ int CImageIconList::Add( HICON hIcon, int iSystemIcon /* = -1 */ )
 
 void CImageIconList::AddToList (int iSystemIcon, int iListIcon)
 {
-	CImageIconItem *pItem = new CImageIconItem (iSystemIcon, iListIcon);
-
-	if (pItem)
-	{
-		if (!GetFirst())
-		{
-			SetFirst (pItem);
-			SetWrite (pItem);
-		}
-		else
-		{
-			GetWrite()->SetNext(pItem);
-			pItem->SetPrevious (GetWrite());
-			SetWrite (pItem);
-		}
-	}
+	m_mapSystemToListIcon.emplace (iSystemIcon, iListIcon);
 }

@@ -49,8 +49,9 @@
 //
 //	void CMyCoolView::OnBegindrag()
 //	{
-//		CDelayRender DelayData(this);
-//		DelayData.DoDragDrop();
+//		CDelayRender *pDelayData = new CDelayRender(this);
+//		pDelayData->DoDragDrop();
+//		pDelayData->ExternalRelease();
 //	}
 //
 //	void CMyCoolView::OnCopy()
@@ -59,23 +60,13 @@
 //		pDelayData->SetClipboard();
 //	}
 //
-//	The first example creates the DelayData object and calls DoDragDrop().  This means MFC will
-//	start the entire drag-n-drop operation for you, and prepare the clipboard exactly the way
-//	it should be for delayed rendering.  The class deconstructor IS called, and the life of 
-//	this item is only for that function.  This is because the clipboard data is built having
-//	the correct format, but with additional flags to say the data can be rendered via the 
-//	CDelayRenderView->RenderData() function.  IE, the address of this function is added to the
-//	clipboard and Windows handles the execution prior to giving the application that is requesting
-//	the data control of the clipboard.  Hence the whole reason for even doing delayed rendering...
-//	the data isn't pushed up to the clipboard until it's actually needed (if ever.)
+//	Both paths heap-allocate.  DoDragDrop is synchronous, but Explorer commonly still
+//	holds IDataObject after it returns.  ExternalRelease drops our construction ref;
+//	if COM is done the object deletes itself, otherwise OnFinalRelease runs later.
+//	A stack CDelayRender would run Empty() / ~CCmdTarget with m_dwRef > 1.
 //
-//	The second item creates a new pointer on the stack.  The life of this variable extends past
-//	the scope of the local function.  This is because nothing does the work of opening the clipboard 
-//	and building the foundation like DoDragDrop() does.  This is an even more delayed version, in 
-//	that the base format isn't even put onto the clipboard until it comes time to render.  Everything 
-//	happens at once at that point, and if the object was removed from memory, there's nothing for
-//	Windows to call in order to check for the proper render formats.  Fortunately, Windows also takes
-//	care of removing the item from memory after the clipboard has been closed and moved on.
+//	SetClipboard is even more delayed: the object must stay alive until the clipboard
+//	is replaced.  Windows releases it at that point.
 ///////////////////////////////////////////////////////////////////////////////
  
 #include "stdafx.h"
@@ -130,9 +121,13 @@ BOOL CDelayRender::DelayRenderDROPEFFECT ( LPFORMATETC lpFormatEtc, LPSTGMEDIUM 
 {	
 	try
 	{
-		lpStgMedium->tymed = TYMED_HGLOBAL;	
-		lpStgMedium->hGlobal = RenderDROPEFFECT();
-		return TRUE;
+		HGLOBAL hGlobal = RenderDROPEFFECT();
+		if (hGlobal)
+		{
+			lpStgMedium->tymed = TYMED_HGLOBAL;	
+			lpStgMedium->hGlobal = hGlobal;
+			return TRUE;
+		}
 	}
 	catch (...)
 	{
@@ -145,9 +140,13 @@ BOOL CDelayRender::DelayRenderHDROP ( LPFORMATETC lpFormatEtc, LPSTGMEDIUM lpStg
 {
 	try
 	{
-		lpStgMedium->tymed = TYMED_HGLOBAL;	
-		lpStgMedium->hGlobal = RenderHDROP();
-		return TRUE;
+		HGLOBAL hGlobal = RenderHDROP();
+		if (hGlobal)
+		{
+			lpStgMedium->tymed = TYMED_HGLOBAL;	
+			lpStgMedium->hGlobal = hGlobal;
+			return TRUE;
+		}
 	}
 	catch (...)
 	{

@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "Wally.h"
 #include "PackageListBox.h"
+#include "PackageView.h"
 #include "WADList.h"
 
 #ifdef _DEBUG
@@ -132,15 +133,22 @@ void CPackageListBox::OnMouseMove(UINT nFlags, CPoint point)
 				sf.Write(&pParent, sizeof(CWnd *));
 				HGLOBAL hMem = sf.Detach();	
 				
-				if (!hMem) return;
-				pSource->CacheGlobalData(g_iPackageFormat, hMem);	
-				pSource->DoDragDrop();
-
-				if (pSource)
+				if (!hMem)
 				{
 					delete pSource;
-					pSource = NULL;
+					return;
 				}
+				pSource->CacheGlobalData(g_iPackageFormat, hMem);
+
+				CPackageView *pView = (CPackageView *)pParent;
+				HGLOBAL hDrop = pView->CreateHDROPFromSelection();
+				if (hDrop)
+				{
+					pSource->CacheGlobalData(CF_HDROP, hDrop);
+				}
+
+				pSource->DoDragDrop();
+				pSource->ExternalRelease();
 				m_bDragging = true;
 			}
 		}

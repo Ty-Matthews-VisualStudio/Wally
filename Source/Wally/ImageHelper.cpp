@@ -30,7 +30,7 @@ extern CWallyApp theApp;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 //  g_strTypeDescriptions is used by CWildCardList and CWildCardItem to fill in
-//  a linked-list of currently supported file types.  The following string array defines
+//  a list of currently supported file types.  The following string array defines
 //  many things, from descriptions as they appear in Wally, to file extensions, to
 //  registry keys, et al.  The order in which they appear *directly* correlates to
 //  the #define statements located in ImageHelper.h.  If the order or the value
@@ -112,39 +112,13 @@ CWildCardItem::CWildCardItem (LPCTSTR szDescription, LPCTSTR szWildCard, LPCTSTR
 	m_strUseCurrentDestRegKey = szUseCurrentDestRegKey;
 
 	m_iImageType = iImageType;
-	
-	SetNext (NULL);
-	SetPrevious (NULL);	
 	m_bInChangeMode = FALSE;
+	m_bUseCurrentSourcePalette = TRUE;
+	m_bUseCurrentDestPalette = TRUE;
+	m_bTempUseCurrentSourcePalette = TRUE;
+	m_bTempUseCurrentDestPalette = TRUE;
 
 	FindAssociatedProgram();
-}
-
-CWildCardItem::~CWildCardItem ()
-{
-	SetNext (NULL);
-	SetPrevious (NULL);
-}
-
-CWildCardItem *CWildCardItem::GetNext()
-{
-	return m_pNext;
-}
-
-
-void CWildCardItem::SetNext (CWildCardItem *pNext)
-{
-	m_pNext = pNext;
-}
-
-CWildCardItem *CWildCardItem::GetPrevious()
-{
-	return m_pPrevious;
-}
-
-void CWildCardItem::SetPrevious (CWildCardItem *pPrevious)
-{
-	m_pPrevious = pPrevious;
 }
 
 CString CWildCardItem::GetDescription()
@@ -483,9 +457,10 @@ void CWildCardItem::RemoveIfAssociatedWithWally()
 
 CWildCardList::CWildCardList()
 {
-	SetAll (NULL);
 	int iIndex = 0;
 	int iImageType = 0;
+
+	m_Items.reserve (WILDCARD_LIST_COUNT);
 
 	for (; iIndex < WILDCARD_LIST_LENGTH; iIndex += WILDCARD_LIST_ITEM_COUNT, iImageType++)
 	{
@@ -500,225 +475,106 @@ CWildCardList::CWildCardList()
 	}
 }
 
-CWildCardList::~CWildCardList()
-{
-	PurgeList();
-}
-
-void CWildCardList::SetAll(CWildCardItem *pItem)
-{
-	SetFirst (pItem);
-	SetWrite (pItem);
-	SetRead (pItem);
-}
-
-void CWildCardList::PurgeList()
-{
-	CWildCardItem *pItem = NULL;
-	m_pRead = GetFirst();
-
-	while (m_pRead)
-	{
-		pItem = m_pRead->GetNext();
-		delete m_pRead;
-		m_pRead = pItem;
-	}
-	SetAll (NULL);
-}
-
 void CWildCardList::AddItem (LPCTSTR szDescription, LPCTSTR szWildCard, LPCTSTR szWildCardExtension, LPCTSTR szSourceRegKey, LPCTSTR szDestRegKey, LPCTSTR szUseCurrentSourceRegKey, LPCTSTR szUseCurrentDestRegKey, int iImageType)
 {
-	CWildCardItem *pNewItem = new CWildCardItem (szDescription, szWildCard, szWildCardExtension, szSourceRegKey, szDestRegKey, szUseCurrentSourceRegKey, szUseCurrentDestRegKey, iImageType);
-	if (!pNewItem)
-	{
-		ASSERT (FALSE);
-		return;
-	}
-
-	if (!GetFirst())
-	{
-		SetAll (pNewItem);
-	}
-	else
-	{
-		m_pWrite->SetNext (pNewItem);
-		pNewItem->SetPrevious (m_pWrite);
-		m_pWrite = pNewItem;	
-	}
-
-	pNewItem = NULL;
+	m_Items.emplace_back (szDescription, szWildCard, szWildCardExtension, szSourceRegKey, szDestRegKey, szUseCurrentSourceRegKey, szUseCurrentDestRegKey, iImageType);
 }
 
 int CWildCardList::GetCount()
 {
-	int iCount = 0;
-	m_pRead = GetFirst();
-
-	while (m_pRead)
-	{
-		iCount++;
-		m_pRead = m_pRead->GetNext();
-	}
-	return iCount;
+	return (int)m_Items.size();
 }
 
 CWildCardItem *CWildCardList::GetAt(int iPosition)
 {
-	int j = 0;
-
-	m_pRead = GetFirst();
-
-	for (j = 0; j < iPosition; j++)
+	if ((iPosition < 0) || (iPosition >= (int)m_Items.size()))
 	{
-		m_pRead = m_pRead->GetNext();
+		return NULL;
 	}
-	
-	return m_pRead;
-}
 
-CWildCardItem *CWildCardList::GetFirstSupportedImage()
-{
-	m_pRead = GetFirst();
-	return m_pRead;
-}
-
-CWildCardItem *CWildCardList::GetNextSupportedImage()
-{	
-	if (m_pRead)
-	{	
-		m_pRead = m_pRead->GetNext();
-	}
-	return m_pRead;
-}
-
-
-	
-CWildCardItem *CWildCardList::GetFirst()
-{
-	return m_pFirst;
-}
-
-void CWildCardList::SetFirst(CWildCardItem *pFirst)
-{
-	m_pFirst = pFirst;
-}
-
-CWildCardItem *CWildCardList::GetWrite()
-{
-	return m_pWrite;
-}
-
-void CWildCardList::SetWrite(CWildCardItem *pWrite)
-{
-	m_pWrite = pWrite;
-}
-
-CWildCardItem *CWildCardList::GetRead()
-{
-	return m_pRead;
-}
-
-void CWildCardList::SetRead(CWildCardItem *pRead)
-{
-	m_pRead = m_pRead;
+	return &m_Items[iPosition];
 }
 
 void CWildCardList::ReadRegistry()
 {
 	CString strBatchRegistryKey ("BatchSettings");
-	CWildCardItem *pItem = GetFirstSupportedImage();
 	int iCheck = 0;
 	
-	while (pItem)
+	for (CWildCardItem &item : m_Items)
 	{
-		if (pItem->GetSourceRegKey() != "")
+		if (item.GetSourceRegKey() != "")
 		{
-			pItem->SetSourcePaletteFile (	theApp.GetProfileString	(strBatchRegistryKey,    pItem->GetSourceRegKey(),		""));
+			item.SetSourcePaletteFile (	theApp.GetProfileString	(strBatchRegistryKey,    item.GetSourceRegKey(),		""));
 		}
 
-		if (pItem->GetDestRegKey() != "")
+		if (item.GetDestRegKey() != "")
 		{
-			pItem->SetDestPaletteFile	(	theApp.GetProfileString	(strBatchRegistryKey,    pItem->GetDestRegKey(),		""));
+			item.SetDestPaletteFile	(	theApp.GetProfileString	(strBatchRegistryKey,    item.GetDestRegKey(),		""));
 		}
 
-		if (pItem->GetUseCurrentSourceRegKey() != "")
+		if (item.GetUseCurrentSourceRegKey() != "")
 		{
-			iCheck = ( theApp.GetProfileInt	(strBatchRegistryKey,    pItem->GetUseCurrentSourceRegKey(),		1));
-			pItem->m_bUseCurrentSourcePalette = iCheck ? TRUE : FALSE;			
+			iCheck = ( theApp.GetProfileInt	(strBatchRegistryKey,    item.GetUseCurrentSourceRegKey(),		1));
+			item.m_bUseCurrentSourcePalette = iCheck ? TRUE : FALSE;			
 		}
 
-		if (pItem->GetUseCurrentDestRegKey() != "")
+		if (item.GetUseCurrentDestRegKey() != "")
 		{
-			iCheck = ( theApp.GetProfileInt	(strBatchRegistryKey,    pItem->GetUseCurrentDestRegKey(),		1));
-			pItem->m_bUseCurrentDestPalette = iCheck ? TRUE : FALSE;			
+			iCheck = ( theApp.GetProfileInt	(strBatchRegistryKey,    item.GetUseCurrentDestRegKey(),		1));
+			item.m_bUseCurrentDestPalette = iCheck ? TRUE : FALSE;			
 		}		
-		pItem = GetNextSupportedImage();
-
 	}
 }
 
 void CWildCardList::WriteRegistry()
 {
 	CString strBatchRegistryKey ("BatchSettings");
-	CWildCardItem *pItem = GetFirstSupportedImage();
 	
-	while (pItem)
+	for (CWildCardItem &item : m_Items)
 	{
-		if (pItem->GetSourceRegKey() != "")
+		if (item.GetSourceRegKey() != "")
 		{
-			theApp.WriteProfileString	(strBatchRegistryKey,  pItem->GetSourceRegKey(),	pItem->GetSourcePaletteFile());
+			theApp.WriteProfileString	(strBatchRegistryKey,  item.GetSourceRegKey(),	item.GetSourcePaletteFile());
 		}
 
-		if (pItem->GetDestRegKey() != "")
+		if (item.GetDestRegKey() != "")
 		{
-			theApp.WriteProfileString	(strBatchRegistryKey,  pItem->GetDestRegKey(),		pItem->GetDestPaletteFile());
+			theApp.WriteProfileString	(strBatchRegistryKey,  item.GetDestRegKey(),		item.GetDestPaletteFile());
 		}
 
-		if (pItem->GetUseCurrentSourceRegKey() != "")
+		if (item.GetUseCurrentSourceRegKey() != "")
 		{
-			theApp.WriteProfileInt	(strBatchRegistryKey,    pItem->GetUseCurrentSourceRegKey(),		pItem->m_bUseCurrentSourcePalette == TRUE ? 1 : 0);
+			theApp.WriteProfileInt	(strBatchRegistryKey,    item.GetUseCurrentSourceRegKey(),		item.m_bUseCurrentSourcePalette == TRUE ? 1 : 0);
 		}
 
-		if (pItem->GetUseCurrentDestRegKey() != "")
+		if (item.GetUseCurrentDestRegKey() != "")
 		{
-			theApp.WriteProfileInt	(strBatchRegistryKey,    pItem->GetUseCurrentDestRegKey(),			pItem->m_bUseCurrentDestPalette == TRUE ? 1 : 0);
+			theApp.WriteProfileInt	(strBatchRegistryKey,    item.GetUseCurrentDestRegKey(),			item.m_bUseCurrentDestPalette == TRUE ? 1 : 0);
 		}
-
-		pItem = GetNextSupportedImage();
 	}
-
 }
 
 void CWildCardList::SolidifyAllChanges()
 {
-	CWildCardItem *pItem = GetFirst();
-
-	while (pItem)
+	for (CWildCardItem &item : m_Items)
 	{
-		pItem->SolidifyChanges();
-		pItem = pItem->GetNext();
+		item.SolidifyChanges();
 	}
 }
 
 void CWildCardList::PrepareForChanges()
 {
-	CWildCardItem *pItem = GetFirst();
-
-	while (pItem)
+	for (CWildCardItem &item : m_Items)
 	{
-		pItem->PrepareForChanges();
-		pItem = pItem->GetNext();
+		item.PrepareForChanges();
 	}
 }
 
 void CWildCardList::CancelAllChanges()
 {
-	CWildCardItem *pItem = GetFirst();
-
-	while (pItem)
+	for (CWildCardItem &item : m_Items)
 	{
-		pItem->CancelChanges();
-		pItem = pItem->GetNext();
+		item.CancelChanges();
 	}
 }
 
@@ -763,7 +619,8 @@ void CImageHelper::Initialize()
 
 	SetErrorCode (IH_SUCCESS);
 	SetImageType (IMAGE_TYPE_START);	
-	SetColorDepth (IH_8BIT);	
+	SetColorDepth (IH_8BIT);
+	m_iWildCardCursor = 0;
 	memset (m_byPalette, 0, 768);	
 
 	m_iPNGReadPosition		= 0;
@@ -1287,113 +1144,83 @@ int CImageHelper::GetColorDepth()
 //}
 
 
-CWildCardItem *CImageHelper::GetFirstSupportedImage()
-{
-	CWildCardItem *pItem = g_WildCardList.GetFirstSupportedImage();
+#define WILDCARD_MATCH_IMAGE	0
+#define WILDCARD_MATCH_PACKAGE	1
+#define WILDCARD_MATCH_PAK		2
+#define WILDCARD_MATCH_PALETTE	3
 
-	while (pItem)
+CWildCardItem *CImageHelper::FindNextSupported(int iStart, int iMatch)
+{
+	int iCount = g_WildCardList.GetCount();
+
+	for (int i = iStart; i < iCount; i++)
 	{
-		if (IsValidImage (pItem->GetImageType()))
+		CWildCardItem *pItem = g_WildCardList.GetAt(i);
+		BOOL bMatch = FALSE;
+
+		switch (iMatch)
 		{
+		case WILDCARD_MATCH_IMAGE:
+			bMatch = IsValidImage (pItem->GetImageType());
+			break;
+		case WILDCARD_MATCH_PACKAGE:
+			bMatch = IsValidPackage (pItem->GetImageType());
+			break;
+		case WILDCARD_MATCH_PAK:
+			bMatch = IsValidPak (pItem->GetImageType());
+			break;
+		case WILDCARD_MATCH_PALETTE:
+			bMatch = IsValidPalette (pItem->GetImageType());
+			break;
+		default:
+			ASSERT (FALSE);
+			break;
+		}
+
+		if (bMatch)
+		{
+			m_iWildCardCursor = i + 1;
 			return pItem;
 		}
-		pItem = g_WildCardList.GetNextSupportedImage();
 	}
 
+	m_iWildCardCursor = iCount;
 	return NULL;
+}
+
+CWildCardItem *CImageHelper::GetFirstSupportedImage()
+{
+	return FindNextSupported (0, WILDCARD_MATCH_IMAGE);
 }
 
 CWildCardItem *CImageHelper::GetNextSupportedImage()
 {
-	CWildCardItem *pItem = g_WildCardList.GetNextSupportedImage();
-
-	while (pItem)
-	{
-		if (IsValidImage (pItem->GetImageType()))
-		{
-			return pItem;
-		}
-		pItem = g_WildCardList.GetNextSupportedImage();
-	}
-	return NULL;
+	return FindNextSupported (m_iWildCardCursor, WILDCARD_MATCH_IMAGE);
 }
 
 CWildCardItem *CImageHelper::GetFirstSupportedPackage()
 {
-	CWildCardItem *pItem = g_WildCardList.GetFirstSupportedImage();
-
-	while (pItem)
-	{
-		if (IsValidPackage (pItem->GetImageType()))
-		{
-			return pItem;
-		}
-		pItem = g_WildCardList.GetNextSupportedImage();
-	}
-
-	return NULL;
+	return FindNextSupported (0, WILDCARD_MATCH_PACKAGE);
 }
 
 CWildCardItem *CImageHelper::GetNextSupportedPackage()
 {
-	CWildCardItem *pItem = g_WildCardList.GetNextSupportedImage();
-
-	while (pItem)
-	{
-		if (IsValidPackage (pItem->GetImageType()))
-		{
-			return pItem;
-		}
-		pItem = g_WildCardList.GetNextSupportedImage();
-	}
-	return NULL;
+	return FindNextSupported (m_iWildCardCursor, WILDCARD_MATCH_PACKAGE);
 }
 
 CWildCardItem *CImageHelper::GetFirstSupportedPak()
 {
-	CWildCardItem *pItem = g_WildCardList.GetFirstSupportedImage();
-
-	while (pItem)
-	{
-		if (IsValidPak (pItem->GetImageType()))
-		{
-			return pItem;
-		}
-		pItem = g_WildCardList.GetNextSupportedImage();
-	}
-
-	return NULL;
+	return FindNextSupported (0, WILDCARD_MATCH_PAK);
 }
 
 CWildCardItem *CImageHelper::GetNextSupportedPak()
 {
-	CWildCardItem *pItem = g_WildCardList.GetNextSupportedImage();
-
-	while (pItem)
-	{
-		if (IsValidPak (pItem->GetImageType()))
-		{
-			return pItem;
-		}
-		pItem = g_WildCardList.GetNextSupportedImage();
-	}
-	return NULL;
+	return FindNextSupported (m_iWildCardCursor, WILDCARD_MATCH_PAK);
 }
 
 CWildCardItem *CImageHelper::GetFirstSupportedPalette()
 {
-	CWildCardItem *pItem = g_WildCardList.GetFirstSupportedImage();
-
-	while (pItem)
-	{
-		if (IsValidPalette (pItem->GetImageType()))
-		{
-			return pItem;
-		}
-		pItem = g_WildCardList.GetNextSupportedImage();
-	}
-
-	return NULL;
+	return FindNextSupported (0, WILDCARD_MATCH_PALETTE);
 }
 
 CWildCardItem *CImageHelper::GetWildCardAt (int iPosition)
@@ -1403,17 +1230,7 @@ CWildCardItem *CImageHelper::GetWildCardAt (int iPosition)
 
 CWildCardItem *CImageHelper::GetNextSupportedPalette()
 {
-	CWildCardItem *pItem = g_WildCardList.GetNextSupportedImage();
-
-	while (pItem)
-	{
-		if (IsValidPalette (pItem->GetImageType()))
-		{
-			return pItem;
-		}
-		pItem = g_WildCardList.GetNextSupportedImage();
-	}
-	return NULL;
+	return FindNextSupported (m_iWildCardCursor, WILDCARD_MATCH_PALETTE);
 }
 
 CString CImageHelper::GetSupportedPaletteList()
@@ -2213,7 +2030,8 @@ void CImageHelper::ConvertImage (int iColorDepth, LPCTSTR szDestinationDirectory
 					case IH_SWL_TYPE:
 					case IH_PCX_TYPE:
 					case IH_BMP_TYPE:
-					case IH_TGA_TYPE:						
+					case IH_TGA_TYPE:
+					case IH_PNG_TYPE:
 						ColorOpt.Optimize( pTemp24Bit, iWidth, iHeight, byPalette, 256, TRUE);												
 						Palette.SetPalette( byPalette, 256);						
 						break;
@@ -2325,7 +2143,8 @@ void CImageHelper::ConvertImage (int iColorDepth, LPCTSTR szDestinationDirectory
 					case IH_SWL_TYPE:
 					case IH_PCX_TYPE:
 					case IH_BMP_TYPE:
-					case IH_TGA_TYPE:						
+					case IH_TGA_TYPE:
+					case IH_PNG_TYPE:
 						ColorOpt.Optimize( pTemp24Bit, iWidth, iHeight, byPalette, 256, TRUE);												
 						Palette.SetPalette( byPalette, 256);						
 						break;
@@ -3598,26 +3417,6 @@ void CImageHelper::SaveWAD(CFile *pFile)
 void CImageHelper::SaveWAD(LPCTSTR szFileName)
 {	
 	m_WADList.Serialize (szFileName, NULL, NULL, TRUE);
-}
-
-CWADItem *CImageHelper::GetFirstImage()
-{
-	return (m_WADList.GetFirstImage());
-}
-
-CWADItem *CImageHelper::GetNextImage()
-{
-	return (m_WADList.GetNextImage());
-}
-
-CWADItem *CImageHelper::GetFirstLump()
-{
-	return (m_WADList.GetFirstLump());
-}
-
-CWADItem *CImageHelper::GetNextLump()
-{
-	return (m_WADList.GetNextLump());
 }
 
 CWADItem *CImageHelper::GetLumpAtPosition(int iPosition)

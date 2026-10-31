@@ -553,14 +553,17 @@ void CToolSettingsToolbar::OnSelendokTst1ComboWad()
 			return;
 		}
 
-		pItem = m_ihHelper.GetFirstImage();
-		bAtLeastOne = (pItem != NULL);
-
-		while (pItem)
+		for (auto& pOwned : m_ihHelper.GetItems())
 		{
+			pItem = pOwned.get();
+			if (!pItem->IsValidMip())
+			{
+				continue;
+			}
+
 			iItemAdded = m_lbTST1_Images.AddString (pItem->GetName());
 			m_lbTST1_Images.SetItemData (iItemAdded, (DWORD)pItem);
-			pItem = m_ihHelper.GetNextImage();
+			bAtLeastOne = true;
 		}
 
 		if (bAtLeastOne)

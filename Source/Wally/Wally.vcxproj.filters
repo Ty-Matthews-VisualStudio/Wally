@@ -144,9 +144,6 @@
     <ClCompile Include="ExplorerTreeView.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FileList.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Filter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -241,9 +238,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="NewPaletteDlg.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="NewRuleDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="NewWalDlg.cpp">
@@ -360,12 +354,6 @@
     <ClCompile Include="RotateDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RuleList.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RulesDlg.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="SafeFile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -411,9 +399,6 @@
     <ClCompile Include="ToolDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ToolSettingsPage.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ToolSettingsToolbar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -442,9 +427,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="WallyException.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="WallyList.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="WallyOptions.cpp">
@@ -478,6 +460,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="singleinstance.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ToolSettingsPage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -655,9 +640,6 @@
     <ClInclude Include="ExplorerTreeView.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="FileList.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Filter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -737,9 +719,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="NewPaletteDlg.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="NewRuleDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="NewWalDlg.h">
@@ -865,12 +844,6 @@
     <ClInclude Include="RotateDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RuleList.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RulesDlg.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="SafeFile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -931,9 +904,6 @@
     <ClInclude Include="ToolDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ToolSettingsPage.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ToolSettingsToolbar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -970,9 +940,6 @@
     <ClInclude Include="WallyException.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WallyList.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="WallyOptions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1001,6 +968,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="singleinstance.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ToolSettingsPage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
